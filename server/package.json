@@ -1,0 +1,24 @@
+{
+  "name": "daytripgo-server",
+  "version": "1.0.0",
+  "description": "DayTripGO API - Tour Visit Planner Backend (Node.js + Express)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "npx nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["tourism", "wadduwa", "visit-planner", "express", "supabase"],
+  "author": "P.K.M. De Silva (E2410884)",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.1"
+  }
+}
