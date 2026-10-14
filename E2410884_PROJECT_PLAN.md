@@ -652,3 +652,386 @@ DayTripGO Project
 > **Document End**
 >
 > _This project plan is a living document and may be updated as the project progresses. All changes will be recorded in the Revision History table._
+
+---
+
+## **14. Implementation Plan – Step-by-Step Execution Guide**
+
+> **Added:** 14.10.2026 — Covers folder restructure, full frontend & backend build-out, integration wiring, and separate log setup.
+
+### **14.1 Revision to Folder Structure**
+
+As part of Phase 3 (System Design – T-3.6), the project folder names were updated for clarity:
+
+| Old Name | New Name | Reason |
+| -------- | -------- | ------ |
+| `client/` | `frontend/` | Clearly describes the Presentation Tier role |
+| `server/` | `backend/` | Clearly describes the Application Tier role |
+
+All internal references (e.g., `package.json` name fields, README paths) updated accordingly.
+
+---
+
+### **14.2 Current State Analysis (as at 14.10.2026)**
+
+#### Frontend (`frontend/`) – Current State
+
+| Item | File | State |
+| ---- | ---- | ----- |
+| Entry point | `index.html` | Exists – needs DayTripGO title/meta |
+| React entry | `src/main.jsx` | Exists – bare StrictMode render |
+| App root | `src/App.jsx` | Default Vite counter – **needs full replacement** |
+| Styles | `src/index.css` | Vite default – **needs full replacement** |
+| Vite config | `vite.config.js` | Minimal – needs `/api` proxy to backend port 5000 |
+| Package | `package.json` | React 19 + Vite – needs `react-router-dom`, `axios`, `leaflet`, `react-leaflet` |
+| Pages | `src/pages/` | Empty (`.gitkeep`) |
+| Components | `src/components/Common/`, `Layout/`, `MapView/`, `PlaceDetail/`, `PlaceListing/`, `VisitPlan/` | All empty |
+| Services | `src/services/` | Empty |
+| Context | `src/context/` | Empty |
+| Hooks | `src/hooks/` | Empty |
+| Utils | `src/utils/` | Empty |
+| Styles | `src/styles/` | Empty |
+
+#### Backend (`backend/`) – Current State
+
+| Item | File | State |
+| ---- | ---- | ----- |
+| Server entry | `src/server.js` | Exists – starts on port 5000 |
+| App config | `src/app.js` | Exists – CORS, Morgan, health check; all routes commented out |
+| DB config | `src/config/db.js` | Exists – Supabase client (requires `.env`) |
+| Env template | `.env.example` | Exists – PORT, SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT vars |
+| Routes | `src/routes/` | Empty |
+| Controllers | `src/controllers/` | Empty |
+| Models | `src/models/` | Empty |
+| Services | `src/services/` | Empty |
+| Middleware | `src/middleware/` | Empty |
+| Utils | `src/utils/` | Empty |
+
+---
+
+### **14.3 Execution Steps**
+
+#### Step 1 – Rename Folders ✅ Complete
+```
+client/  →  frontend/
+server/  →  backend/
+```
+Both `package.json` name fields updated to `daytripgo-frontend` and `daytripgo-server`.
+
+#### Step 2 – Database Schema & Seeds
+Create the following SQL files in `database/`:
+
+```
+database/
+├── schema/
+│   └── 001_create_tables.sql    ← Category, Place, VisitPlan, VisitPlanItem, Admin
+├── seeds/
+│   ├── 001_seed_categories.sql  ← Religious, Nature, Heritage, Cultural
+│   └── 002_seed_places.sql      ← ≥10 verified places within 25km of Wadduwa
+└── migrations/                  ← (empty – reserved for future schema changes)
+```
+
+Run in Supabase SQL Editor: schema first, then seeds.
+
+#### Step 3 – Backend Middleware Layer
+Create `backend/src/middleware/`:
+
+| File | Purpose |
+| ---- | ------- |
+| `auth.js` | Verifies JWT from `Authorization: Bearer <token>` header |
+| `validate.js` | Sanitises and validates request bodies |
+| `errorHandler.js` | Central 4-argument Express error handler |
+
+#### Step 4 – Backend Models Layer (Supabase query functions)
+Create `backend/src/models/`:
+
+| File | Supabase Operations |
+| ---- | ------------------- |
+| `placeModel.js` | `select`, `insert`, `update`, `delete` on `places` table |
+| `categoryModel.js` | `select` on `categories` table |
+| `visitPlanModel.js` | `insert`, `select`, `update` on `visit_plans` + `visit_plan_items` |
+| `adminModel.js` | `select` on `admins` (for login lookup) |
+
+#### Step 5 – Backend Services Layer (business logic)
+Create `backend/src/services/`:
+
+| File | Responsibility |
+| ---- | -------------- |
+| `placeService.js` | Filter logic, distance calculation, open-status evaluation |
+| `visitPlanService.js` | Add/remove/reorder items, session plan management |
+| `authService.js` | Password compare (bcrypt), JWT sign/verify, logout |
+
+#### Step 6 – Backend Controllers Layer (request/response handlers)
+Create `backend/src/controllers/`:
+
+| File | Handles |
+| ---- | ------- |
+| `placeController.js` | `getAllPlaces`, `getPlaceById`, `createPlace`, `updatePlace`, `deletePlace` |
+| `categoryController.js` | `getAllCategories` |
+| `visitPlanController.js` | `createPlan`, `getPlan`, `updatePlan` |
+| `authController.js` | `login`, `logout` |
+
+#### Step 7 – Backend Routes Layer
+Create `backend/src/routes/`:
+
+| File | Mounted At | Methods |
+| ---- | ---------- | ------- |
+| `placeRoutes.js` | `/api/places` | `GET`, `GET /:id`, `POST` (🔒), `PUT /:id` (🔒), `DELETE /:id` (🔒) |
+| `categoryRoutes.js` | `/api/categories` | `GET` |
+| `visitPlanRoutes.js` | `/api/visit-plans` | `POST`, `GET /:id`, `PUT /:id` |
+| `authRoutes.js` | `/api/auth` | `POST /login`, `POST /logout` (🔒) |
+
+🔒 = requires JWT auth middleware
+
+#### Step 8 – Backend Utils
+Create `backend/src/utils/`:
+
+| File | Exports |
+| ---- | ------- |
+| `tokenUtils.js` | `signToken(payload)`, `verifyToken(token)` |
+| `passwordUtils.js` | `hashPassword(plain)`, `comparePassword(plain, hash)` |
+
+#### Step 9 – Wire Routes in `backend/src/app.js`
+Uncomment and register all routes + attach `errorHandler` middleware:
+```js
+app.use('/api/places',      require('./routes/placeRoutes'));
+app.use('/api/categories',  require('./routes/categoryRoutes'));
+app.use('/api/visit-plans', require('./routes/visitPlanRoutes'));
+app.use('/api/auth',        require('./routes/authRoutes'));
+app.use(require('./middleware/errorHandler'));
+```
+
+#### Step 10 – Backend Logging (Separate Log File)
+Configure Morgan to write to `backend/logs/backend.log` in addition to the console:
+```js
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, '../../logs/backend.log'),
+  { flags: 'a' }
+);
+app.use(morgan('combined', { stream: accessLogStream })); // file
+app.use(morgan('dev'));                                    // console
+```
+Add `"dev:log"` npm script: `"dev:log": "nodemon src/server.js 2>&1 | tee logs/backend.log"`.
+
+#### Step 11 – Install Frontend Packages ✅ Complete
+```
+react-router-dom  axios  leaflet  react-leaflet
+```
+
+#### Step 12 – Frontend Design System
+Create `frontend/src/styles/`:
+
+| File | Contents |
+| ---- | -------- |
+| `variables.css` | CSS custom properties (colours, spacing, fonts, breakpoints) |
+| `global.css` | CSS reset + base typography |
+| `components.css` | Shared utility classes (cards, buttons, badges) |
+
+#### Step 13 – Frontend Services (API wrappers)
+Create `frontend/src/services/`:
+
+| File | Description |
+| ---- | ----------- |
+| `api.js` | Axios instance with `baseURL` and JWT interceptor |
+| `placeService.js` | `getPlaces(params)`, `getPlaceById(id)` |
+| `categoryService.js` | `getCategories()` |
+| `visitPlanService.js` | `createPlan()`, `getPlan(id)`, `updatePlan(id, items)` |
+| `authService.js` | `login(credentials)`, `logout()` |
+
+#### Step 14 – Frontend Context
+Create `frontend/src/context/`:
+
+| File | State Managed |
+| ---- | ------------- |
+| `VisitPlanContext.jsx` | Current plan items, add/remove/reorder actions, plan ID |
+| `AuthContext.jsx` | Admin JWT token, login/logout state |
+
+#### Step 15 – Frontend Hooks
+Create `frontend/src/hooks/`:
+
+| File | Wraps |
+| ---- | ----- |
+| `usePlaces.js` | Fetches places, applies category filter |
+| `useVisitPlan.js` | Consumes `VisitPlanContext` |
+| `useAuth.js` | Consumes `AuthContext`, exposes `login`, `logout`, `isAdmin` |
+
+#### Step 16 – Frontend Components
+
+**Common** (`frontend/src/components/Common/`):
+`Button.jsx` · `Loader.jsx` · `ErrorMessage.jsx` · `Modal.jsx` · `Badge.jsx`
+
+**Layout** (`frontend/src/components/Layout/`):
+`Header.jsx` · `Footer.jsx` · `Navbar.jsx`
+
+**PlaceListing** (`frontend/src/components/PlaceListing/`):
+`PlaceCard.jsx` · `PlaceGrid.jsx` · `CategoryFilter.jsx`
+
+**PlaceDetail** (`frontend/src/components/PlaceDetail/`):
+`DetailView.jsx` · `PhotoGallery.jsx`
+
+**MapView** (`frontend/src/components/MapView/`):
+`MapEmbed.jsx` (Leaflet) · `MapMarker.jsx`
+
+**VisitPlan** (`frontend/src/components/VisitPlan/`):
+`PlanList.jsx` · `PlanItem.jsx` · `DragReorder.jsx`
+
+#### Step 17 – Frontend Pages
+Create `frontend/src/pages/`:
+
+| File | Route | Description |
+| ---- | ----- | ----------- |
+| `HomePage.jsx` | `/` | Place grid + category filter |
+| `PlaceDetailPage.jsx` | `/places/:id` | Detail view + embedded Leaflet map |
+| `VisitPlanPage.jsx` | `/visit-plan` | Consolidated plan with reorder |
+| `AdminLoginPage.jsx` | `/admin/login` | Login form |
+| `AdminDashboardPage.jsx` | `/admin/dashboard` | CRUD management table |
+
+#### Step 18 – Frontend Routing (`App.jsx`)
+Replace default Vite App with full React Router DOM routes:
+```jsx
+<BrowserRouter>
+  <Routes>
+    <Route path="/"                  element={<HomePage />} />
+    <Route path="/places/:id"        element={<PlaceDetailPage />} />
+    <Route path="/visit-plan"        element={<VisitPlanPage />} />
+    <Route path="/admin/login"       element={<AdminLoginPage />} />
+    <Route path="/admin/dashboard"   element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+  </Routes>
+</BrowserRouter>
+```
+
+#### Step 19 – Vite Proxy (`vite.config.js`)
+```js
+server: {
+  proxy: {
+    '/api': 'http://localhost:5000'
+  }
+}
+```
+Eliminates CORS issues in development – all `/api` calls routed to the Express backend.
+
+#### Step 20 – Frontend Logging (Separate Log File)
+`dev:log` npm script pipes Vite output to `frontend/logs/frontend.log`:
+```
+"dev:log": "vite 2>&1 | tee logs/frontend.log"
+```
+
+#### Step 21 – Frontend Utils
+Create `frontend/src/utils/`:
+
+| File | Function |
+| ---- | -------- |
+| `formatDistance.js` | `formatDistance(km)` → `"12.5 km"` |
+| `formatHours.js` | `formatHours(openTime, closeTime)` → `"8:00 AM – 5:00 PM"` |
+| `isOpenNow.js` | `isOpenNow(openTime, closeTime)` → `true / false` |
+
+---
+
+### **14.4 Integration Points (Frontend ↔ Backend)**
+
+| Frontend Call | Backend Endpoint | Method | Auth Required |
+| ------------- | ---------------- | ------ | ------------- |
+| Fetch all places | `GET /api/places` | Public | No |
+| Filter by category | `GET /api/places?category=:id` | Public | No |
+| Get place detail | `GET /api/places/:id` | Public | No |
+| Get all categories | `GET /api/categories` | Public | No |
+| Create visit plan | `POST /api/visit-plans` | Public | No |
+| View visit plan | `GET /api/visit-plans/:id` | Public | No |
+| Update visit plan | `PUT /api/visit-plans/:id` | Public | No |
+| Admin login | `POST /api/auth/login` | Public | No |
+| Admin logout | `POST /api/auth/logout` | Private | JWT 🔒 |
+| Add place | `POST /api/places` | Private | JWT 🔒 |
+| Edit place | `PUT /api/places/:id` | Private | JWT 🔒 |
+| Delete place | `DELETE /api/places/:id` | Private | JWT 🔒 |
+
+---
+
+### **14.5 Log Architecture**
+
+| Log | Location | Written By | Format |
+| --- | -------- | ---------- | ------ |
+| Backend HTTP requests | `backend/logs/backend.log` | Morgan (`combined`) | `IP METHOD URL STATUS RESPONSE_TIME` |
+| Frontend build/HMR output | `frontend/logs/frontend.log` | Vite stdout via `tee` | Vite dev server messages |
+
+Both log files are **git-ignored** (`*.log` in respective `.gitignore` files).
+
+---
+
+### **14.6 Files to Create – Complete Checklist**
+
+#### Backend (`backend/src/`)
+- [ ] `middleware/auth.js`
+- [ ] `middleware/validate.js`
+- [ ] `middleware/errorHandler.js`
+- [ ] `models/placeModel.js`
+- [ ] `models/categoryModel.js`
+- [ ] `models/visitPlanModel.js`
+- [ ] `models/adminModel.js`
+- [ ] `services/placeService.js`
+- [ ] `services/visitPlanService.js`
+- [ ] `services/authService.js`
+- [ ] `controllers/placeController.js`
+- [ ] `controllers/categoryController.js`
+- [ ] `controllers/visitPlanController.js`
+- [ ] `controllers/authController.js`
+- [ ] `routes/placeRoutes.js`
+- [ ] `routes/categoryRoutes.js`
+- [ ] `routes/visitPlanRoutes.js`
+- [ ] `routes/authRoutes.js`
+- [ ] `utils/tokenUtils.js`
+- [ ] `utils/passwordUtils.js`
+- [ ] `app.js` (update – wire all routes + file logging)
+- [ ] `logs/` directory (git-ignored)
+
+#### Frontend (`frontend/src/`)
+- [ ] `styles/variables.css`
+- [ ] `styles/global.css`
+- [ ] `styles/components.css`
+- [ ] `services/api.js`
+- [ ] `services/placeService.js`
+- [ ] `services/categoryService.js`
+- [ ] `services/visitPlanService.js`
+- [ ] `services/authService.js`
+- [ ] `context/VisitPlanContext.jsx`
+- [ ] `context/AuthContext.jsx`
+- [ ] `hooks/usePlaces.js`
+- [ ] `hooks/useVisitPlan.js`
+- [ ] `hooks/useAuth.js`
+- [ ] `components/Common/Button.jsx`
+- [ ] `components/Common/Loader.jsx`
+- [ ] `components/Common/ErrorMessage.jsx`
+- [ ] `components/Common/Modal.jsx`
+- [ ] `components/Common/Badge.jsx`
+- [ ] `components/Layout/Header.jsx`
+- [ ] `components/Layout/Footer.jsx`
+- [ ] `components/Layout/Navbar.jsx`
+- [ ] `components/PlaceListing/PlaceCard.jsx`
+- [ ] `components/PlaceListing/PlaceGrid.jsx`
+- [ ] `components/PlaceListing/CategoryFilter.jsx`
+- [ ] `components/PlaceDetail/DetailView.jsx`
+- [ ] `components/PlaceDetail/PhotoGallery.jsx`
+- [ ] `components/MapView/MapEmbed.jsx`
+- [ ] `components/MapView/MapMarker.jsx`
+- [ ] `components/VisitPlan/PlanList.jsx`
+- [ ] `components/VisitPlan/PlanItem.jsx`
+- [ ] `components/VisitPlan/DragReorder.jsx`
+- [ ] `pages/HomePage.jsx`
+- [ ] `pages/PlaceDetailPage.jsx`
+- [ ] `pages/VisitPlanPage.jsx`
+- [ ] `pages/AdminLoginPage.jsx`
+- [ ] `pages/AdminDashboardPage.jsx`
+- [ ] `utils/formatDistance.js`
+- [ ] `utils/formatHours.js`
+- [ ] `utils/isOpenNow.js`
+- [ ] `App.jsx` (replace – full React Router)
+- [ ] `index.css` (replace – DayTripGO design system)
+- [ ] `logs/` directory (git-ignored)
+
+#### Database (`database/`)
+- [ ] `schema/001_create_tables.sql`
+- [ ] `seeds/001_seed_categories.sql`
+- [ ] `seeds/002_seed_places.sql`
+
+---
+
+> _Section 14 added 14.10.2026 by P.K.M. De Silva (E2410884) — Implementation Plan based on analysis of actual codebase state as at project kickoff of Phase 3 (System Design)._
