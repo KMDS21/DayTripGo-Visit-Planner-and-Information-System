@@ -298,3 +298,19 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 14:49 - All branches pushed; frontend editing round opens on feature/frontend-redesign
+
+- **Pushes completed per developer instruction**: `frontend` -> `1534011` (fast-forward from 3a2c5bb - brings the JWT-hardening / admin-review log entry), `feature/admin-ui-redesign` -> `893dd9b` (new remote branch), `feature/frontend-redesign` -> `893dd9b` (new remote branch); `main` (3a2c5bb) and `backend` (3510607) were already current; `archive/admin-ui-redesign-preSquash` (48a41a9) stays **local only** as the pre-consolidation history safety net
+
+- **Remote heads after push**: main `3a2c5bb` · frontend `1534011` · feature/admin-ui-redesign `893dd9b` · feature/frontend-redesign `893dd9b` · backend `3510607` · Documents `ab3d91b`
+
+- **New branch `feature/frontend-redesign`** created from `893dd9b` - the frontend (public-site) editing round starts here on top of: previous light design, collapsible admin sidebar, `/admin`-only access, the consolidated 4-commit admin panel history, hardened JWT login and the full log
+
+- **Log infrastructure note**: the append footer marker `_(Entries below are appended as further steps complete.)_` had been silently consumed by the status entry append (commit 48a41a9) due to a prefix/suffix insertion bug; it was restored during the consolidation - future entries are appended at end-of-file with the marker re-emitted, and no existing entry content is altered (append-only preserved)
+
+- **Continuing conventions**: integration-log entry committed **before** the code it documents, plain descriptive commit messages, stepwise commits (no single blobs), push on instruction
+
+---
+
+_(Entries below are appended as further steps complete.)_
