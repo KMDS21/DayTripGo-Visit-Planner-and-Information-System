@@ -314,3 +314,17 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:14 - Full-width large-screen layout; mobile below 1280 verified
+
+- **Audit first**: headless captures of home / visit-plan / place-detail at 390, 768, 1280 and 1920 px with horizontal-overflow measurement - **every viewport reports zero horizontal scroll**; below 1280 the site stacks correctly (1 col <640, 2 col grid >=640, 3 col >=1024) so no mobile fixes were needed and mobile padding stays `px-4`
+
+- **Large-screen gutters removed**: the public shell dropped its `max-w-6xl` (1152px) cap - `PublicLayout` main, `Header` and `Footer` inner rows are now full-width with responsive padding `px-4 / sm:px-6 / lg:px-10`, and the `HomePage` carousel + listing sections dropped their nested `max-w-7xl` / `max-w-6xl` caps; on a 1920px screen the dead side space went from ~384px per side to ~40px
+
+- **Grid reclaims the space**: `PlaceGrid` gains `xl:grid-cols-4 2xl:grid-cols-5` - the 10 seeded places render as two full rows at 1920 (previously 3 columns); featured-carousel cards are fixed 384px in the vendor component so they do not balloon
+
+- **Deliberately untouched**: `VisitPlanPage` keeps `max-w-3xl` (readable form column), the admin layout keeps its container, hero copy stays centered at `max-w-3xl`; lint clean, `npm run build` passes (5.40s), post-change re-audit again shows zero overflow at every width
+
+---
+
+_(Entries below are appended as further steps complete.)_
