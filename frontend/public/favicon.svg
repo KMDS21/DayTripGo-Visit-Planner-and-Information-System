@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0e7c66"/>
+  <path d="M32 10c-9.4 0-17 7.6-17 17 0 12.8 17 27 17 27s17-14.2 17-27c0-9.4-7.6-17-17-17z" fill="#ffffff"/>
+  <circle cx="32" cy="27" r="7.5" fill="#0e7c66"/>
+  <text x="32" y="59" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">GO</text>
+</svg>
