@@ -1,6 +1,6 @@
 // Header — DayTripGO brand bar with navigation.
 
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import Navbar from './Navbar';
 
 export default function Header() {
@@ -16,6 +16,19 @@ export default function Header() {
         {/* Centred at md+ (1fr / auto / 1fr columns); stays in the row on mobile. */}
         <div className="md:col-start-2 md:justify-self-center">
           <Navbar />
+        </div>
+        {/* Separate green CTA button, right side of the bar */}
+        <div className="ml-auto md:col-start-3 md:ml-0 md:justify-self-end">
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `block rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark ${
+                isActive ? 'ring-2 ring-brand-dark ring-offset-2 ring-offset-background' : ''
+              }`
+            }
+          >
+            Contact us
+          </NavLink>
         </div>
       </div>
     </header>

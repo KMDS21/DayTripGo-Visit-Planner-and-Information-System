@@ -13,6 +13,7 @@ import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
 import PlaceDetailPage from './pages/PlaceDetailPage';
 import VisitPlanPage from './pages/VisitPlanPage';
+import ContactPage from './pages/ContactPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 
@@ -208,6 +209,7 @@ export default function App() {
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />
           <Route path="/visit-plan" element={<VisitPlanPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
           <Route path="*" element={<NotFoundPage />} />
