@@ -7,12 +7,15 @@ node_modules/
 .env.production
 
 # Build output
-client/dist/
-server/dist/
+frontend/dist/
+backend/dist/
 
 # IDE
 .vscode/
 .idea/
+
+# Agent tooling (installed skills — not part of the project)
+.agents/
 
 # OS files
 .DS_Store

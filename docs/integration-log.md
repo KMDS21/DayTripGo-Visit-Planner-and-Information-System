@@ -56,4 +56,41 @@ Reference: Project Plan §14 (E2410884_PROJECT_PLAN.md) · SRS v2.1 (E2410884_SR
 
 ---
 
+## 2026-10-15 10:48 · Session 1 — Frontend packages installed
+
+- Branch at this step: `frontend` (log committed first as `ea3a6d2` at 10:41)
+- Ran `npm install framer-motion embla-carousel-react lucide-react class-variance-authority clsx tailwind-merge` in `frontend/`
+- Result: **11 packages added, 70 total audited, 0 vulnerabilities** (~24s)
+- Purpose: prep for `shadcn init` + `shadcn add @aceternity/apple-cards-carousel-demo` (Aceternity carousel needs `framer-motion` + `embla-carousel-react`; shadcn components need `class-variance-authority`/`clsx`/`tailwind-merge`/`lucide-react`)
+- Existing deps re-synced from `package.json`: react 19.2, react-dom 19.2, react-router-dom 7.18, axios 1.20, leaflet 1.9, react-leaflet 5.0, vite 8.3, oxlint
+- Changes pending commit on `frontend` branch: `frontend/package.json`, `frontend/package-lock.json`
+
+---
+
+## 2026-10-15 10:48–10:54 · Session 1 — Tailwind v4 + shadcn/ui + Aceternity carousel
+
+- Branch: `frontend`
+- **10:48** First `shadcn init --preset b4pjp1TMZc --template vite` **failed** (exit 1): no Tailwind config, no `@/` import alias — fixed per shadcn "Existing Vite project" docs:
+  - `npm install -D tailwindcss @tailwindcss/vite` (17 packages, 0 vulns)
+  - `vite.config.js`: added `tailwindcss()` plugin + `@ → ./src` alias (ESM `fileURLToPath` shim) — kept `/api → :5000` proxy
+  - `src/index.css` → `@import "tailwindcss";`
+  - Created `frontend/tsconfig.json` with `baseUrl` + `paths: { "@/*": ["./src/*"] }`
+- **10:52** Re-ran init → **success**: `components.json` written, `src/components/ui/button.tsx`, `src/lib/utils.ts` created, theme vars injected into `src/index.css`
+- **10:53** `shadcn add @aceternity/apple-cards-carousel-demo` → **success**, created:
+  - `src/components/ui/apple-cards-carousel.tsx`
+  - `src/components/apple-cards-carousel-demo.tsx`
+  - `src/hooks/use-outside-click.tsx`
+- **Deviation from plan §14 Step 12 logged:** the plain-CSS design system (`styles/variables.css`, `global.css`, `components.css`) is **superseded by Tailwind v4 + shadcn theme variables** — same role, modern stack. Rest of Phase 4 (components/pages/context/hooks/services) will use Tailwind classes + shadcn components.
+- Pending commit on `frontend` branch: all of the above + Phase-1 cleanup + package changes
+
+---
+
+## 2026-10-15 10:58 · Session 1 — Commit order per developer instruction
+
+Developer instruction (verbatim intent): "firstly upload gitignore file with new things" → backend work goes on a new `backend` branch; frontend work commits land on the `frontend` branch afterwards; log updated at every step.
+
+- **10:58** `.gitignore` updated with new entry `.agents/` (installed agent-skill definitions are tooling, not project code) — committed **first**, before any code, on branch `frontend`
+
+---
+
 _(Entries below are appended as further steps complete.)_
