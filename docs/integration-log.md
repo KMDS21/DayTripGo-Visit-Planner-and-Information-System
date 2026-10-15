@@ -328,3 +328,15 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:20 - Navbar selected state and Home navigation
+
+- **Selected page = green text only**: the public `Navbar` active state dropped the light-green pill (`bg-brand-light`) - the current item now shows just `text-brand-dark` green text with a transparent background (verified via computed style: color `oklch(0.38 0.08 175)`, background `rgba(0,0,0,0)`); hover feedback and the plan-count badge are unchanged, admin sidebar untouched per scope
+
+- **Home navigation added**: navbar now reads `Home / Explore / My Day Plan` - `Home` links to `/` and is active only on the bare path; `Explore` now targets `/#places` (the listing section gained the places id) and highlights only when that anchor is selected, so the two never light up together
+
+- **Explore scroll behaviour**: `HomePage` smooth-scrolls to `#places` whenever that hash is present, re-running after data loads so the final grid position is respected - works from the home page and from any other route; headless check passed: click from `/visit-plan` navigates to `/#places` and scrolls (scrollY 1417), lint clean, `npm run build` passes (3.72s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
