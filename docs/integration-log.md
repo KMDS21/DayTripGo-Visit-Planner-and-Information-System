@@ -406,3 +406,13 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:22 - Contact us page and header CTA button
+
+- **New page `/contact`**: `ContactPage` with a branded gradient hero and company details - address (No. 12, Galle Road, Wadduwa, Kalutara District), email `hello@daytripgo.lk`, phone `+94 11 234 5678`, opening hours - plus an About card (ITE2953 / E2410884 / De Silva P.K.M.) and a scope note (planning only, no bookings)
+
+- **Separate green button in the navbar right corner**: `Contact us` sits in the header's third grid column (`justify-self-end`), a rounded-2xl `bg-brand` box with hover/active ring states - nav links stay centred (measured: nav centre 640 = viewport centre 640, button 40px from the right edge); headless click verified → `/contact` renders with both detail cards
+
+---
+
+_(Entries below are appended as further steps complete.)_
