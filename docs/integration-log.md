@@ -104,4 +104,13 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 11:04 · Session 1 — Pushed to GitHub
+
+- **11:04** `git push -u origin frontend` → updated `3ee09c0..46fbe8f` on `origin/frontend` ✅
+- **11:04** `git push -u origin backend` → **new remote branch** `origin/backend` created ✅ (tracking set both)
+- Remote: `https://github.com/KMDS21/DayTripGo-Visit-Planner-and-Information-System.git`
+- GitHub offered PR link for `backend`: `/pull/new/backend`
+
+---
+
 _(Entries below are appended as further steps complete.)_
