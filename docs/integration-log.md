@@ -352,3 +352,13 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:52 - Centred navbar links
+
+- **Header re-gridded**: the public header row switched from `justify-between` to a `md:grid-cols-[1fr_auto_1fr]` grid with the logo `justify-self-start` and the navbar wrapper in the middle column - the links are now dead-centre on screens 768px+ (measured at 1280: nav centre 640 = viewport centre 640, delta 0), aligned on the same row as the logo; below md the layout is untouched (logo + links row, wrapping as before)
+
+- lint clean, `npm run build` passes (3.93s), headless check at 1280 and 390 px
+
+---
+
+_(Entries below are appended as further steps complete.)_
