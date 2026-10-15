@@ -1,8 +1,8 @@
 // HomePage — place listing with category filter (SRS FR-1…FR-4) plus the
 // featured-places carousel and hero (plan §14.3 Step 17, T-4.1…T-4.3).
 
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
@@ -14,16 +14,7 @@ export default function HomePage() {
   const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
-  const { hash } = useLocation();
   const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name;
-
-  // Explore → /#places scrolls to the listing (re-runs after data loads so the
-  // final grid position is respected).
-  useEffect(() => {
-    if (hash === '#places') {
-      document.getElementById('places')?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [hash, loading]);
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
