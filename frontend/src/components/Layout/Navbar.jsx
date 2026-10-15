@@ -14,6 +14,17 @@ export default function Navbar() {
 
   return (
     <nav className="flex flex-wrap items-center gap-1">
+      {/* Green plan CTA box, left side of the navigation → My Day Plan */}
+      <NavLink
+        to="/visit-plan"
+        className={({ isActive }) =>
+          `mr-2 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark ${
+            isActive ? 'ring-2 ring-brand-dark ring-offset-2 ring-offset-background' : ''
+          }`
+        }
+      >
+        Let&apos;s plan your tour
+      </NavLink>
       <NavLink to="/" end className={linkClass}>
         Home
       </NavLink>
