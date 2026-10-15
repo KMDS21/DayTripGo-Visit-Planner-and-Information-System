@@ -1,7 +1,8 @@
 // HomePage — place listing with category filter (SRS FR-1…FR-4) plus the
 // featured-places carousel and hero (plan §14.3 Step 17, T-4.1…T-4.3).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import CategoryFilter from '../components/PlaceListing/CategoryFilter';
@@ -14,6 +15,15 @@ export default function HomePage() {
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
+  const { hash } = useLocation();
+
+  // Explore → /#places scrolls to the listing (re-runs after data loads so the
+  // final grid position is respected).
+  useEffect(() => {
+    if (hash === '#places') {
+      document.getElementById('places')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [hash, loading]);
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -46,7 +56,7 @@ export default function HomePage() {
       </section>
 
       {/* Listing + filter */}
-      <section className="w-full">
+      <section id="places" className="w-full">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
           <CategoryFilter categories={categories} activeCategory={activeCategory} onSelect={selectCategory} />
