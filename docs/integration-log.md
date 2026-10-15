@@ -235,5 +235,66 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
-_(Entries below are appended as further steps complete.)_
+---
 
+## 2026-10-15 14:06 - feature/admin-ui-redesign - previous admin panel is the base; redesign committed step by step
+
+- Branch `feature/admin-ui-redesign` verified to sit on the **previous admin panel**: admin pages at the branch point are byte-identical to `113f850` (where the original panel was first committed) - so the previous copy is integrated very first, as instructed
+- Previous panel captured as full-page screenshots (login + signed-in dashboard, 1600px viewport @2x, live API) for before/after reference - stored outside the repo in the session temp folder
+- Redesign is split into separate logical commits, **not one blob**: (1) global terra theme rework in `index.css`, (2) isolated admin layout in `App.jsx` + navbar admin-link removal, (3) login page redesign incl. its render-phase-navigate fix, (4) dashboard redesign incl. sidebar cursor fix - each preceded by this log commit per logging discipline
+- The uncommitted redesign was hash-verified backed up and restored around the screenshot capture - no work lost; working tree carries all 5 modified files until the step commits below land
+
+---
+
+---
+
+## 2026-10-15 14:18 - Previous design restored; sidebar added to the admin panel
+
+- The green terra redesign was rejected - **previous light design restored** on this branch: `index.css`, `AdminLoginPage`, `AdminDashboardPage` and `Navbar` reverted to their pre-redesign (`frontend`) versions; the green commits remain in history (6153541..f11adbb) for reference
+- **Sidebar added to the admin panel** in the previous design's style via a new `AdminLayout` in `App.jsx`: light `bg-card` sidebar with the DayTripGO logo, Dashboard (active pill), Explore, My Day Plan (+ plan count badge), "Signed in as admin" and Log out - public Header/Footer no longer wrap the dashboard
+- Routing restructured with `PublicLayout` (Header + Footer - previous shell) around all public routes **including** `/admin/login` (previous login page keeps its public chrome), `/admin` redirects to login, `ProtectedRoute` unchanged; sidebar is `hidden` below `lg` - the dashboard stays fully usable without it (own Log out / Add place header)
+- Verified: lint adds no new issues, `npm run build` passes (4.64s), full-page capture shows the previous white dashboard with the light sidebar rendering against the live API
+
+---
+
+---
+
+## 2026-10-15 14:20 - Public navbar admin link removed - admin access only via /admin
+
+- The Admin/Dashboard pill in `Navbar.jsx` was the **only** public entry point to the admin panel (confirmed by grep: every other `/admin` reference is admin-internal - route definitions, `ProtectedRoute`, the two admin pages) - removed, along with the now-unused `useAuth` import and `isAdmin` state
+- Admin is now reached by typing `/admin` directly, which redirects to `/admin/login` (route already in `App.jsx`); after login the sidebar layout takes over, logout returns to `/admin/login`
+- Verified: lint reports nothing for the file, `npm run build` passes (3.60s), live home-page capture prints public navbar text = `"Explore / My Day Plan"` only
+
+---
+
+---
+
+## 2026-10-15 14:26 - Collapsible admin sidebar
+
+- The light sidebar is now **collapsible**: a chevron toggle in the sidebar header (`aria-label` Collapse/Expand sidebar, `aria-controls`, `title` tooltip) switches between a 240px labelled sidebar and a 76px icon-only rail with a smooth width/padding transition
+- Because the collapsed rail shows icons only, 18px stroke icons were added to every nav item (dashboard grid, compass, calendar, logout door) alongside the existing text labels; collapsed state hides labels, the wordmark, the plan-count badge and the "Signed in as admin" line - logo mark and centred icon buttons remain; active pill still highlights the Dashboard item
+- Verified: lint reports nothing for `App.jsx`, `npm run build` passes (3.81s), headless capture measured sidebar width **240 -> 76 -> 240** (collapse and re-expand both work) with full-page screenshots of each state
+
+---
+
+## 2026-10-15 14:28 - Session status - admin UI branch state and pending items
+
+- **`feature/admin-ui-redesign` (current branch, tip `9cfee85`, local only - NOT pushed)**: based on `frontend` tip 1534011; stepwise admin UI history - green terra redesign (6153541..f11adbb, superseded and reverted), previous light design restored (5a01081), light sidebar added (eb20518), public admin link removed (d5290d7), sidebar collapse toggle (9cfee85) - each preceded by its log commit per discipline
+- **Current admin UI (all verified against the live API)**: previous light design + collapsible light sidebar (240px labelled / 76px icon rail, smooth transition), dashboard isolated from public chrome, sole admin entry `/admin` -> `/admin/login`, public navbar = Explore / My Day Plan only
+- **Other branches**: local `frontend` = `1534011` (previous design without sidebar - 1 commit ahead of origin, unpushed) · `main` = `3a2c5bb` (pushed) · `backend` = `3510607` (pushed)
+- **Services running**: API on `:5000` (hardened JWT secret in local `.env`), Vite dev server on `:5173`; headless capture artifacts in `%TEMP%\opencode\shot\` (previous panel login + dashboard, sidebar expanded + collapsed, public home)
+- **Pending**: push `feature/admin-ui-redesign` and local `frontend`; merge admin UI into `frontend`/`main` when instructed; user still to run the bcrypt `admin123` SQL UPDATE for the `admins` table in Supabase
+
+---
+
+## 2026-10-15 14:38 - Admin panel creation consolidated into four commits
+
+- Per developer instruction the `feature/admin-ui-redesign` history was rebuilt on `1534011`: the entire admin panel creation now lives in **four commits** - (1) this docs commit with all session log entries, (2) admin dashboard isolated in a layout with a light sidebar, (3) public navbar admin-link removal (`/admin`-only access), (4) sidebar collapse toggle
+
+- The superseded green-terra exploration and every pre-restructure SHA mentioned in the entries above (fc1267d, 6153541, ecbf0ad, 140f3ea, f11adbb, 2ee893e, 5a01081, eb20518, eff46c7, d5290d7, 15faf95, 9cfee85, 48a41a9) remain resolvable on branch `archive/admin-ui-redesign-preSquash` - nothing was destroyed
+
+- Append-only rule respected: no existing entry was edited or removed; the rebuilt branch is content-identical to the pre-restructure tip except this appended entry
+
+---
+
+_(Entries below are appended as further steps complete.)_
