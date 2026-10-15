@@ -209,5 +209,17 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 13:27 · Branch integration — backend merged into frontend, main fast-forwarded to the complete system
+
+- `backend` merged into `frontend` (merge commit `f8f0aa3`). Single conflict — `docs/integration-log.md` — resolved as a chronological union of both branches' append-only entries (10:41 → 13:19, no entry lost)
+- Integrated tree verified: backend 23 JS files (routes/controllers/models/services/middleware/utils) + frontend 45 files + `database/` schema & seeds all present in one working tree
+- Verification on the merged tree: `npm run build` passes (3.77s) · live API from the same tree healthy — `/api/health` OK, categories=4, places=10
+- `main` fast-forwarded from the scaffolding commit (28c90cf) to the integration commit — **main now holds the complete DayTripGO system** (docs v2.1 + database + backend API + frontend)
+- Branch roles going forward: `main` = complete integrated system · `frontend` = integration line (same tip as main) · `backend` = merged, kept for history
+
+---
+
 _(Entries below are appended as further steps complete.)_
 
