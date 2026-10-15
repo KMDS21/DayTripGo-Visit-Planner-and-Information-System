@@ -3,7 +3,7 @@
 export default function Footer() {
   return (
     <footer className="mt-16 border-t border-border bg-muted/40">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
+      <div className="flex w-full flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground sm:px-6 lg:px-10">
         <p>
           <span className="font-semibold text-foreground">DayTripGO</span> — places of interest within 25 km of
           Wadduwa, Sri Lanka.

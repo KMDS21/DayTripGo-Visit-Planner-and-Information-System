@@ -39,14 +39,14 @@ export default function HomePage() {
       </section>
 
       {/* Featured carousel (Aceternity Apple Cards) */}
-      <section className="mx-auto w-full max-w-7xl px-2 sm:px-4">
+      <section className="w-full">
         <h2 className="mb-2 px-2 font-heading text-2xl font-bold sm:text-3xl">Featured escapes</h2>
         <p className="mb-4 px-2 text-muted-foreground">A taste of each category — tap a card for the full story.</p>
         <FeaturedCarousel places={places} categories={categories} />
       </section>
 
       {/* Listing + filter */}
-      <section className="mx-auto w-full max-w-6xl px-4">
+      <section className="w-full">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
           <CategoryFilter categories={categories} activeCategory={activeCategory} onSelect={selectCategory} />

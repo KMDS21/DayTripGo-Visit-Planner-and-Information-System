@@ -32,7 +32,7 @@ function PublicLayout() {
   return (
     <div className="flex min-h-svh flex-col">
       <Header />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4">
+      <main className="w-full flex-1 px-4 sm:px-6 lg:px-10">
         <Outlet />
       </main>
       <Footer />
