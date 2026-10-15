@@ -416,3 +416,13 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:22 - Branded page heroes on My Day Plan and Explore
+
+- **Matching hero banners**: `VisitPlanPage` and `ExplorePage` now open with the same gradient hero treatment as home and contact (`from-brand-dark via-brand to-teal-500`, decorative white circles, `rounded-b-[2.5rem]`) - My Day Plan: title plus the session-only reassurance line; Explore: title plus the discovery wording
+
+- The old plain `<header>`/`<h1>` blocks were replaced by the hero sections; content below unchanged
+
+---
+
+_(Entries below are appended as further steps complete.)_
