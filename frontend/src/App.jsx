@@ -1,7 +1,8 @@
 // App — router and app shell (plan §14.3 Step 18).
 // Public routes render inside the public Header/Footer shell (previous design);
-// the admin dashboard gets an isolated layout with a light sidebar instead.
+// the admin dashboard gets an isolated layout with a collapsible light sidebar.
 
+import { useState } from 'react';
 import { BrowserRouter, Link, Navigate, NavLink, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
@@ -39,42 +40,127 @@ function PublicLayout() {
   );
 }
 
-const sideLinkClass = ({ isActive }) =>
-  `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
-    isActive ? 'bg-brand-light text-brand-dark' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-  }`;
+// ── Sidebar icons (18px stroke, inherit currentColor) ──────────────────────
+const ICON = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+  className: 'h-[18px] w-[18px] shrink-0',
+};
 
-// ── Admin shell — light sidebar, no public Header/Footer ───────────────────
+function DashboardIcon() {
+  return (
+    <svg {...ICON}>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+function ExploreIcon() {
+  return (
+    <svg {...ICON}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" />
+    </svg>
+  );
+}
+
+function PlanIcon() {
+  return (
+    <svg {...ICON}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg {...ICON}>
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ collapsed }) {
+  return (
+    <svg {...ICON} className="h-4 w-4 shrink-0">
+      {collapsed ? <path d="M9 18l6-6-6-6" /> : <path d="M15 18l-6-6 6-6" />}
+    </svg>
+  );
+}
+
+// ── Admin shell — collapsible light sidebar, no public Header/Footer ───────
 function AdminLayout({ children }) {
   const { count } = useVisitPlan();
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/admin/login');
   };
 
+  const sideLinkClass = ({ isActive }) =>
+    `flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+      collapsed ? 'justify-center' : ''
+    } ${isActive ? 'bg-brand-light text-brand-dark' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`;
+
   return (
     <div className="flex min-h-svh bg-background">
-      <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col justify-between border-r border-border bg-card px-4 py-5 lg:flex">
+      <aside
+        id="admin-sidebar"
+        className={`sticky top-0 hidden h-svh shrink-0 flex-col justify-between border-r border-border bg-card py-5 transition-[width,padding] duration-300 lg:flex ${
+          collapsed ? 'w-[76px] px-3' : 'w-60 px-4'
+        }`}
+      >
         <div className="space-y-6">
-          <Link to="/" className="flex items-center gap-2.5 px-1">
-            <img src="/favicon.svg" alt="" className="h-9 w-9" />
-            <span className="font-heading text-xl font-bold tracking-tight">
-              DayTrip<span className="text-brand">GO</span>
-            </span>
-          </Link>
+          {/* Logo + collapse toggle */}
+          <div className={`flex items-center px-1 ${collapsed ? 'flex-col gap-2.5' : 'justify-between gap-2'}`}>
+            <Link to="/" className="flex items-center gap-2.5">
+              <img src="/favicon.svg" alt="" className="h-9 w-9 shrink-0" />
+              {!collapsed && (
+                <span className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">
+                  DayTrip<span className="text-brand">GO</span>
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!collapsed}
+              aria-controls="admin-sidebar"
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="shrink-0 rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ChevronIcon collapsed={collapsed} />
+            </button>
+          </div>
+
           <nav className="space-y-1">
             <NavLink to="/admin/dashboard" end className={sideLinkClass}>
-              Dashboard
+              <DashboardIcon />
+              {!collapsed && 'Dashboard'}
             </NavLink>
             <NavLink to="/" end className={sideLinkClass}>
-              Explore
+              <ExploreIcon />
+              {!collapsed && 'Explore'}
             </NavLink>
             <NavLink to="/visit-plan" className={sideLinkClass}>
-              My Day Plan
-              {count > 0 && (
+              <PlanIcon />
+              {!collapsed && 'My Day Plan'}
+              {!collapsed && count > 0 && (
                 <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">
                   {count}
                 </span>
@@ -82,19 +168,27 @@ function AdminLayout({ children }) {
             </NavLink>
           </nav>
         </div>
+
         <div className="space-y-3 border-t border-border pt-4">
-          <p className="truncate px-1 text-xs text-muted-foreground">
-            Signed in as <span className="font-semibold text-foreground">{admin?.username}</span>
-          </p>
+          {!collapsed && (
+            <p className="truncate px-1 text-xs text-muted-foreground">
+              Signed in as <span className="font-semibold text-foreground">{admin?.username}</span>
+            </p>
+          )}
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full rounded-xl border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Log out"
+            className={`flex w-full items-center gap-2.5 rounded-xl border border-border py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${
+              collapsed ? 'justify-center px-3' : 'px-3'
+            }`}
           >
-            Log out
+            <LogoutIcon />
+            {!collapsed && 'Log out'}
           </button>
         </div>
       </aside>
+
       <div className="flex min-w-0 flex-1 flex-col">
         <main className="mx-auto w-full max-w-6xl flex-1 px-4">
           {children}
