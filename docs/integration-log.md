@@ -93,6 +93,11 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 10:58 · Session 1 — Backend branch created, backend work committed
+
+- **10:58** `git checkout -b backend` (branched from `frontend` @ `79f53df`, so history stays linear: main → log → gitignore → backend…)
+- Committed on `backend` branch: all 20 backend source files (middleware/models/services/controllers/routes/utils + rewired `app.js`) and the 3 database SQL files (schema, category seeds, place seeds incl. default admin bcrypt hash)
+- Frontend work intentionally left uncommitted — it goes to the `frontend` branch next, per developer instruction
 ## 2026-10-15 10:59 · Session 1 — Frontend work committed on `frontend` branch
 
 - **10:58** Backend commit landed on `backend` branch (`cce94e4`); **10:59** switched back to `frontend`
@@ -157,6 +162,50 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 - **Project Plan**: requirement IDs aligned to SRS canonical form (FR-1..FR-19, NFR-1..NFR-12) across §3, §5, §8; ToC gained missing Section 14 row; §4.2 architecture diagram and §4.4 folder map corrected `client/` → `frontend/`, `server/` → `backend/`; §2.1 stakeholder row reconciled as "5 identified; 4 formally consulted" plus explanatory note under §2.2; §14.1 internal-reference claim corrected to the actual re-check; §14.2 rewritten as "Implementation Status (as at 15.10.2026)" after the original state analysis was found to describe empty directories that did not exist; Step 10/20 `tee`-based `dev:log` steps corrected to the implemented Morgan file-stream logging (Windows-safe)
 - **SRS FINAL → v2.1**: revision-history row 2.1 added; typos fixed (`Requirmnets`, `superbase`, `within25 km`, `dabase`, `NonFunctional`); §1.2 priority convention corrected to MoSCoW as actually used in §4/§5; ToC de-duplicated 5.x rows and renumbered Appendix B (B.1 use case, B.2 class, B.3 sequence, B.4 ERD) with titles matching the body; duplicated §5.1–5.3 prose block replaced by consolidated **§5.5 Compliance and Verification Notes** with corrected references (NFR-04 → NFR-6, FR-01–FR-05 → FR-1–FR-5); §6.1 data requirements gained `image_url` + `created_by`, §6.3 now records `plan_title` and `visit_order` per the implemented schema; §7 traceability table rebuilt with correct FR mappings and typos fixed; Appendix B retitled **System Diagrams** and all four garbled OCR figure blocks replaced with Mermaid diagrams (flowchart use case, class, sequence, ERD) matching the implemented schema; Appendix C open issues marked resolved (stack confirmed PostgreSQL/Supabase, Kosgoda excluded from dataset, OpenStreetMap + Leaflet chosen)
 - **Removed**: `E2410884_SRS DOCUMENT.md` (superseded v1.0 draft) via `git rm` per developer instruction
+## 2026-10-15 12:03 · Backend smoke test — blocked on database provisioning (user action pending)
+
+- Branch: `backend` · Live API started from this branch against Supabase REST (`https://nefbxgjcvnutbutuwxiq.supabase.co`)
+- **Fixed `backend/.env`** (local, untracked): `SUPABASE_URL` contained a `postgresql://` direct-connection string; `supabase-js` needs the HTTPS project URL — corrected to `https://nefbxgjcvnutbutuwxiq.supabase.co`. Key left as the developer-supplied publishable key per instruction.
+- **Smoke results**: `GET /api/health` → 200 OK; `POST /api/places` without token → 401 (FR-15 guard works); every DB-backed endpoint (categories, places, login, visit-plans) → 500 `Could not find the table 'public.…' in the schema cache` — the schema/seeds have **not been executed** in the Supabase instance yet.
+- **Attempted remote SQL provisioning**: threw away a temp `pg` runner (`%TEMP%\opencode\sqlrunner`) — project's direct host `db.nefbxgjcvnutbutuwxiq.supabase.co` is **IPv6-only** (AAAA `2406:da1c:…`) and this machine has no global IPv6 → `getaddrinfo ENOTFOUND`; no pooler host resolves; `psql` not installed. REST/HTTPS works (IPv4 via Cloudflare), but PostgREST cannot execute DDL.
+- **`@supabase/server` evaluated** per developer suggestion: it is a server-side auth/client-context helper for frameworks; its Postgres middleware still requires `SUPABASE_DB_URL` (the same unreachable direct TCP) — it cannot run DDL over HTTPS, so it does not unblock provisioning.
+- **Prepared one-shot SQL** (schema + both seeds + dev-mode RLS policies for the publishable key + verify query) at `C:\Users\CyrusIT\AppData\Local\Temp\opencode\daytripgo_one_shot_setup.sql` for a single paste into the Supabase SQL Editor.
+- **Pending**: after the SQL is run → full smoke re-test (categories, places, admin login `admin`/`DayTripGO@2026`, places CRUD with JWT, visit-plan create/replace/get) and log results here.
+
+---
+
+---
+
+## 2026-10-15 12:13 · .env updated with Supabase secret key — db config adapted; SQL step still pending
+
+- Developer replaced the backend .env contents: `SUPABASE_URL` (HTTPS, correct), `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (sb_secret_…) and `SUPABASE_JWKS_URL`; the old `SUPABASE_SERVICE_KEY` variable was removed
+- **Fix applied**: `backend/src/config/db.js` still read `SUPABASE_SERVICE_KEY` → would have refused to boot; now prefers `SUPABASE_SECRET_KEY` with fallback to `SUPABASE_SERVICE_KEY`. Server restarted and authenticates with the secret key (`GET /api/health` 200; 7 env vars injected)
+- Secret key bypasses RLS, so the prepared one-shot setup SQL was trimmed to schema + seeds + verify (dev anon policies removed — no longer needed)
+- DB-backed endpoints still return 500 `Could not find the table 'public.…' in the schema cache` → **tables are not created yet**; the one paste into the Supabase SQL Editor remains the only pending step before the full smoke re-test
+
+---
+
+---
+
+## 2026-10-15 12:32 · Live end-to-end smoke test — FULL PASS (database provisioned)
+
+- Branch: `backend` · Supabase project `nefbxgjcvnutbutuwxiq`; developer executed schema + seeds in the SQL Editor; backend authenticates with the `sb_secret_` key (RLS bypassed; no dev policies needed)
+- **Read paths**: `GET /api/health` 200 · `GET /api/categories` 200 count=4 (Religious, Nature, Heritage, Cultural) · `GET /api/places` 200 count=10 (all ten proposal Table 2 places) · `GET /api/places/1` 200 full detail (FR-5) · `GET /api/places/9999` 404
+- **Auth (FR-14/15/19)**: `POST /api/auth/login` admin → 200 + JWT · `POST /api/places` without token → 401 · invalid payload with token → 400 field validation
+- **Places CRUD (FR-16–FR-18)**: create → 201 `place_id=11` (count 10→11) · update → 200 with edited fields · delete → 200 (count restored to 10, test record removed)
+- **Visit plans (FR-10–FR-13)**: create → 201 · replace-all with 3 items → 200 with places joined in `visit_order` · replace-all down to 1 item → 200 · read-backs verified at each step
+- Notes: `plan_title` defaults to 'My One-Day Plan' (schema default, SRS §6.3); smoke-test visit plans 1–3 (session `smoke-test-session`) remain in the dev DB — no plan DELETE endpoint by design (session-scoped, NFR-7); `JWT_SECRET` in `backend/.env` is still the example placeholder — fine for local demo, generate a strong value before any shared deployment
+- **Backend is live end-to-end.** Frontend (`frontend` branch) build + lint pass and talks to this API via the Vite `/api` proxy
+
+---
+
+---
+
+## 2026-10-15 13:19 · Admin credentials from .env (optional override) — implemented and verified
+
+- Developer wanted the admin username/password kept in `backend/.env`; wired as an **optional override** in `backend/src/services/authService.js`: when both `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, login checks them first (timing-safe compare via `crypto.timingSafeEqual`); when unset, the original admins-table + bcrypt path runs unchanged (SRS NFR-5). `backend/.env` gained `ADMIN_USERNAME=admin` / `ADMIN_PASSWORD=DayTripGO@2026` (same working credentials as the seeded account); `.env.example` updated to document the new variables and the secret-key naming
+- Verified against the live server: correct creds → 200 + JWT · wrong password → 401 · unknown username → 401 · token from env-login used successfully for admin CRUD (create 201, delete 200)
+- Note: the env override stores the password in plain text in `.env` (gitignored, local demo only) — for anything real, remove the two vars and rely on the bcrypt-verified admins table
 
 ---
 
