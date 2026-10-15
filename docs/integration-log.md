@@ -93,4 +93,12 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 10:58 · Session 1 — Backend branch created, backend work committed
+
+- **10:58** `git checkout -b backend` (branched from `frontend` @ `79f53df`, so history stays linear: main → log → gitignore → backend…)
+- Committed on `backend` branch: all 20 backend source files (middleware/models/services/controllers/routes/utils + rewired `app.js`) and the 3 database SQL files (schema, category seeds, place seeds incl. default admin bcrypt hash)
+- Frontend work intentionally left uncommitted — it goes to the `frontend` branch next, per developer instruction
+
+---
+
 _(Entries below are appended as further steps complete.)_
