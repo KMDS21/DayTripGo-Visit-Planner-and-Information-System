@@ -149,4 +149,16 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 11:50 · Phase 5 — document corrections (Project Plan + SRS → v2.1)
+
+- Branch: `frontend`
+- **Project Plan**: requirement IDs aligned to SRS canonical form (FR-1..FR-19, NFR-1..NFR-12) across §3, §5, §8; ToC gained missing Section 14 row; §4.2 architecture diagram and §4.4 folder map corrected `client/` → `frontend/`, `server/` → `backend/`; §2.1 stakeholder row reconciled as "5 identified; 4 formally consulted" plus explanatory note under §2.2; §14.1 internal-reference claim corrected to the actual re-check; §14.2 rewritten as "Implementation Status (as at 15.10.2026)" after the original state analysis was found to describe empty directories that did not exist; Step 10/20 `tee`-based `dev:log` steps corrected to the implemented Morgan file-stream logging (Windows-safe)
+- **SRS FINAL → v2.1**: revision-history row 2.1 added; typos fixed (`Requirmnets`, `superbase`, `within25 km`, `dabase`, `NonFunctional`); §1.2 priority convention corrected to MoSCoW as actually used in §4/§5; ToC de-duplicated 5.x rows and renumbered Appendix B (B.1 use case, B.2 class, B.3 sequence, B.4 ERD) with titles matching the body; duplicated §5.1–5.3 prose block replaced by consolidated **§5.5 Compliance and Verification Notes** with corrected references (NFR-04 → NFR-6, FR-01–FR-05 → FR-1–FR-5); §6.1 data requirements gained `image_url` + `created_by`, §6.3 now records `plan_title` and `visit_order` per the implemented schema; §7 traceability table rebuilt with correct FR mappings and typos fixed; Appendix B retitled **System Diagrams** and all four garbled OCR figure blocks replaced with Mermaid diagrams (flowchart use case, class, sequence, ERD) matching the implemented schema; Appendix C open issues marked resolved (stack confirmed PostgreSQL/Supabase, Kosgoda excluded from dataset, OpenStreetMap + Leaflet chosen)
+- **Removed**: `E2410884_SRS DOCUMENT.md` (superseded v1.0 draft) via `git rm` per developer instruction
+
+---
+
 _(Entries below are appended as further steps complete.)_
+

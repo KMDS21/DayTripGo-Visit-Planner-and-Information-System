@@ -1,4 +1,4 @@
-## Software Requirmnets Specification 
+## Software Requirements Specification 
 
 For 
 
@@ -6,7 +6,7 @@ For
 
 _A Web-Based Visit Planning System for Wadduwa and Surrounding Areas_ 
 
-Document Version: 2.0 
+Document Version: 2.1 
 
 Student Name - De Silva P.K.M Registration Number - E2410884 Date: 05.09.2026 
 
@@ -16,6 +16,65 @@ Student Name - De Silva P.K.M Registration Number - E2410884 Date: 05.09.2026
 |---|---|---|---|
 |1.0|21.08.2026|P.K.M.DE Silva|Initial draft of SRS based on<br>approved project proposal.|
 |2.0|05.09.2026|P.K.M.DE Silva|Final draft of SRS based on<br>Initial and peer review|
+|2.1|15.10.2026|P.K.M. De Silva|Corrected typos and appendix numbering;<br>rebuilt §7 traceability; aligned §6 with the<br>implemented schema; replaced garbled figures<br>with Mermaid diagrams.|
+
+
+
+### **Table of Contents** 
+
+|Revision History ........................................................................................................................ 2|
+|---|
+|Table of Contents ....................................................................................................................... 3|
+|1.1 Purpose ............................................................................................................................. 5|
+|1.2 Document Conventions .................................................................................................... 5|
+|1.3 Intended Audience and Reading Suggestions .................................................................. 5|
+|1.4 Project Scope ................................................................................................................... 5|
+|1.5 References ........................................................................................................................ 6|
+|2. Overall Description ................................................................................................................ 6|
+|2.1 Product Perspective .......................................................................................................... 6|
+|2.2 Product Functions ............................................................................................................ 6|
+|2.3 User Classes and Characteristics ..................................................................................... 7|
+|2.4 Operating Environment .................................................................................................... 7|
+|2.5 Design and Implementation Constraints .......................................................................... 7|
+|2.6 User Documentation ........................................................................................................ 8|
+|2.7 Assumptions and Dependencies ...................................................................................... 8|
+|3. External Interface Requirements ............................................................................................ 8|
+|3.1 User Interfaces ................................................................................................................. 8|
+|3.2 Hardware Interfaces ......................................................................................................... 9|
+|3.3 Software Interfaces .......................................................................................................... 9|
+|3.4 Communications Interfaces ............................................................................................. 9|
+|4. System Features (Functional Requirements) ................................................................... 10|
+|4.1 Place Listing and Category Filtering ............................................................................. 10|
+|4.2 Place Detail View .......................................................................................................... 10|
+|4.3 Map View....................................................................................................................... 11|
+|4.4 One-Day Visit Plan Builder ........................................................................................... 11|
+|4.5 Administrator Authentication ........................................................................................ 11|
+|4.6 Administrator Place Management.................................................................................. 12|
+|5. Non-Functional Requirements ............................................................................................. 12|
+|5.1 Performance Requirements ............................................................................................ 12|
+|5.2 Safety Requirements ...................................................................................................... 12|
+|5.3 Security Requirements ................................................................................................... 12|
+|5.4 Software Quality Attributes ........................................................................................... 13|
+|5.5 Compliance and Verification Notes ................................................................................ 14|
+# Software Requirements Specification 
+
+For 
+
+# **Tour -Visit Planner (DayTripGO)** 
+
+_A Web-Based Visit Planning System for Wadduwa and Surrounding Areas_ 
+
+Document Version: 2.1 
+
+Student Name - De Silva P.K.M Registration Number - E2410884 Date: 05.09.2026 
+
+### **Revision History** 
+
+|**Version**|**Date**|**Author**|**Description of Change**|
+|---|---|---|---|
+|1.0|21.08.2026|P.K.M.DE Silva|Initial draft of SRS based on<br>approved project proposal.|
+|2.0|05.09.2026|P.K.M.DE Silva|Final draft of SRS based on<br>Initial and peer review|
+|2.1|15.10.2026|P.K.M. De Silva|Corrected typos and appendix numbering;<br>rebuilt §7 traceability; aligned §6 with the<br>implemented schema; replaced garbled figures<br>with Mermaid diagrams.|
 
 
 
@@ -69,10 +128,10 @@ Student Name - De Silva P.K.M Registration Number - E2410884 Date: 05.09.2026
 |7. Requirements Traceability ................................................................................................... 16|
 |8. Appendices ........................................................................................................................... 17|
 |Appendix A: Glossary.......................................................................................................... 17|
-|Appendix B: Open Issues..................................................................................................... 17|
+|Appendix B: System Diagrams .............................................................................................. 17|
 |B.1 Use Case Diagram ......................................................................................................... 17|
 |Figure 1: Use Case Diagram for DayTripGO .................................................................. 17|
-|B.3 Class Diagram ............................................................................................................... 18|
+|B.2 Class Diagram ............................................................................................................... 18|
 |Figure 2: Class Diagram for DayTripGO ........................................................................ 18|
 |B.3 Sequence Diagram......................................................................................................... 19|
 |Figure 3: Sequence Diagram — Build a One-Day Visit Plan ......................................... 19|
@@ -90,7 +149,7 @@ This Software Requirements Specification (SRS) defines the functional and non-fu
 
 ###### **1.2 Document Conventions** 
 
-Requirements are labelled using the prefixes FR (Functional Requirement) and NFR (NonFunctional Requirement), each followed by a sequential number, e.g. FR-01. The keywords "shall" and "must" indicate mandatory requirements; "should" indicates a desirable but nonmandatory requirement. Priority is expressed as High, Medium or Low, where High requirements are necessary for the system to fulfil its core purpose. 
+Requirements are labelled using the prefixes FR (Functional Requirement) and NFR (Non-Functional Requirement), each followed by a sequential number, e.g. FR-1. The keywords "shall" and "must" indicate mandatory requirements; "should" indicates a desirable but nonmandatory requirement. Priority is expressed using the MoSCoW convention — Essential (Must), Desirable (Should), Optional (Could) — as applied in the tables of Sections 4 and 5. 
 
 ###### **1.3 Intended Audience and Reading Suggestions** 
 
@@ -148,7 +207,7 @@ At a high level, the system provides the following functions, summarised here an
 
 - Server: Node.js runtime with an Express-based backend (or the module-approved equivalent). 
 
-- Database: PostgreSQL relational database hosted on superbase. 
+- Database: PostgreSQL relational database hosted on Supabase. 
 
 - Hosting: development/demo environment suitable for local or low-cost cloud hosting for the duration of the module; production-grade hosting is out of scope. 
 
@@ -158,7 +217,7 @@ At a high level, the system provides the following functions, summarised here an
 
 - The system must be delivered without payment, booking or reservation functionality, per the approved scope. 
 
-- The place dataset must contain a minimum of 10 verified places within25 km of Wadduwa at the point of submission. 
+- The place dataset must contain a minimum of 10 verified places within 25 km of Wadduwa at the point of submission. 
 
 - Development is carried out by a single student within the timeframe of one academic module, which constrains the depth of testing and the size of the feature set. 
 
@@ -335,29 +394,21 @@ Description: Allows an authenticated administrator to keep the catalogue of plac
 
 
 
-###### **5.1 Safety Requirements** 
+###### **5.5 Compliance and Verification Notes** 
 
-The system handles no payment, medical, or safety-critical data; no dedicated safety requirements beyond standard data-handling practice apply. 
+- Safety: the system handles no payment, medical or safety-critical data; no dedicated safety requirements beyond standard data-handling practice apply (NFR-4). 
 
-###### **5.2 Security Requirements** 
+- Security: only authenticated administrators may create, edit or delete place records (NFR-6); all administrator authentication traffic shall be transmitted over HTTPS; tourist browsing requires no account and collects no personal data beyond the session-based visit plan (NFR-7). 
 
-- Only authenticated administrators shall be able to create, edit or delete place records (see NFR-04). 
+- Reliability: core browsing and filtering functions (FR-1–FR-5) shall function correctly for all records in the initial dataset (NFR-9). 
 
-- All administrator authentication traffic shall be transmitted over HTTPS. 
-
-- Tourist-facing browsing shall not require account creation or collect personal data beyond what is strictly needed for the visit-plan feature (which is session-based, not accountbased). 
-
-###### **5.3 Software Quality Attributes** 
-
-- Reliability: core browsing and filtering functions (FR-01–FR-05) shall function correctly for all records in the initial dataset. 
-
-- Portability: the backend shall run on any standard Node.js hosting environment without code changes. 
+- Portability: the backend shall run on any standard Node.js hosting environment without code changes (NFR-11). 
 
 - Testability: every functional requirement in Section 4 shall map to at least one test case in the system test plan. 
 
 ###### **6. Data Requirements** 
 
-The core entities are Place, Category, VisitPlan, VisitPlanItem and Administrator. The Place table, the entity most central to the system, is detailed below as an example; the remaining entities follow the same convention and will be finalised as an entity-relationship diagram during design (see List of Figures). 
+The core entities are Place, Category, VisitPlan, VisitPlanItem and Administrator. The Place table, the entity most central to the system, is detailed below as an example; the remaining entities are listed briefly below and are fully defined in the entity-relationship diagram of Appendix B, Figure 4. 
 
 ###### **6.1 Place Entity** 
 
@@ -372,6 +423,8 @@ The core entities are Place, Category, VisitPlan, VisitPlanItem and Administrato
 |**distance_km**|DECIMAL(4,1), NOT<br>NULL|Approximate distance from Wadduwa in<br>kilometres.|
 |**latitude**|DECIMAL(9,6), NOT<br>NULL|Latitude used for map display.|
 |**longitude**|DECIMAL(9,6), NOT<br>NULL|Longitude used for map display.|
+|**image_url**|TEXT, NULL|URL of a representative photo (FR-7);<br>optional.|
+|**created_by**|INT, FK -><br>administrator.admin_id|Administrator who created the record.|
 |**created_at**|DATETIME|Record creation timestamp.|
 |**updated_at**|DATETIME|Record last-updated timestamp.|
 
@@ -385,9 +438,9 @@ The core entities are Place, Category, VisitPlan, VisitPlanItem and Administrato
 
 ###### **6.3 VisitPlan and VisitPlanItem Entities** 
 
-- VisitPlan: plan_id (PK), session_id or device token, created_at. 
+- VisitPlan: plan_id (PK), session_id (browser-session token), plan_title (default "My One-Day Plan"), created_at. 
 
-- VisitPlanItem: item_id (PK), plan_id (FK), place_id (FK), sort_order — links selected places to a plan in a chosen order. 
+- VisitPlanItem: item_id (PK), plan_id (FK), place_id (FK), visit_order — links selected places to a plan in a chosen order (FR-13). 
 
 ###### **6.4 Administrator Entity** 
 
@@ -399,13 +452,12 @@ This table maps each project objective from the approved proposal to the require
 
 |**Project Objective**|**Related Requirement(s)**|
 |---|---|
-|**Identify ≥10 verified places within 25 km of**<br>**Wadduwa**|FR-01, FR-04, Section 6.1|
-|**Elicit and validate requirements through**|Section 2.3, Appendix A|
-|**stakeholder consultation**|(proposal)|
-|**Design a relational dabase and system architecture**|Section 2.1, Section 6|
-|**Implement viewing, filtering and mapping of places**|FR-01–FR-05|
-|**Implement a one-day visit-plan builder**|FR-06–FR-08|
-|**Implement administrator add/edit/delete**<br>**functionality**|FR-10–FR-14|
+|**Identify ≥10 verified places within 25 km of**<br>**Wadduwa**|FR-1, FR-4, Section 6.1|
+|**Elicit and validate requirements through**<br>**stakeholder consultation**|Section 2.3, Appendix A (proposal)|
+|**Design a relational database and system architecture**|Section 2.1, Section 6|
+|**Implement viewing, filtering and mapping of places**|FR-1–FR-9|
+|**Implement a one-day visit-plan builder**|FR-10–FR-13|
+|**Implement administrator authentication and place**<br>**add/edit/delete functionality**|FR-14–FR-19|
 
 
 
@@ -423,7 +475,7 @@ This table maps each project objective from the approved proposal to the require
 
 
 
-###### **Appendix B: Open Issues** 
+###### **Appendix B: System Diagrams** 
 
 ##### **B.1 Use Case Diagram** 
 
@@ -431,19 +483,83 @@ Figure 1 shows the two actors of the system Tourist and Administrator and the us
 
 
 
-<!-- Start of picture text -->
-DayTripGO System<br>Ce > DeenslKa<br><!-- End of picture text -->
+```mermaid
+flowchart LR
+    T((Tourist))
+    A((Administrator))
+    UC1[Browse and filter places]
+    UC2[View place details]
+    UC3[View location on map]
+    UC4[Build one-day visit plan]
+    UC5[Admin login]
+    UC6[Add / edit / delete places]
+    T --> UC1
+    T --> UC2
+    T --> UC4
+    UC2 -.->|includes| UC3
+    A --> UC5
+    A --> UC6
+    UC6 -.->|includes| UC5
+```
 
 **_Figure 1: Use Case Diagram for DayTripGO_** 
 
-###### **B.3 Class Diagram** 
+###### **B.2 Class Diagram** 
 
 Figure 2 shows the main classes in the system, their key attributes and methods, and the relationships between them, consistent with the entity-relationship diagram in Section 6. 
 
 
 
-<!-- Start of picture text -->
-= adminid: int<br>VisitPlanSer. wre - username: string meres Category<br>seeicat a PlaceServi =u<br>= email: string Pecans<br>+ createPlan(sessionid): VisitPtan oe aL + listPlaces(fiter: Category): Placel] - description: string<br>+=getPlanipienid): VisitPien tects++ editPlacelpiaceld,login(usemame,reactpassword):date): Pacerecsboolesn + searchPlacelid int): . Place Sacteren]  Neel)<br>+ deietePace(piaceld): void J<br>i sn sain *<br>Place A<br>VisitPian - placeld: int ff<br>‘4 id: int<br>= planid: int = name. string<br>= sessionld: string - description: string<br>- plane: string = openingHours: string<br>~ erestedAt: datetime <travelTipe: string<br>+ addPlace(pince: Piace): void seni<br>+ removePiace(placeld int}: void Bsacaehil<br>+ reorderPlaces(order: int{}): void Bad Vt stg<br>+ getiters(): VisitPlanitem{] eon<br>- / | + getDetailsl): PaceDetais<br>+ getLocation(): Coocdinates<br>\;i¥<br>=planttemid: int<br>+ planta: int<br>+= vistOrder: placeld: int int<br><!-- End of picture text -->
+```mermaid
+classDiagram
+    class Category {
+        +int category_id
+        +string category_name
+    }
+    class Place {
+        +int place_id
+        +string name
+        +int category_id
+        +text description
+        +string opening_hours
+        +text travel_tips
+        +decimal distance_km
+        +decimal latitude
+        +decimal longitude
+        +text image_url
+        +int created_by
+        +timestamptz created_at
+        +timestamptz updated_at
+        +getDetails()
+        +getLocation()
+    }
+    class VisitPlan {
+        +int plan_id
+        +string session_id
+        +string plan_title
+        +timestamptz created_at
+        +addPlace()
+        +removePlace()
+        +reorderPlaces()
+        +getItems()
+    }
+    class VisitPlanItem {
+        +int item_id
+        +int plan_id
+        +int place_id
+        +int visit_order
+    }
+    class Administrator {
+        +int admin_id
+        +string username
+        +string password_hash
+        +login()
+    }
+    Category "1" --> "*" Place : category_id
+    Administrator "1" --> "*" Place : created_by
+    VisitPlan "1" --> "*" VisitPlanItem : plan_id
+    Place "1" --> "*" VisitPlanItem : place_id
+```
 
 **_Figure 2: Class Diagram for DayTripGO_** 
 
@@ -453,19 +569,75 @@ Figure 3 illustrates the interaction between the Tourist, the frontend UI, the b
 
 
 
-<!-- Start of picture text -->
-=] L-—_Sequence |  Diagram: Build a One-Day Visit Plan<br>1 Senet pace toe Sst<br>2 peinacedeeapeceit<br>2. SELECT = oN hace VERE 0<br>PR).<br>z 4 warepiaieanonh sce i<br>cen wa wears<br>11. ren eats sar<br><!-- End of picture text -->
+```mermaid
+sequenceDiagram
+    participant T as Tourist
+    participant UI as React Frontend
+    participant API as Express Backend
+    participant DB as PostgreSQL on Supabase
+    T->>UI: Click "Add to plan" on a place
+    UI->>API: POST /api/visit-plans (first add only)
+    API->>DB: INSERT visit_plans row
+    DB-->>API: new plan_id
+    API-->>UI: created plan
+    UI->>API: PUT /api/visit-plans/:id with full ordered items
+    API->>DB: DELETE old items, INSERT items in visit_order
+    API-->>UI: updated plan with places
+    UI->>T: Render the one-day visit plan
+```
 
 **_Figure 3: Sequence Diagram — Build a One-Day Visit Plan_** 
 
 ##### **B.4 Entity-Relationship Diagram** 
 
-The system uses a relational database (PostgreSQL, hosted on Supabase) with five core entities: Category, Place, VisitPlan, VisitPlanItem and Admin. Category has a one-to-many relationship with Place. VisitPlan and Place have a many-to-many relationship, resolved through the VisitPlanItem join entity, which also stores the visit order for the reordering feature (FR-13). Admin has a one-to-many relationship with Place representing which administrator created or last managed a given record. 
+The system uses a relational database (PostgreSQL, hosted on Supabase) with five core entities: Category, Place, VisitPlan, VisitPlanItem and Admin. Category has a one-to-many relationship with Place. VisitPlan and Place have a many-to-many relationship, resolved through the VisitPlanItem join entity, which also stores the visit order for the reordering feature (FR-13). Admin has a one-to-many relationship with Place via `created_by`, recording which administrator created a given record. 
 
 
 
-<!-- Start of picture text -->
-Place<br>PKplace_id<br>Category FK category_id<br>PK category_id Pini FK created_by (admin_id)<br>name name<br>description description<br>opening_hours<br>Admin travel_tips<br>PK admin_id distance_km<br>username vio Tnanayed! latitude<br>password_hash longitude<br>email image_url 1toM<br>role created_at<br>updated_at<br>VisitPlan —> VisitPlanitem<br>P 5 7<br>Fé planta FK plan_id<br>session_id saad FK place id<br>plan.tite visit_order<br>created_at<br><!-- End of picture text -->
+```mermaid
+erDiagram
+    CATEGORY ||--o{ PLACE : category_id
+    ADMINISTRATOR ||--o{ PLACE : created_by
+    VISIT_PLAN ||--o{ VISIT_PLAN_ITEM : plan_id
+    PLACE ||--o{ VISIT_PLAN_ITEM : place_id
+    CATEGORY {
+        int category_id PK
+        string category_name
+    }
+    PLACE {
+        int place_id PK
+        string name
+        int category_id FK
+        text description
+        string opening_hours
+        text travel_tips
+        decimal distance_km
+        decimal latitude
+        decimal longitude
+        text image_url
+        int created_by FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    ADMINISTRATOR {
+        int admin_id PK
+        string username
+        string password_hash
+        timestamptz created_at
+    }
+    VISIT_PLAN {
+        int plan_id PK
+        string session_id
+        string plan_title
+        timestamptz created_at
+    }
+    VISIT_PLAN_ITEM {
+        int item_id PK
+        int plan_id FK
+        int place_id FK
+        int visit_order
+    }
+```
 
 **_Figure 4: Entity-Relationship Diagram for DayTripGO_** 
 
@@ -481,11 +653,13 @@ Place<br>PKplace_id<br>Category FK category_id<br>PK category_id Pini FK created
 
 
 
-###### **Appendix C: Open Issues** 
+###### **Appendix C: Open Issues (Resolved)** 
 
-- Final confirmation of the technology stack (Node.js/Express + MySQL vs. PHP alternative) pending module approval. 
+All open issues raised in version 2.0 have been resolved (15.10.2026): 
 
-- Exact distance verification for the Kosgoda Sea Turtle Conservation Project, which sits close to the 25 km boundary. 
+- **Technology stack** — confirmed as Node.js + Express with PostgreSQL hosted on Supabase (proposal §1.8); the PHP alternative is not used. 
 
-- Selection of the specific map-embedding API (Google Maps vs. OpenStreetMap/Leaflet) pending cost/quota review for a student project. 
+- **Kosgoda Sea Turtle Conservation Project** — excluded from the final dataset; the ten seeded places all sit within 25 km of Wadduwa (risk R-04). 
+
+- **Map-embedding API** — resolved in favour of OpenStreetMap with Leaflet (free, no usage quota for a student project). 
 

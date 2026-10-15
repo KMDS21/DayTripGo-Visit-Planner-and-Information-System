@@ -63,6 +63,7 @@ Module: ITE2953 – Programming Group Project 25S1
 | 11      | Communication & Reporting |
 | 12      | Assumptions and Dependencies |
 | 13      | Appendix A – Work Breakdown Structure (WBS) |
+| 14      | Implementation Plan – Step-by-Step Execution Guide |
 
 ---
 
@@ -100,7 +101,7 @@ The project is scoped for delivery within a **12-week (3-month)** academic modul
 | ---------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Developer              | P.K.M. De Silva (E2410884)| Full-stack design, development, testing, documentation and deployment of the system.                       |
 | Module Supervisor      | (As assigned by UOM)      | Provides guidance, reviews deliverables, assesses submissions.                                             |
-| Stakeholders (×5)      | See Section 2.2           | Provide domain requirements, validate deliverables, and give user-acceptance feedback.                     |
+| Stakeholders (5 identified; 4 formally consulted) | See Section 2.2 | Provide domain requirements, validate deliverables, and give user-acceptance feedback. |
 
 ### **2.2 Stakeholders**
 
@@ -112,6 +113,8 @@ The project is scoped for delivery within a **12-week (3-month)** academic modul
 | Jayawickrama KKSD          | Site Administrator                | Add/edit/delete places, maintain accurate descriptions and categories.          |
 | Dharmawardhana WNL         | Destination Management Org (DMO)  | Accurate tourism info, appropriate categorisation, focused visitor experience.  |
 
+> **Note (15.10.2026):** five stakeholders are listed above, matching Table 1 of the approved proposal. Four of them were formally consulted for requirements elicitation, consistent with SRS §1.1 and Assumption A-3; the developer (De Silva PKM) also appears in the proposal's table in the business-owner role.
+
 ---
 
 ## **3. Project Scope**
@@ -120,14 +123,14 @@ The project is scoped for delivery within a **12-week (3-month)** academic modul
 
 | # | Feature                                  | SRS Reference     |
 | - | ---------------------------------------- | ------------------ |
-| 1 | Place listing with category filtering    | FR-01 to FR-04     |
-| 2 | Place detail view (description, hours, tips, distance, photo) | FR-05 to FR-07 |
-| 3 | Map view with embedded map and markers   | FR-08, FR-09       |
+| 1 | Place listing with category filtering    | FR-1 to FR-4     |
+| 2 | Place detail view (description, hours, tips, distance, photo) | FR-5 to FR-7 |
+| 3 | Map view with embedded map and markers   | FR-8, FR-9       |
 | 4 | One-day visit plan builder               | FR-10 to FR-13     |
 | 5 | Administrator authentication             | FR-14, FR-15       |
 | 6 | Administrator place management (CRUD)    | FR-16 to FR-19     |
 | 7 | Minimum 10 verified places within 25 km of Wadduwa | Data Requirement |
-| 8 | Non-functional: performance, security, usability, reliability | NFR-01 to NFR-12 |
+| 8 | Non-functional: performance, security, usability, reliability | NFR-1 to NFR-12 |
 
 ### **3.2 Out-of-Scope Items**
 
@@ -160,7 +163,7 @@ The system follows a **3-Tier Architecture** with an **MVC (Model-View-Controlle
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                        PRESENTATION TIER                             │
-│                     (React Frontend — client/)                       │
+│                     (React Frontend — frontend/)                     │
 │                                                                      │
 │  Pages:  Home/Listing │ Place Detail │ Visit Plan │ Admin Dashboard  │
 │  Components: PlaceListing │ MapView │ VisitPlan │ Layout │ Common    │
@@ -169,7 +172,7 @@ The system follows a **3-Tier Architecture** with an **MVC (Model-View-Controlle
 │                         ▼ HTTPS / REST API ▼                         │
 ├──────────────────────────────────────────────────────────────────────┤
 │                         APPLICATION TIER                             │
-│                  (Node.js + Express — server/)                       │
+│                  (Node.js + Express — backend/)                      │
 │                                                                      │
 │  Routes ──► Controllers ──► Services ──► Models                      │
 │                                                                      │
@@ -205,7 +208,7 @@ The system follows a **3-Tier Architecture** with an **MVC (Model-View-Controlle
 
 ```
 DayTripGo/
-├── client/                  ← PRESENTATION TIER (View)
+├── frontend/                ← PRESENTATION TIER (View)
 │   └── src/
 │       ├── components/      ← Reusable UI components
 │       │   ├── PlaceListing/   (PlaceCard, PlaceGrid, CategoryFilter)
@@ -222,7 +225,7 @@ DayTripGo/
 │       ├── utils/           ← Helper functions (formatDistance, formatHours)
 │       └── assets/          ← Images, icons, static resources
 │
-├── server/                  ← APPLICATION TIER (Controller + Model)
+├── backend/                 ← APPLICATION TIER (Controller + Model)
 │   └── src/
 │       ├── routes/          ← Express route definitions (placeRoutes, authRoutes)
 │       ├── controllers/     ← Request/response handling (placeController, authController)
@@ -258,7 +261,7 @@ DayTripGo/
 | **Frontend**     | React SPA                                 | Component-based, reusable UI; matches approved tech stack; supports responsive design.          |
 | **Backend**      | Express with Controller → Service → Model | Modular; each layer has a single responsibility; simplifies future feature additions.           |
 | **Database**     | Supabase (hosted PostgreSQL)              | Free tier suitable for student project; no server management; built-in REST/auth support.       |
-| **Auth**         | JWT or session-based tokens               | Stateless auth for admin; tourists remain unauthenticated and session-based (NFR-07).          |
+| **Auth**         | JWT or session-based tokens               | Stateless auth for admin; tourists remain unauthenticated and session-based (NFR-7).          |
 | **API Style**    | REST over HTTPS                           | Simple, well-understood pattern; matches SRS Section 3.4 requirements.                         |
 | **Map Service**  | OpenStreetMap + Leaflet (preferred)       | Free, no quota limits for student project; Leaflet is lightweight and cross-browser compatible. |
 | **State Mgmt**   | React Context API                         | Sufficient for visit-plan state; avoids unnecessary complexity of Redux for this project scope. |
@@ -282,8 +285,8 @@ DayTripGo/
 | **Task ID** | **Task**                                          | **Deliverable**                   | **Status**  |
 | ----------- | ------------------------------------------------- | --------------------------------- | ----------- |
 | T-2.1       | Analyse stakeholder requirements                  | Requirements categories           | ✅ Complete |
-| T-2.2       | Define functional requirements (FR-01 to FR-19)   | SRS Section 4                     | ✅ Complete |
-| T-2.3       | Define non-functional requirements (NFR-01 to NFR-12) | SRS Section 5                 | ✅ Complete |
+| T-2.2       | Define functional requirements (FR-1 to FR-19)   | SRS Section 4                     | ✅ Complete |
+| T-2.3       | Define non-functional requirements (NFR-1 to NFR-12) | SRS Section 5                 | ✅ Complete |
 | T-2.4       | Define data requirements and entity schema        | SRS Section 6                     | ✅ Complete |
 | T-2.5       | Create Use Case Diagram                           | SRS Appendix B.1                  | ✅ Complete |
 | T-2.6       | Create Class Diagram                              | SRS Appendix B.3                  | ✅ Complete |
@@ -307,55 +310,55 @@ DayTripGo/
 
 | **Task ID** | **Task**                                              | **Deliverable**                | **Requirement(s)** |
 | ----------- | ----------------------------------------------------- | ------------------------------ | ------------------- |
-| T-4.1       | Implement Home / Place Listing page                   | Place list page                | FR-01               |
-| T-4.2       | Implement category filter controls                    | Filter component               | FR-02, FR-03        |
-| T-4.3       | Implement open/closed status indicator                | Status badge                   | FR-04               |
-| T-4.4       | Implement Place Detail page                           | Detail page                    | FR-05, FR-07        |
-| T-4.5       | Implement "Add to Visit Plan" button on detail page   | Add-to-plan control            | FR-06               |
-| T-4.6       | Integrate embedded map on detail page                 | Map component                  | FR-08, FR-09        |
+| T-4.1       | Implement Home / Place Listing page                   | Place list page                | FR-1               |
+| T-4.2       | Implement category filter controls                    | Filter component               | FR-2, FR-3        |
+| T-4.3       | Implement open/closed status indicator                | Status badge                   | FR-4               |
+| T-4.4       | Implement Place Detail page                           | Detail page                    | FR-5, FR-7        |
+| T-4.5       | Implement "Add to Visit Plan" button on detail page   | Add-to-plan control            | FR-6               |
+| T-4.6       | Integrate embedded map on detail page                 | Map component                  | FR-8, FR-9        |
 | T-4.7       | Implement Visit Plan page (consolidated view)         | Visit plan page                | FR-12               |
 | T-4.8       | Implement add/remove places from visit plan           | Plan management controls       | FR-10, FR-11        |
 | T-4.9       | Implement drag-and-drop reorder in visit plan         | Reorder functionality          | FR-13               |
 | T-4.10      | Implement responsive design for mobile/desktop        | Responsive layouts             | NFR-11              |
-| T-4.11      | Implement error handling UI (network loss, empty states) | Error messages              | NFR-09              |
+| T-4.11      | Implement error handling UI (network loss, empty states) | Error messages              | NFR-9              |
 
 ### **5.5 Phase 5 – Backend & Database Implementation (Weeks 6–8)**
 
 | **Task ID** | **Task**                                              | **Deliverable**                | **Requirement(s)** |
 | ----------- | ----------------------------------------------------- | ------------------------------ | ------------------- |
 | T-5.1       | Create database tables (Place, Category, VisitPlan, VisitPlanItem, Admin) | DB schema      | Section 6          |
-| T-5.2       | Seed database with ≥10 verified places                | Populated database             | FR-01, Section 6.1 |
+| T-5.2       | Seed database with ≥10 verified places                | Populated database             | FR-1, Section 6.1 |
 | T-5.3       | Seed category data (Religious, Nature, Heritage, Cultural) | Category records            | Section 6.2        |
-| T-5.4       | Implement GET /places endpoint (list all)              | REST endpoint                  | FR-01              |
-| T-5.5       | Implement GET /places?category= endpoint (filter)     | REST endpoint                  | FR-02              |
-| T-5.6       | Implement GET /places/:id endpoint (detail)           | REST endpoint                  | FR-05              |
+| T-5.4       | Implement GET /places endpoint (list all)              | REST endpoint                  | FR-1              |
+| T-5.5       | Implement GET /places?category= endpoint (filter)     | REST endpoint                  | FR-2              |
+| T-5.6       | Implement GET /places/:id endpoint (detail)           | REST endpoint                  | FR-5              |
 | T-5.7       | Implement POST /visit-plan endpoint (create plan)     | REST endpoint                  | FR-10              |
 | T-5.8       | Implement PUT /visit-plan/:id endpoint (add/remove/reorder) | REST endpoint             | FR-10, FR-11, FR-13 |
 | T-5.9       | Implement GET /visit-plan/:id endpoint (view plan)    | REST endpoint                  | FR-12              |
-| T-5.10      | Implement session-based plan identification           | Session handling               | NFR-07             |
-| T-5.11      | Optimise queries for <3 second page load              | Performance tuning             | NFR-01, NFR-03     |
+| T-5.10      | Implement session-based plan identification           | Session handling               | NFR-7             |
+| T-5.11      | Optimise queries for <3 second page load              | Performance tuning             | NFR-1, NFR-3     |
 
 ### **5.6 Phase 6 – Admin Module Implementation (Weeks 8–9)**
 
 | **Task ID** | **Task**                                              | **Deliverable**                | **Requirement(s)** |
 | ----------- | ----------------------------------------------------- | ------------------------------ | ------------------- |
 | T-6.1       | Implement Admin Login page                            | Login page                     | FR-14              |
-| T-6.2       | Implement authentication backend (hashed passwords)   | Auth endpoints                 | FR-14, NFR-05      |
-| T-6.3       | Implement session/token-based auth middleware          | Auth middleware                | FR-15, NFR-06      |
+| T-6.2       | Implement authentication backend (hashed passwords)   | Auth endpoints                 | FR-14, NFR-5      |
+| T-6.3       | Implement session/token-based auth middleware          | Auth middleware                | FR-15, NFR-6      |
 | T-6.4       | Implement Admin Dashboard page                        | Dashboard page                 | FR-16 – FR-18      |
 | T-6.5       | Implement Add Place form with validation              | Add form                       | FR-16, FR-19       |
 | T-6.6       | Implement Edit Place form with validation             | Edit form                      | FR-17, FR-19       |
 | T-6.7       | Implement Delete Place functionality (with confirmation) | Delete flow                 | FR-18              |
 | T-6.8       | Implement admin CRUD REST endpoints                   | REST endpoints                 | FR-16 – FR-18      |
-| T-6.9       | Ensure all admin endpoints require authentication     | Secured endpoints              | NFR-06             |
+| T-6.9       | Ensure all admin endpoints require authentication     | Secured endpoints              | NFR-6             |
 
 ### **5.7 Phase 7 – Integration & Testing (Weeks 9–10)**
 
 | **Task ID** | **Task**                                              | **Deliverable**                |
 | ----------- | ----------------------------------------------------- | ------------------------------ |
 | T-7.1       | End-to-end integration of frontend ↔ backend ↔ DB    | Working integrated system      |
-| T-7.2       | Write and execute functional test cases (FR-01 to FR-19) | Test case document + results |
-| T-7.3       | Write and execute non-functional test cases (NFR-01 to NFR-12) | Test case document + results |
+| T-7.2       | Write and execute functional test cases (FR-1 to FR-19) | Test case document + results |
+| T-7.3       | Write and execute non-functional test cases (NFR-1 to NFR-12) | Test case document + results |
 | T-7.4       | Cross-browser testing (Chrome, Firefox, Edge, Safari) | Browser compatibility report   |
 | T-7.5       | Mobile responsiveness testing                         | Responsive test report         |
 | T-7.6       | Performance testing (page load < 3s, filter < 1s)     | Performance test results       |
@@ -456,25 +459,25 @@ This section maps each functional requirement from the SRS to specific implement
 
 | **Requirement** | **Description**                                                  | **Priority** | **Implementation Task(s)**   | **Test Case(s)** |
 | --------------- | ---------------------------------------------------------------- | ------------ | ----------------------------- | ---------------- |
-| FR-01           | Display list of all places (photo, name, category, distance)     | Essential    | T-4.1, T-5.4                 | TC-01            |
-| FR-02           | Filter places by one category at a time                          | Essential    | T-4.2, T-5.5                 | TC-02            |
-| FR-03           | Clear active filter to view all places                           | Desirable    | T-4.2                        | TC-03            |
-| FR-04           | Indicate if a place is currently open (based on stored hours)    | Optional     | T-4.3                        | TC-04            |
+| FR-1           | Display list of all places (photo, name, category, distance)     | Essential    | T-4.1, T-5.4                 | TC-01            |
+| FR-2           | Filter places by one category at a time                          | Essential    | T-4.2, T-5.5                 | TC-02            |
+| FR-3           | Clear active filter to view all places                           | Desirable    | T-4.2                        | TC-03            |
+| FR-4           | Indicate if a place is currently open (based on stored hours)    | Optional     | T-4.3                        | TC-04            |
 
 ### **8.2 Place Detail View**
 
 | **Requirement** | **Description**                                                  | **Priority** | **Implementation Task(s)**   | **Test Case(s)** |
 | --------------- | ---------------------------------------------------------------- | ------------ | ----------------------------- | ---------------- |
-| FR-05           | Display description, opening hours, travel tips, distance        | Essential    | T-4.4, T-5.6                 | TC-05            |
-| FR-06           | Add selected place directly to current one-day visit plan        | Essential    | T-4.5                        | TC-06            |
-| FR-07           | Display representative photo on detail page                      | Desirable    | T-4.4                        | TC-07            |
+| FR-5           | Display description, opening hours, travel tips, distance        | Essential    | T-4.4, T-5.6                 | TC-05            |
+| FR-6           | Add selected place directly to current one-day visit plan        | Essential    | T-4.5                        | TC-06            |
+| FR-7           | Display representative photo on detail page                      | Desirable    | T-4.4                        | TC-07            |
 
 ### **8.3 Map View**
 
 | **Requirement** | **Description**                                                  | **Priority** | **Implementation Task(s)**   | **Test Case(s)** |
 | --------------- | ---------------------------------------------------------------- | ------------ | ----------------------------- | ---------------- |
-| FR-08           | Display place location as a marker on embedded map               | Essential    | T-4.6                        | TC-08            |
-| FR-09           | Centre and appropriately zoom the map on the place               | Desirable    | T-4.6                        | TC-09            |
+| FR-8           | Display place location as a marker on embedded map               | Essential    | T-4.6                        | TC-08            |
+| FR-9           | Centre and appropriately zoom the map on the place               | Desirable    | T-4.6                        | TC-09            |
 
 ### **8.4 One-Day Visit Plan Builder**
 
@@ -505,15 +508,15 @@ This section maps each functional requirement from the SRS to specific implement
 
 | **Requirement** | **Description**                                                  | **Priority** | **Implementation Task(s)**   | **Test Case(s)** |
 | --------------- | ---------------------------------------------------------------- | ------------ | ----------------------------- | ---------------- |
-| NFR-01          | Home page loads within 3 seconds on 4G                           | Essential    | T-5.11                       | TC-NFR-01        |
-| NFR-02          | Support ≥50 concurrent users without degradation                 | Desirable    | T-5.11                       | TC-NFR-02        |
-| NFR-03          | Category filter updates within 1 second                          | Desirable    | T-5.11                       | TC-NFR-03        |
-| NFR-04          | No misleading booking/payment functionality                      | Essential    | Design review                | TC-NFR-04        |
-| NFR-05          | Passwords stored with secure hashing                             | Essential    | T-6.2                        | TC-NFR-05        |
-| NFR-06          | Admin endpoints verify valid auth session                        | Essential    | T-6.3, T-6.9                 | TC-NFR-06        |
-| NFR-07          | No PII collected from tourist users                              | Desirable    | T-5.10                       | TC-NFR-07        |
-| NFR-08          | View details and add to plan within 3 clicks from home           | Essential    | T-4.4, T-4.5                 | TC-NFR-08        |
-| NFR-09          | Graceful error messages on network failure                       | Desirable    | T-4.11                       | TC-NFR-09        |
+| NFR-1          | Home page loads within 3 seconds on 4G                           | Essential    | T-5.11                       | TC-NFR-1        |
+| NFR-2          | Support ≥50 concurrent users without degradation                 | Desirable    | T-5.11                       | TC-NFR-2        |
+| NFR-3          | Category filter updates within 1 second                          | Desirable    | T-5.11                       | TC-NFR-3        |
+| NFR-4          | No misleading booking/payment functionality                      | Essential    | Design review                | TC-NFR-4        |
+| NFR-5          | Passwords stored with secure hashing                             | Essential    | T-6.2                        | TC-NFR-5        |
+| NFR-6          | Admin endpoints verify valid auth session                        | Essential    | T-6.3, T-6.9                 | TC-NFR-6        |
+| NFR-7          | No PII collected from tourist users                              | Desirable    | T-5.10                       | TC-NFR-7        |
+| NFR-8          | View details and add to plan within 3 clicks from home           | Essential    | T-4.4, T-4.5                 | TC-NFR-8        |
+| NFR-9          | Graceful error messages on network failure                       | Desirable    | T-4.11                       | TC-NFR-9        |
 | NFR-10          | Modular, reusable codebase (components + services)               | Desirable    | All implementation tasks      | TC-NFR-10        |
 | NFR-11          | Accessible on Chrome, Firefox, Safari, Edge                      | Essential    | T-4.10, T-7.4                | TC-NFR-11        |
 | NFR-12          | DB schema supports additional categories/radius expansion        | Optional     | T-5.1                        | TC-NFR-12        |
@@ -624,8 +627,8 @@ DayTripGO Project
 │       └── 4.4.4 Auth Middleware
 │
 ├── 5. Testing
-│   ├── 5.1 Functional Testing (FR-01 to FR-19)
-│   ├── 5.2 Non-Functional Testing (NFR-01 to NFR-12)
+│   ├── 5.1 Functional Testing (FR-1 to FR-19)
+│   ├── 5.2 Non-Functional Testing (NFR-1 to NFR-12)
 │   ├── 5.3 Cross-Browser Testing
 │   ├── 5.4 Security Testing
 │   └── 5.5 Stakeholder Acceptance Testing
@@ -668,44 +671,55 @@ As part of Phase 3 (System Design – T-3.6), the project folder names were upda
 | `client/` | `frontend/` | Clearly describes the Presentation Tier role |
 | `server/` | `backend/` | Clearly describes the Application Tier role |
 
-All internal references (e.g., `package.json` name fields, README paths) updated accordingly.
+All internal references were re-checked on 15.10.2026: `package.json` name fields, README paths, the `index.html` title and the root `.gitignore` now use the new folder names.
 
 ---
 
-### **14.2 Current State Analysis (as at 14.10.2026)**
+### **14.2 Implementation Status (as at 15.10.2026)**
 
-#### Frontend (`frontend/`) – Current State
+> **Correction (15.10.2026):** the first version of this section (14.10.2026) described empty `src/` sub-directories as existing scaffolding. Those directories had **not** actually been created in the repository at that time and were created during the build. The tables below now record the real, completed state.
 
-| Item | File | State |
-| ---- | ---- | ----- |
-| Entry point | `index.html` | Exists – needs DayTripGO title/meta |
-| React entry | `src/main.jsx` | Exists – bare StrictMode render |
-| App root | `src/App.jsx` | Default Vite counter – **needs full replacement** |
-| Styles | `src/index.css` | Vite default – **needs full replacement** |
-| Vite config | `vite.config.js` | Minimal – needs `/api` proxy to backend port 5000 |
-| Package | `package.json` | React 19 + Vite – needs `react-router-dom`, `axios`, `leaflet`, `react-leaflet` |
-| Pages | `src/pages/` | Empty (`.gitkeep`) |
-| Components | `src/components/Common/`, `Layout/`, `MapView/`, `PlaceDetail/`, `PlaceListing/`, `VisitPlan/` | All empty |
-| Services | `src/services/` | Empty |
-| Context | `src/context/` | Empty |
-| Hooks | `src/hooks/` | Empty |
-| Utils | `src/utils/` | Empty |
-| Styles | `src/styles/` | Empty |
+#### Frontend (`frontend/`) – Status
 
-#### Backend (`backend/`) – Current State
+| Item | File / Folder | State |
+| ---- | ------------- | ----- |
+| Entry point | `index.html` | ✅ DayTripGO title + meta description |
+| React entry | `src/main.jsx` | ✅ Mounted inside Auth + VisitPlan context providers |
+| App root | `src/App.jsx` | ✅ Full React Router setup (5 routes + 404) |
+| Styles | Tailwind v4 + shadcn theme (`src/index.css`) | ✅ Re-themed to DayTripGO brand colours (supersedes Step 12 plain-CSS design system) |
+| UI stack | shadcn/ui + Aceternity Apple Cards Carousel | ✅ Installed 15.10.2026 |
+| Vite config | `vite.config.js` | ✅ `/api` proxy (Step 19) + Tailwind plugin + `@` alias |
+| Package | `package.json` | ✅ react-router-dom, axios, leaflet, react-leaflet, tailwindcss |
+| Pages | `src/pages/` | ✅ Home, PlaceDetail, VisitPlan, AdminLogin, AdminDashboard |
+| Components | `src/components/*` | ✅ Common, Layout, PlaceListing, PlaceDetail, MapView, VisitPlan (all Step 16 files + ProtectedRoute, FeaturedCarousel) |
+| Services | `src/services/` | ✅ api, placeService, categoryService, visitPlanService, authService |
+| Context | `src/context/` | ✅ AuthContext, VisitPlanContext |
+| Hooks | `src/hooks/` | ✅ usePlaces, useVisitPlan, useAuth |
+| Utils | `src/utils/` | ✅ formatDistance, formatHours, isOpenNow, placeImage |
+| Build & lint | `npm run build` / `npm run lint` | ✅ Build passes; lint warnings-only (15.10.2026) |
 
-| Item | File | State |
-| ---- | ---- | ----- |
-| Server entry | `src/server.js` | Exists – starts on port 5000 |
-| App config | `src/app.js` | Exists – CORS, Morgan, health check; all routes commented out |
-| DB config | `src/config/db.js` | Exists – Supabase client (requires `.env`) |
-| Env template | `.env.example` | Exists – PORT, SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT vars |
-| Routes | `src/routes/` | Empty |
-| Controllers | `src/controllers/` | Empty |
-| Models | `src/models/` | Empty |
-| Services | `src/services/` | Empty |
-| Middleware | `src/middleware/` | Empty |
-| Utils | `src/utils/` | Empty |
+#### Backend (`backend/`) – Status
+
+| Item | File / Folder | State |
+| ---- | ------------- | ----- |
+| Server entry | `src/server.js` | ✅ Starts on port 5000 |
+| App config | `src/app.js` | ✅ CORS, JSON, Morgan (console + `logs/backend.log`), all four routes wired, central error handler |
+| DB config | `src/config/db.js` | ✅ Supabase client (requires `.env`) |
+| Env template | `.env.example` | ✅ PORT, SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT vars |
+| Routes | `src/routes/` | ✅ places, categories, visit-plans, auth (JWT on admin operations) |
+| Controllers | `src/controllers/` | ✅ place, category, visitPlan, auth |
+| Models | `src/models/` | ✅ place, category, visitPlan, admin |
+| Services | `src/services/` | ✅ place, visitPlan, auth (bcrypt + JWT) |
+| Middleware | `src/middleware/` | ✅ auth (requireAuth), validate (FR-19), errorHandler |
+| Utils | `src/utils/` | ✅ tokenUtils, passwordUtils |
+
+#### Database (`database/`) – Status
+
+| Item | State |
+| ---- | ----- |
+| `schema/001_create_tables.sql` | ✅ Written — **to be executed in the Supabase SQL Editor** |
+| `seeds/001_seed_categories.sql` | ✅ 4 categories (Religious, Nature, Heritage, Cultural) |
+| `seeds/002_seed_places.sql` | ✅ 10 verified places within 25 km + default admin (bcrypt-hashed password) |
 
 ---
 
@@ -811,7 +825,7 @@ const accessLogStream = fs.createWriteStream(
 app.use(morgan('combined', { stream: accessLogStream })); // file
 app.use(morgan('dev'));                                    // console
 ```
-Add `"dev:log"` npm script: `"dev:log": "nodemon src/server.js 2>&1 | tee logs/backend.log"`.
+> **Implemented note (15.10.2026):** a `tee`-based `dev:log` npm script was **not** used — `tee` is unavailable in the Windows `cmd` shell that npm runs scripts in. Morgan's file stream in `app.js` writes `logs/backend.log` directly, which is cross-platform; the `logs/` directory is created at startup and is git-ignored.
 
 #### Step 11 – Install Frontend Packages ✅ Complete
 ```
@@ -910,11 +924,8 @@ server: {
 ```
 Eliminates CORS issues in development – all `/api` calls routed to the Express backend.
 
-#### Step 20 – Frontend Logging (Separate Log File)
-`dev:log` npm script pipes Vite output to `frontend/logs/frontend.log`:
-```
-"dev:log": "vite 2>&1 | tee logs/frontend.log"
-```
+#### Step 20 – Frontend Logging (Dropped)
+Not implemented: `tee` is unavailable in the Windows npm shell. Frontend messages stay in the Vite console; HTTP access logging is handled by the backend log (`backend/logs/backend.log`).
 
 #### Step 21 – Frontend Utils
 Create `frontend/src/utils/`:
