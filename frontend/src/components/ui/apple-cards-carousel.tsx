@@ -6,11 +6,7 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import {
-  IconArrowNarrowLeft,
-  IconArrowNarrowRight,
-  IconX,
-} from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import Image, { ImageProps } from "next/image";
@@ -38,36 +34,13 @@ export const CarouselContext = createContext<{
 
 export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
   const carouselRef = React.useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
-  const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (carouselRef.current) {
       carouselRef.current.scrollLeft = initialScroll;
-      checkScrollability();
     }
   }, [initialScroll]);
-
-  const checkScrollability = () => {
-    if (carouselRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth);
-    }
-  };
-
-  const scrollLeft = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -300, behavior: "smooth" });
-    }
-  };
-
-  const scrollRight = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
-  };
 
   const handleCardClose = (index: number) => {
     if (carouselRef.current) {
@@ -86,6 +59,25 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
     return window && window.innerWidth < 768;
   };
 
+  // One card plus row gap per step (w-56 / w-96 plus the gap-4 spacing).
+  const stepSize = () => (isMobile() ? 240 : 400);
+
+  // Dot navigation: track the centred card while the row is scrolled by hand.
+  const handleScroll = () => {
+    if (carouselRef.current) {
+      const index = Math.round(carouselRef.current.scrollLeft / stepSize());
+      setCurrentIndex(Math.max(0, Math.min(items.length - 1, index)));
+    }
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    carouselRef.current?.scrollTo({
+      left: index * stepSize(),
+      behavior: "smooth",
+    });
+  };
+
   return (
     <CarouselContext.Provider
       value={{ onCardClose: handleCardClose, currentIndex }}
@@ -94,7 +86,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
         <div
           className="flex w-full overflow-x-scroll overscroll-x-auto scroll-smooth py-10 [scrollbar-width:none] md:py-20"
           ref={carouselRef}
-          onScroll={checkScrollability}
+          onScroll={handleScroll}
         >
           <div
             className={cn(
@@ -131,21 +123,21 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
             ))}
           </div>
         </div>
-        <div className="mr-10 flex justify-end gap-2">
-          <button
-            className="relative z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 disabled:opacity-50"
-            onClick={scrollLeft}
-            disabled={!canScrollLeft}
-          >
-            <IconArrowNarrowLeft className="h-6 w-6 text-gray-500" />
-          </button>
-          <button
-            className="relative z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 disabled:opacity-50"
-            onClick={scrollRight}
-            disabled={!canScrollRight}
-          >
-            <IconArrowNarrowRight className="h-6 w-6 text-gray-500" />
-          </button>
+        {/* Small dot indicators, centred under the carousel (replaces the arrows). */}
+        <div className="flex items-center justify-center gap-2 pb-2">
+          {items.map((_, index) => (
+            <button
+              key={index}
+              aria-label={`Go to featured card ${index + 1}`}
+              onClick={() => goToSlide(index)}
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                index === currentIndex
+                  ? "w-6 bg-brand"
+                  : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+              )}
+            />
+          ))}
         </div>
       </div>
     </CarouselContext.Provider>
