@@ -126,4 +126,18 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 12:32 · Live end-to-end smoke test — FULL PASS (database provisioned)
+
+- Branch: `backend` · Supabase project `nefbxgjcvnutbutuwxiq`; developer executed schema + seeds in the SQL Editor; backend authenticates with the `sb_secret_` key (RLS bypassed; no dev policies needed)
+- **Read paths**: `GET /api/health` 200 · `GET /api/categories` 200 count=4 (Religious, Nature, Heritage, Cultural) · `GET /api/places` 200 count=10 (all ten proposal Table 2 places) · `GET /api/places/1` 200 full detail (FR-5) · `GET /api/places/9999` 404
+- **Auth (FR-14/15/19)**: `POST /api/auth/login` admin → 200 + JWT · `POST /api/places` without token → 401 · invalid payload with token → 400 field validation
+- **Places CRUD (FR-16–FR-18)**: create → 201 `place_id=11` (count 10→11) · update → 200 with edited fields · delete → 200 (count restored to 10, test record removed)
+- **Visit plans (FR-10–FR-13)**: create → 201 · replace-all with 3 items → 200 with places joined in `visit_order` · replace-all down to 1 item → 200 · read-backs verified at each step
+- Notes: `plan_title` defaults to 'My One-Day Plan' (schema default, SRS §6.3); smoke-test visit plans 1–3 (session `smoke-test-session`) remain in the dev DB — no plan DELETE endpoint by design (session-scoped, NFR-7); `JWT_SECRET` in `backend/.env` is still the example placeholder — fine for local demo, generate a strong value before any shared deployment
+- **Backend is live end-to-end.** Frontend (`frontend` branch) build + lint pass and talks to this API via the Vite `/api` proxy
+
+---
+
 _(Entries below are appended as further steps complete.)_
