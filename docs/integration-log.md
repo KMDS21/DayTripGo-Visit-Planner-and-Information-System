@@ -426,3 +426,73 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:27 - Creative footer across public pages
+
+- **Footer redesigned**: the plain centered text block became a full-width branded footer - the same `from-brand-dark via-brand to-teal-500` gradient as the heroes with `rounded-t-[2.5rem]` top corners and decorative translucent circles, four columns on desktop (brand blurb, quick links Home/Explore/My Day Plan/Contact us, the four categories, contact details), and a bottom bar (copyright + the planning-only scope note and ITE2953 / E2410884 credit)
+
+- Lives in `Footer.jsx` so every public page (home, explore, plan, contact, detail) gets it automatically via `PublicLayout`; stacks to one column on mobile
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:31 - Let's plan your tour box in the navbar
+
+- **New green CTA box, left side of the navigation**: a `rounded-2xl bg-brand` box styled exactly like the Contact us button, placed as the first item inside the navbar (left of Home) with the wording `Let's plan your tour` - it routes to `/visit-plan` and shows the same active ring when on that page
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:36 - Home page wording and highlight pass
+
+- **Hero highlights**: the hero paragraph is followed by four white/10 pill chips - 10 verified places, 4 categories, no account needed, free to use - so visitors grasp the offer at a glance
+
+- **How DayTripGO works strip** (new, between hero and featured escapes): three numbered step cards - Browse verified places / Filter and compare / Build your one-day plan - each with a one-line description, explaining the site flow to first-time visitors
+
+- **Why DayTripGO strip** (new, after the preview band before the footer): three trust points - Opening times checked, Distances up front, Planning only (no bookings or payments) - closing the page with a clear idea of what the service is
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:39 - Wording layout for Featured escapes and All places sections
+
+- **Featured escapes**: heading moved into a max-w-2xl block with a fuller description (one highlight from each category, tap for the full story, add straight to the day plan) plus a row of category name pills (Religious / Nature / Heritage / Cultural) between the text and the carousel
+
+- **All places band**: the header copy was expanded into a full sentence explaining what every card shows (photo, open/closed hint, distance from Wadduwa, one-tap add-to-plan), alongside the existing Explore all places arrow button
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:48 - Home section rework: wording trimmed, How-it-works repositioned
+
+- **Verbose wording removed per developer feedback**: the long paragraph, highlight chip rows and the `Showing:` category pill row added to the Featured escapes and All places sections were reverted - both sections are back to their short one-line descriptions; only the hero chips, How-it-works steps and Why strip kept
+
+- **How DayTripGO works moved**: the section now sits between Featured escapes and All places (verified order: Featured escapes, How DayTripGO works, All places, Why DayTripGO)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:54 - How DayTripGO works centred
+
+- **Section centred per developer instruction**: the How DayTripGO works block (kept between Featured escapes and All places) now centres its heading and intro (max-w-2xl mx-auto text-center) and each step card centres its number circle (mx-auto), title and description; verified via computed style (heading center, card center)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:55 - Frontend editing round - log committed and branches pushed
+
+- **Round summary (this session, all committed on `feature/frontend-redesign`)**: full-width large-screen layout with xl/2xl grid columns; navbar selected state as green text only plus Home link; featured carousel in category order with centred dot indicators (arrows removed); centred navbar links; Explore split into its own page (`/explore`) with a four-place tinted preview band on home; branded page heroes on Explore, My Day Plan and Contact; Contact us page with company details plus its separate green header button and the `Let's plan your tour` box on the left of the navbar; creative gradient footer with link columns; home wording pass (hero chips, How DayTripGO works centred between Featured and All places, Why DayTripGO strip)
+
+- **Logging rule applied**: entries were appended to this file as work happened but held uncommitted per developer instruction; this commit flushes all held entries (`16:27` footer through `16:54` How-it-works centred) - from the next change each entry is committed with its code again
+
+- **Push**: `feature/frontend-redesign` pushed to origin along with every other branch (`frontend`, `main`, `backend` already up to date; `archive/admin-ui-redesign-preSquash` stays local by design)
+
+---
+
+_(Entries below are appended as further steps complete.)_
