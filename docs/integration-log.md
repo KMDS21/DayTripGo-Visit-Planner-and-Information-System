@@ -340,3 +340,15 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:48 - Featured carousel: category ordering, arrows removed, centred dots
+
+- **Featured order = category order**: `FeaturedCarousel` now takes the first place per category and orders the cards alphabetically by category name, matching the filter pills below (headless check: Cultural, Heritage, Nature, Religious); still capped at 6
+
+- **Arrow navigation removed**: the Aceternity carousel dropped its prev/next circle buttons and their scroll helpers (and the now-unused tabler arrow imports)
+
+- **Centred dot indicators added**: small 2px dots under the carousel track - active dot is wider (24px) in brand green, inactive dots muted with hover; dots track hand-scrolling and clicking a dot scrolls to that card exactly (verified: dot 3 -> scrollLeft 800 = 2 steps, active index 2); row verified centred on the viewport, lint clean, `npm run build` passes (3.91s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
