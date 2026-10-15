@@ -374,3 +374,13 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:59 - Explore page created as a separate page
+
+- **New route `/explore`**: `ExplorePage` carries the full public listing - page hero with wording, result count, the category filter pills (All + every category, SRS FR-2/FR-3), `PlaceGrid` with all places, loading/error/retry states, and the same add-to-plan flash toast as home; it fetches through the existing `usePlaces` / `useVisitPlan` hooks so filter behaviour is identical to what home had
+
+- Home page untouched in this commit (full list still shows there until the next step)
+
+---
+
+_(Entries below are appended as further steps complete.)_
