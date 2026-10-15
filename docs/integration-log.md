@@ -101,4 +101,18 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 12:03 · Backend smoke test — blocked on database provisioning (user action pending)
+
+- Branch: `backend` · Live API started from this branch against Supabase REST (`https://nefbxgjcvnutbutuwxiq.supabase.co`)
+- **Fixed `backend/.env`** (local, untracked): `SUPABASE_URL` contained a `postgresql://` direct-connection string; `supabase-js` needs the HTTPS project URL — corrected to `https://nefbxgjcvnutbutuwxiq.supabase.co`. Key left as the developer-supplied publishable key per instruction.
+- **Smoke results**: `GET /api/health` → 200 OK; `POST /api/places` without token → 401 (FR-15 guard works); every DB-backed endpoint (categories, places, login, visit-plans) → 500 `Could not find the table 'public.…' in the schema cache` — the schema/seeds have **not been executed** in the Supabase instance yet.
+- **Attempted remote SQL provisioning**: threw away a temp `pg` runner (`%TEMP%\opencode\sqlrunner`) — project's direct host `db.nefbxgjcvnutbutuwxiq.supabase.co` is **IPv6-only** (AAAA `2406:da1c:…`) and this machine has no global IPv6 → `getaddrinfo ENOTFOUND`; no pooler host resolves; `psql` not installed. REST/HTTPS works (IPv4 via Cloudflare), but PostgREST cannot execute DDL.
+- **`@supabase/server` evaluated** per developer suggestion: it is a server-side auth/client-context helper for frameworks; its Postgres middleware still requires `SUPABASE_DB_URL` (the same unreachable direct TCP) — it cannot run DDL over HTTPS, so it does not unblock provisioning.
+- **Prepared one-shot SQL** (schema + both seeds + dev-mode RLS policies for the publishable key + verify query) at `C:\Users\CyrusIT\AppData\Local\Temp\opencode\daytripgo_one_shot_setup.sql` for a single paste into the Supabase SQL Editor.
+- **Pending**: after the SQL is run → full smoke re-test (categories, places, admin login `admin`/`DayTripGO@2026`, places CRUD with JWT, visit-plan create/replace/get) and log results here.
+
+---
+
 _(Entries below are appended as further steps complete.)_
