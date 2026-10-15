@@ -6,7 +6,7 @@ import Badge from '../Common/Badge';
 import Button from '../Common/Button';
 import { formatDistance } from '../../utils/formatDistance';
 import { isOpenFromText } from '../../utils/isOpenNow';
-import { placeImage, categoryGradient } from '../../utils/placeImage';
+import { placeImage } from '../../utils/placeImage';
 
 export default function PlaceCard({ place, categoryName, inPlan, onAdd }) {
   const open = isOpenFromText(place.opening_hours); // true | false | null (FR-4)

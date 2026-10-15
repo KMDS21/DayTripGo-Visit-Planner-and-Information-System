@@ -138,4 +138,15 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 11:20 · Phase 4 complete — admin module, routing, build verification
+
+- Branch: `frontend` · Covers SRS FR-14…FR-19 and plan §14.3 Steps 17–18
+- **AdminLoginPage** (`/admin/login`): username/password form, friendly errors, redirect to dashboard on success (FR-14)
+- **AdminDashboardPage** (`/admin/dashboard`, protected): places table (name, category, distance, hours), **Add** modal with all fields incl. image URL (FR-16), **Edit** modal prefilled (FR-17), **Delete** with confirmation dialog (FR-18), client-side validation with per-field error messages (FR-19), logout button
+- **App.jsx**: full React Router setup — `/`, `/places/:id`, `/visit-plan`, `/admin/login`, `/admin/dashboard` (wrapped in `ProtectedRoute` → FR-15 deny unauthenticated), 404 page, Header/Footer shell
+- **main.jsx**: mounts `<App />` inside `AuthProvider` + `VisitPlanProvider`
+- **Verification**: `npm run build` ✅ (6851 modules, 5.0s — 680 kB JS / 64 kB CSS, chunk-size warning only) · `npm run lint` ✅ warnings-only (mostly vendor shadcn files); removed one unused import found by lint
+
+---
+
 _(Entries below are appended as further steps complete.)_
