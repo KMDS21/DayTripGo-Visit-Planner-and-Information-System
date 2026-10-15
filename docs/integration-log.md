@@ -129,4 +129,13 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 11:16 · Phase 4 — visit plan builder + tourist pages
+
+- Branch: `frontend` · Covers SRS FR-10…FR-13 and plan §14.3 Step 17
+- **VisitPlan components**: `PlanItem` (order badge, place details, keyboard ↑/↓ reorder, remove — FR-11/13), `DragReorder` (HTML5 drag container, no extra dependency), `PlanList` (consolidated view FR-12, count + total distance, empty state with CTA)
+- **Pages**: `HomePage` (hero + featured Apple Cards carousel + category filter + grid + add-to-plan flash feedback), `PlaceDetailPage` (`/places/:id` — fetch + DetailView + add-to-plan FR-6), `VisitPlanPage` (`/visit-plan` — consolidated plan, session note for NFR-7)
+- Commit message convention corrected per developer: plain descriptive messages, no step numbering
+
+---
+
 _(Entries below are appended as further steps complete.)_
