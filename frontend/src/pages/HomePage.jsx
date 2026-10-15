@@ -2,20 +2,20 @@
 // featured-places carousel and hero (plan §14.3 Step 17, T-4.1…T-4.3).
 
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
-import CategoryFilter from '../components/PlaceListing/CategoryFilter';
 import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
-import PlaceGrid from '../components/PlaceListing/PlaceGrid';
+import PlaceCard from '../components/PlaceListing/PlaceCard';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 
 export default function HomePage() {
-  const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
+  const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
   const { hash } = useLocation();
+  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name;
 
   // Explore → /#places scrolls to the listing (re-runs after data loads so the
   // final grid position is respected).
@@ -55,17 +55,44 @@ export default function HomePage() {
         <FeaturedCarousel places={places} categories={categories} />
       </section>
 
-      {/* Listing + filter */}
-      <section id="places" className="w-full">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
-          <CategoryFilter categories={categories} activeCategory={activeCategory} onSelect={selectCategory} />
+      {/* Preview band — a few favourites on a tinted background; the full
+          listing lives on the Explore page */}
+      <section id="places" className="relative w-full overflow-hidden rounded-[2rem] bg-brand-light/50 px-6 py-10 sm:px-10">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand/10" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand/10" />
+
+        <div className="relative mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              A taste of what is out there — open Explore for the full list and category filters.
+            </p>
+          </div>
+          <Link
+            to="/explore"
+            className="group inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+          >
+            Explore all places
+            <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
         </div>
 
         {loading && <Loader label="Loading places…" />}
         {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
         {!loading && !error && (
-          <PlaceGrid places={places} categories={categories} hasPlace={hasPlace} onAdd={handleAdd} />
+          <div className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {places.slice(0, 4).map((place) => (
+              <PlaceCard
+                key={place.place_id}
+                place={place}
+                categoryName={categoryName(place.category_id)}
+                inPlan={hasPlace(place.place_id)}
+                onAdd={handleAdd}
+              />
+            ))}
+          </div>
         )}
       </section>
 
