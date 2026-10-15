@@ -10,6 +10,7 @@ import ProtectedRoute from './components/Common/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import { useVisitPlan } from './hooks/useVisitPlan';
 import HomePage from './pages/HomePage';
+import ExplorePage from './pages/ExplorePage';
 import PlaceDetailPage from './pages/PlaceDetailPage';
 import VisitPlanPage from './pages/VisitPlanPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -204,6 +205,7 @@ export default function App() {
       <Routes>
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />
           <Route path="/visit-plan" element={<VisitPlanPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
