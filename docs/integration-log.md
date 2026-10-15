@@ -384,3 +384,15 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:02 - Home page: four-place preview band with link to the Explore page
+
+- **All places no longer listed on home**: the home listing section now shows only the first 4 places as a preview; the full list and the category filter pills live on the new `/explore` page
+
+- **Separate background-colour area**: the preview sits in its own tinted band (`bg-brand-light/50`, large rounded corners, decorative brand circles top-right/bottom-left) so it reads as a distinct block between the featured carousel and the footer
+
+- **Arrow link to Explore**: the band header carries an `Explore all places →` link to `/explore` (arrow nudges right on hover)
+
+---
+
+_(Entries below are appended as further steps complete.)_
