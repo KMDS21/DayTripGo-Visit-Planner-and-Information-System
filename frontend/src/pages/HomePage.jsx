@@ -34,6 +34,14 @@ export default function HomePage() {
             Discover verified places of interest within 25 km of Wadduwa, Sri Lanka — temples, gardens, waterfalls
             and beaches — and build a simple one-day visit plan.
           </p>
+          {/* Highlight chips */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 text-sm font-semibold">
+            {['10 verified places', '4 categories', 'No account needed', 'Free to use'].map((chip) => (
+              <span key={chip} className="rounded-full bg-white/15 px-4 py-1.5 backdrop-blur">
+                ✓ {chip}
+              </span>
+            ))}
+          </div>
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10" />
@@ -46,6 +54,38 @@ export default function HomePage() {
         <FeaturedCarousel places={places} categories={categories} />
       </section>
 
+      {/* How it works — explain the flow before the preview band */}
+      <section className="w-full">
+        <h2 className="px-2 font-heading text-2xl font-bold sm:text-3xl">How DayTripGO works</h2>
+        <p className="mb-6 mt-1 px-2 text-muted-foreground">
+          Three steps from landing on this page to standing in front of something worth the trip.
+        </p>
+        <div className="grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              title: 'Browse verified places',
+              text: 'Temples, beaches, gardens and heritage sites within 25 km of Wadduwa — each one checked by our team before it is listed.',
+            },
+            {
+              title: 'Filter and compare',
+              text: 'Narrow the list by category, see opening hours and distances up front, and pick what fits into a single day.',
+            },
+            {
+              title: 'Build your one-day plan',
+              text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place — no sign-up, no payment.',
+            },
+          ].map((step, i) => (
+            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
+                {i + 1}
+              </span>
+              <h3 className="mt-4 font-heading text-lg font-bold">{step.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Preview band — a few favourites on a tinted background; the full
           listing lives on the Explore page */}
       <section id="places" className="relative w-full overflow-hidden rounded-[2rem] bg-brand-light/50 px-6 py-10 sm:px-10">
@@ -53,10 +93,11 @@ export default function HomePage() {
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand/10" />
 
         <div className="relative mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
+          <div className="max-w-2xl">
             <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              A taste of what is out there — open Explore for the full list and category filters.
+            <p className="mt-1.5 leading-relaxed text-muted-foreground">
+              A taste of what is out there — open Explore for the full list, category
+              filters, opening hours and distances.
             </p>
           </div>
           <Link
@@ -85,6 +126,38 @@ export default function HomePage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Why DayTripGO — close with a clear idea of the service */}
+      <section className="w-full">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">Why DayTripGO</h2>
+          <p className="mt-2 text-muted-foreground">
+            Travel blogs list everything; we list what is worth your day — and tell you when
+            to go.
+          </p>
+        </div>
+        <div className="mt-6 grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              title: 'Opening times checked',
+              text: 'Every listing carries real opening hours and an "open now" hint, so you never travel to a closed gate.',
+            },
+            {
+              title: 'Distances up front',
+              text: 'Distances from Wadduwa town are shown on every card — you always know how far the trip is before you tap.',
+            },
+            {
+              title: 'Planning only',
+              text: 'DayTripGO helps you decide and organise. No bookings, no payments, no accounts — just a clear one-day plan.',
+            },
+          ].map((point) => (
+            <div key={point.title} className="rounded-2xl bg-muted/40 p-6 text-center">
+              <h3 className="font-heading text-base font-bold text-brand-dark">{point.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{point.text}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Add-to-plan confirmation flash */}
