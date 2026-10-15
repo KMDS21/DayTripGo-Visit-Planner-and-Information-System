@@ -221,5 +221,19 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 13:54 - Admin UI rebuild reviewed, review fixes applied, JWT secret hardened, full stack running
+
+- **User's admin UI rebuild analysed** (was uncommitted): isolated `AdminLayout` so `/admin/*` renders without public Header/Footer (`/admin` redirects to login), Navbar admin link removed, `index.css` retheme to warm cream + deep forest green (all brand/sand tokens, dark mode and chart variables preserved), rewritten `AdminLoginPage` (show/hide password, autofocus, autocomplete, busy state, error banner) and `AdminDashboardPage` (sidebar, stat cards, search filter, loading skeletons, add/edit modal with per-field validation, delete confirmation, image error fallbacks)
+- **3 review fixes applied**: (1) login page `navigate()` moved from render body into `useEffect` (React render-phase side effect error), (2) unused `useLocation` import removed from `App.jsx`, (3) non-functional sidebar item given `cursor: default`
+- **Reviewed as sound, no changes needed**: `ProtectedRoute` already passes `from` deep-link state for post-login return, `AuthContext.logout` clears localStorage even when the API call fails, dashboard CRUD/validation correctly wired to services (FR-14..FR-19)
+- **Verification**: `npm run lint` warnings-only, none in changed files; `npm run build` passes (3.81s)
+- **JWT_SECRET hardened**: placeholder `your-jwt-secret-key` replaced with a 96-hex-char random secret in `backend/.env` (local-only, gitignored - never committed); API restarted; auth re-verified against the new secret - login 200 + token, no token 401, tampered token 401 (FR-15), authenticated invalid payload 400 (FR-19)
+- **DB admin password alignment pending (user SQL)**: bcrypt hash for `admin123` generated with bcryptjs (10 rounds, `bcrypt.compare` verified true) and handed to the user as a one-line UPDATE for the Supabase SQL Editor; the `.env` override remains the active login path
+- **Full stack running**: API on `:5000` (live Supabase, categories=4, places=10) + Vite dev server on `:5173` - root 200 (title DayTripGO), `/api` proxy reaches backend (health OK, categories=4)
+
+---
+
 _(Entries below are appended as further steps complete.)_
 
