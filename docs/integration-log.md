@@ -115,4 +115,15 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 12:13 · .env updated with Supabase secret key — db config adapted; SQL step still pending
+
+- Developer replaced the backend .env contents: `SUPABASE_URL` (HTTPS, correct), `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (sb_secret_…) and `SUPABASE_JWKS_URL`; the old `SUPABASE_SERVICE_KEY` variable was removed
+- **Fix applied**: `backend/src/config/db.js` still read `SUPABASE_SERVICE_KEY` → would have refused to boot; now prefers `SUPABASE_SECRET_KEY` with fallback to `SUPABASE_SERVICE_KEY`. Server restarted and authenticates with the secret key (`GET /api/health` 200; 7 env vars injected)
+- Secret key bypasses RLS, so the prepared one-shot setup SQL was trimmed to schema + seeds + verify (dev anon policies removed — no longer needed)
+- DB-backed endpoints still return 500 `Could not find the table 'public.…' in the schema cache` → **tables are not created yet**; the one paste into the Supabase SQL Editor remains the only pending step before the full smoke re-test
+
+---
+
 _(Entries below are appended as further steps complete.)_
