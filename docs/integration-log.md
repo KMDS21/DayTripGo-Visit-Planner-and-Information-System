@@ -93,4 +93,15 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 10:59 · Session 1 — Frontend work committed on `frontend` branch
+
+- **10:58** Backend commit landed on `backend` branch (`cce94e4`); **10:59** switched back to `frontend`
+- Committed on `frontend` branch:
+  - Phase-1 cleanup: template removal (`App.css`, react/vite svg, hero.png, icons.svg), new favicon, `index.html` (title/meta), README, `/api` proxy
+  - Packages: framer-motion, embla-carousel-react, lucide-react, cva/clsx/tailwind-merge + tailwindcss v4 & @tailwindcss/vite
+  - shadcn init (`components.json`, `ui/button.tsx`, `lib/utils.ts`, themed `index.css`) + Aceternity Apple Cards Carousel (`ui/apple-cards-carousel.tsx`, demo, use-outside-click hook) + `tsconfig.json` alias
+- Branch topology now: `main` → `frontend` (log → gitignore → **frontend build**) with `backend` branching after gitignore (log → gitignore → **backend API+DB**)
+
+---
+
 _(Entries below are appended as further steps complete.)_
