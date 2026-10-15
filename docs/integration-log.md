@@ -140,4 +140,14 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+---
+
+## 2026-10-15 13:19 · Admin credentials from .env (optional override) — implemented and verified
+
+- Developer wanted the admin username/password kept in `backend/.env`; wired as an **optional override** in `backend/src/services/authService.js`: when both `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, login checks them first (timing-safe compare via `crypto.timingSafeEqual`); when unset, the original admins-table + bcrypt path runs unchanged (SRS NFR-5). `backend/.env` gained `ADMIN_USERNAME=admin` / `ADMIN_PASSWORD=DayTripGO@2026` (same working credentials as the seeded account); `.env.example` updated to document the new variables and the secret-key naming
+- Verified against the live server: correct creds → 200 + JWT · wrong password → 401 · unknown username → 401 · token from env-login used successfully for admin CRUD (create 201, delete 200)
+- Note: the env override stores the password in plain text in `.env` (gitignored, local demo only) — for anything real, remove the two vars and rely on the bcrypt-verified admins table
+
+---
+
 _(Entries below are appended as further steps complete.)_
