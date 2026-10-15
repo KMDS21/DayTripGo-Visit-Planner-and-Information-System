@@ -362,3 +362,15 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:54 - Developer instruction - update the integration log on every commit
+
+- **New logging rule**: from now on every code commit is preceded by its own dedicated log entry (one entry per commit), instead of one batched entry covering a group of commits
+
+- **Mechanics stay the same**: entry appended at EOF with a fresh timestamp, `docs:` commit first, then the code commit; append-only - no existing entry is ever edited or reordered
+
+- Retroactive check done at the same time: every commit back to the start of the frontend editing round (`1a42e9a`) already has a covering log entry - no gaps to backfill
+
+---
+
+_(Entries below are appended as further steps complete.)_
