@@ -54,13 +54,15 @@ export default function HomePage() {
         <FeaturedCarousel places={places} categories={categories} />
       </section>
 
-      {/* How it works — explain the flow before the preview band */}
+      {/* How it works — centred block before the preview band */}
       <section className="w-full">
-        <h2 className="px-2 font-heading text-2xl font-bold sm:text-3xl">How DayTripGO works</h2>
-        <p className="mb-6 mt-1 px-2 text-muted-foreground">
-          Three steps from landing on this page to standing in front of something worth the trip.
-        </p>
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">How DayTripGO works</h2>
+          <p className="mt-2 text-muted-foreground">
+            Three steps from landing on this page to standing in front of something worth the trip.
+          </p>
+        </div>
+        <div className="mt-6 grid gap-5 sm:grid-cols-3">
           {[
             {
               title: 'Browse verified places',
@@ -75,8 +77,8 @@ export default function HomePage() {
               text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place — no sign-up, no payment.',
             },
           ].map((step, i) => (
-            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
+            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+              <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
                 {i + 1}
               </span>
               <h3 className="mt-4 font-heading text-lg font-bold">{step.title}</h3>
