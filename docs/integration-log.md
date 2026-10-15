@@ -113,4 +113,20 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 
 ---
 
+## 2026-10-15 11:13 · Phase 4, Step A — tourist UI foundation + browsing components
+
+- Branch: `frontend` · Build follows plan §14 Steps 13–18 and SRS FR-1…FR-9
+- **Re-themed** shadcn tokens: `--primary` → DayTripGO teal, sand accent, brand color utilities (`bg-brand` etc.) in `src/index.css`
+- **Services** (`src/services/`): `api.js` (axios + JWT interceptor + friendly errorMessage for NFR-9), `placeService`, `categoryService`, `visitPlanService`, `authService`
+- **Utils** (`src/utils/`): `formatDistance` (FR-1), `formatHours`/`normaliseHours` (FR-5), `isOpenNow`/`isOpenFromText` (FR-4 free-text hour parser), `placeImage` (photo with generated per-category gradient placeholder — FR-7 "where available")
+- **Context** (`src/context/`): `AuthContext` (admin JWT in localStorage), `VisitPlanContext` (server-side session plan: create on first add, add/remove/reorder → PUT sync; plan id in sessionStorage → NFR-7 no PII)
+- **Hooks**: `usePlaces` (fetch + one-category filter, FR-2/3), `useVisitPlan`, `useAuth`
+- **Common components**: Button (wraps shadcn Button), Loader, ErrorMessage (NFR-9), Modal, Badge, ProtectedRoute (FR-15)
+- **Layout**: Header (brand + nav), Navbar (plan count badge), Footer (scope note: no booking/payment → NFR-4)
+- **PlaceListing**: PlaceCard (photo, name, category, distance FR-1; open/closed badge FR-4; add-to-plan FR-6), PlaceGrid (responsive, empty state), CategoryFilter (FR-2/3), **FeaturedCarousel** (Aceternity Apple Cards Carousel wired to real places)
+- **PlaceDetail**: DetailView (FR-5/6/7 + open badge + NFR-8 2-click flow), PhotoGallery
+- **MapView**: MapEmbed (Leaflet + OSM tiles, centred/zoomed on place FR-8/9), MapMarker (custom SVG pin)
+
+---
+
 _(Entries below are appended as further steps complete.)_
