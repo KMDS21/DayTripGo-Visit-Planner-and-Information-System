@@ -396,3 +396,13 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:06 - Navbar Explore link now targets the /explore page
+
+- **Explore → `/explore`**: the navbar Explore item navigates to the new page instead of the home anchor, and its selected state is a plain `NavLink` match (still green text only); the home hash-scroll code (`/#places` effect and `useLocation`) was removed as dead
+
+- Home keeps its own `Home` and `My Day Plan` items unchanged
+
+---
+
+_(Entries below are appended as further steps complete.)_
