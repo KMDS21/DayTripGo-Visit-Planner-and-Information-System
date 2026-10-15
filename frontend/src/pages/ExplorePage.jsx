@@ -22,14 +22,18 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="space-y-8 py-10">
-      {/* Page hero with wording */}
-      <section className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-bold sm:text-5xl">Explore places</h1>
-        <p className="mt-4 text-muted-foreground">
-          Every verified spot within 25 km of Wadduwa in one place — filter by category, check
-          opening times, and add your favourites straight to the day plan.
-        </p>
+    <div className="space-y-8 pb-8">
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-6 py-14 text-white sm:py-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="font-heading text-4xl font-bold sm:text-5xl">Explore places</h1>
+          <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
+            Every verified spot within 25 km of Wadduwa in one place — filter by category,
+            check opening times, and add your favourites straight to the day plan.
+          </p>
+        </div>
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10" />
       </section>
 
       {/* Filter row */}
