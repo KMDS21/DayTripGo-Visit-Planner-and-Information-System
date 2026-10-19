@@ -638,4 +638,18 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 02:48 - Company logo on the admin login shell and the Contact company-details card
+
+- **Developer request**: the admin login page and the Contact us company-details area should show the `Logo.png` company logo rather than the hardcoded text wordmark
+
+- **`App.jsx` `AdminAuthLayout`**: the login shell's brand lockup above the card is now `<img src="/Logo.png">` (h-10, auto width, `alt="DayTripGO"`) replacing the `DayTripGO` text span; the light `bg-background` shell needs no backing behind the logo
+
+- **`ContactPage` company-details card**: the `DayTripGO` heading is replaced by the logo (h-12, `shrink-0`) sitting beside the `Company details` label; the card is white (`bg-card`) so the dark-navy lettering reads correctly without a chip
+
+- **Unchanged by scope**: the admin sidebar and admin mobile bar keep the text wordmark (the sidebar's collapsed 76px rail relies on the short `GO` text mark), the public header/footer/drawer keep the logo from the previous round
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (9.25s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
