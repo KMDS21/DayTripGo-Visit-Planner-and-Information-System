@@ -1,8 +1,12 @@
 // VisitPlanPage — /visit-plan (SRS FR-10…FR-13, NFR-7 session-based).
+// Layout: the ordered plan list sits left and the live route map right at every
+// screen width (developer choice); the map column sticks while the list scrolls
+// on large screens. An empty plan shows only the empty-state card.
 
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
 import PlanList from '../components/VisitPlan/PlanList';
+import PlanRouteMap from '../components/VisitPlan/PlanRouteMap';
 import Loader from '../components/Common/Loader';
 
 export default function VisitPlanPage() {
@@ -24,10 +28,12 @@ export default function VisitPlanPage() {
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10" />
       </section>
 
-      <div className="mx-auto max-w-3xl space-y-6">
-        {loading ? (
+      {loading ? (
+        <div className="mx-auto max-w-3xl">
           <Loader label="Loading your plan…" />
-        ) : (
+        </div>
+      ) : items.length === 0 ? (
+        <div className="mx-auto max-w-3xl">
           <PlanList
             items={items}
             totalDistance={totalDistance}
@@ -35,8 +41,23 @@ export default function VisitPlanPage() {
             onRemove={removePlace}
             onClear={clearPlan}
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 items-start gap-4 sm:gap-5 lg:gap-8">
+          <div className="min-w-0">
+            <PlanList
+              items={items}
+              totalDistance={totalDistance}
+              onMove={moveItem}
+              onRemove={removePlace}
+              onClear={clearPlan}
+            />
+          </div>
+          <div className="min-w-0 lg:sticky lg:top-24">
+            <PlanRouteMap items={items} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
