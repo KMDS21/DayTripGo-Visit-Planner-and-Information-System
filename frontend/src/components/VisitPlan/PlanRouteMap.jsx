@@ -91,7 +91,7 @@ export default function PlanRouteMap({ items }) {
           center={positions[0]}
           zoom={12}
           scrollWheelZoom={false}
-          className="h-72 w-full sm:h-96 lg:h-[560px]"
+          className="h-80 w-full sm:h-96 lg:h-[560px]"
           aria-label="Route map of your day plan, stops numbered in visiting order"
         >
           <TileLayer

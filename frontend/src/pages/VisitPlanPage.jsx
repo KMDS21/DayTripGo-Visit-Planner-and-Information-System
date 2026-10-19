@@ -1,7 +1,8 @@
 // VisitPlanPage — /visit-plan (SRS FR-10…FR-13, NFR-7 session-based).
-// Layout: the ordered plan list sits left and the live route map right at every
-// screen width (developer choice); the map column sticks while the list scrolls
-// on large screens. An empty plan shows only the empty-state card.
+// Layout: stacked and full width on phones/tablets (route map first, plan list
+// below) so both are clearly visible on small screens; on large screens the
+// ordered plan list sits left and the live route map right, with the map column
+// sticking while the list scrolls. An empty plan shows only the empty-state card.
 
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
@@ -28,6 +29,8 @@ export default function VisitPlanPage() {
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10" />
       </section>
 
+      {/* Layout: mobile/tablet stacked and full width (route map first, plan list
+          below) so both stay clearly visible; large screens list left, map right. */}
       {loading ? (
         <div className="mx-auto max-w-3xl">
           <Loader label="Loading your plan…" />
@@ -43,8 +46,11 @@ export default function VisitPlanPage() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-2 items-start gap-4 sm:gap-5 lg:gap-8">
-          <div className="min-w-0">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2 lg:gap-8">
+          {/* At lg+ the list scrolls inside its height (aligned with the map
+              column: map h-[560px] + directions button row) so a long plan never
+              pushes the map off screen; below lg it flows full width instead. */}
+          <div className="order-2 min-w-0 lg:order-1 lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <PlanList
               items={items}
               totalDistance={totalDistance}
@@ -53,7 +59,7 @@ export default function VisitPlanPage() {
               onClear={clearPlan}
             />
           </div>
-          <div className="min-w-0 lg:sticky lg:top-24">
+          <div className="order-1 min-w-0 lg:order-2 lg:sticky lg:top-24">
             <PlanRouteMap items={items} />
           </div>
         </div>
