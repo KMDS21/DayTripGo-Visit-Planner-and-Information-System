@@ -548,3 +548,21 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 16:42 - Tab title reduced to the brand name only; em dashes stripped from visible copy
+
+- **Developer request 1 (page title)**: the browser tab should show only the company name. `frontend/src/hooks/usePageTitle.js` now sets `document.title = 'DayTripGO'` on mount (no `DayTripGO | <page>` suffix and no `DayTripGO — Tour Visit Planner` fallback), and the hook no longer takes a title argument - this supersedes the `12:47` hook entry and the `12:48` Contact tab-title note
+
+- **Call sites cleaned up**: all seven pages now call `usePageTitle()` with no argument (Home, Explore, Contact, My Day Plan, Place Detail - previously the fetched place name, Admin Login, Admin Dashboard), and `frontend/index.html` ships `<title>DayTripGO</title>` so the tab reads correctly before React mounts
+
+- **Developer request 2 (page copy)**: every em dash (—) was removed from rendered text and the sentences rewritten with commas/periods so they still read naturally - HomePage (hero, Why DayTripGO strip, three benefit cards, Featured escapes intro, three How-it-works cards, All places intro), Explore hero, Contact (form intro, success message, company blurb, About paragraph, Good-to-know bullet), VisitPlan session note, Admin Login note, Admin Dashboard (signed-in line and empty-table message), Footer (brand blurb and bottom bar), DetailView (hours fallback and planning-only note), PhotoGallery caption, FeaturedCarousel card line and the PlanList drag hint
+
+- **Placeholder dashes in the admin table**: the missing-data `—` cells now read `Uncategorised` (category) and `Not set` (opening hours)
+
+- **Deliberately unchanged**: `//` and `{/* */}` code comments are not rendered, and en-dash time ranges on Contact (`9:00 – 17:00`, `Mon – Sat · 9:00 – 18:00`) stay per the developer's scope choice
+
+- **Verification**: `npm run build` passes (8.64s, chunk-size warning only) - a repo-wide grep for `—` under `frontend/src` now returns comments only
+
+---
+
+_(Entries below are appended as further steps complete.)_
