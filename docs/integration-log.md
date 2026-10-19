@@ -666,4 +666,16 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 03:05 - New logo artwork committed; Explore grid back to full screen width on large screens
+
+- **Developer replaced both logo assets**: `frontend/public/Logo.png` and `Logo pin.png` were swapped for new artwork (slate/navy pin with a teal road, `GO` in a teal pill matching the site's brand colours, replacing the earlier orange sun design) - both files verified as valid PNGs rendering correctly; no code changes needed since every slot already references these filenames · `npm run build` passes (8.97s)
+
+- **Developer request**: on large screens the Explore page cards should use the full screen width again
+
+- **`PlaceGrid.jsx`**: the `max-w-7xl mx-auto` cap and the 4-column ceiling added in the `02:16` mobile-pass round are removed - the grid is full-width once more with `xl:grid-cols-4 2xl:grid-cols-5`, restoring the large-screen layout logged on 2026-10-15 15:14 (gutters removed, grid reclaims the space); the mobile behaviour from that round (1 col < 640, 2 col >= 640, 3 col >= 1024) is unchanged
+
+- **Verification**: `npm run lint` reports nothing for the changed file · `npm run build` passes (5.56s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
