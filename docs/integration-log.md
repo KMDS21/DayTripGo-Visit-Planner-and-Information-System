@@ -534,3 +534,17 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 14:42 - Admin login screen isolated from the public Header and Footer
+
+- **Developer request**: `http://localhost:5173/admin` should show only the admin screen (the login card) - not the public site navigation or footer, which the login page had been picking up from `PublicLayout`
+
+- **`App.jsx` routing**: `/admin/login` and the `/admin` → `/admin/login` redirect moved out of `PublicLayout` into a new **`AdminAuthLayout`** - a bare centred shell (`min-h-svh`, `bg-background`, `px-4`) holding only a small DayTripGO logo lockup that links back to the public site and the page itself in a `max-w-md` column. `PublicLayout` now wraps only the public routes: `/`, `/explore`, `/places/:id`, `/visit-plan`, `/contact` and the 404 catch-all
+
+- **Unchanged**: after login the dashboard still renders inside `AdminLayout` with the collapsible sidebar (it never had public chrome), and `ProtectedRoute` still bounces logged-out visits of `/admin/dashboard` to `/admin/login` with the `from` deep-link state
+
+- **Verification**: lint reports nothing for `App.jsx`, `npm run build` passes (5.42s); headless Chrome check - `/admin` → `/admin/login` renders with `header=false footer=false nav=false` (logo + Administrator-login card only, zero JS errors), `/` still has header + nav + footer, and login with the current `backend/.env` credentials lands on `/admin/dashboard` with the sidebar, 10 place rows and no footer
+
+---
+
+_(Entries below are appended as further steps complete.)_
