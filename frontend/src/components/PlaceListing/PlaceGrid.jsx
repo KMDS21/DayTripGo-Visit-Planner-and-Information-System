@@ -13,11 +13,10 @@ export default function PlaceGrid({ places, categories, hasPlace, onAdd }) {
     );
   }
 
-  // Capped at 4 columns (was 5 at 2xl) so cards stay readable on wide
-  // screens; the grid is centred with a max width so it doesn't stretch
-  // edge-to-edge on 2K+ monitors.
+  // Full-width grid (no max-width cap) so cards use the whole screen on
+  // large displays; up to 5 columns at 2xl.
   return (
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {places.map((place) => (
         <PlaceCard
           key={place.place_id}
