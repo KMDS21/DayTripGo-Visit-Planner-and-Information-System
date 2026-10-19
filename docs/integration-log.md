@@ -652,4 +652,18 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 02:55 - Company logo on the admin sidebar, admin mobile bar and admin drawer
+
+- **Developer request**: the admin panel sidebar logo had not been updated - it should show the company logo like the rest of the site
+
+- **Admin sidebar (`App.jsx` `AdminLayout`)**: the brand slot now switches on the collapse state - the expanded 240px sidebar shows the full `Logo.png` (h-9), and the collapsed 76px rail shows the pin-only `Logo%20pin.png` (h-8) because the full horizontal lockup is wider than the rail; both carry `alt="DayTripGO"`; this replaces the previous text wordmark and the `GO` text mark used for the collapsed state
+
+- **Admin mobile bar + drawer (`AdminMobileBar`)**: the top bar brand and the drawer header swap their text wordmarks for `Logo.png` (h-8) so the admin branding matches between the sidebar (lg+), the mobile bar and the drawer at every width
+
+- **Every logo slot in the app is now an image**: public header, public footer (white chip), public mobile drawer, admin login shell, admin sidebar (two states), admin mobile bar, admin drawer, Contact company-details card; the tab icon stays `Logo%20pin.png` - no `DayTripGO` text wordmark renders anywhere anymore
+
+- **Verification**: `npm run lint` reports nothing for `App.jsx` · `npm run build` passes (10.97s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
