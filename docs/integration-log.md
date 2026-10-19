@@ -678,4 +678,20 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 03:20 - Live route map on the My Day Plan page (new branch `feature/plan-route-map`)
+
+- **Developer request**: the day plan page should show the planned destinations on a map beside the plan list, and the route must update automatically when the visit order changes (move up/down, drag reorder, add, remove, clear)
+
+- **Branch**: work moves to a dedicated `feature/plan-route-map` branch forked from `feature/frontend-redesign` (`63d61e0`), per the developer's instruction
+
+- **Map engine decision**: the developer first chose the Google Maps JS API but could not obtain an API key, then approved the earlier recommendation - OpenStreetMap + Leaflet, the same free/no-quota stack (plan §4.5) already used by the place-detail map; a free "Open route in Google Maps" directions link under the map supplies real Google turn-by-turn without any API key
+
+- **New `components/VisitPlan/PlanRouteMap.jsx`**: derives the ordered stop list from the plan items (invalid coordinates skipped) and renders - numbered DayTripGO pins (custom `L.divIcon`, same pin silhouette as `MapMarker`, stop number inside) with a "Stop N of M" popup; a brand-teal route polyline with a white casing connecting the stops **in visit order**, so the line re-draws the moment the order changes; a `FitBounds` child (`useMap()`) that refits the viewport with padding on every change (single stop → centred view); OSM tile layer with attribution, `scrollWheelZoom={false}` like `MapEmbed`; renders nothing for an empty plan; the Google Maps directions link builds origin → ordered waypoints (max 9, the URL API limit) → destination and opens in a new tab
+
+- **`pages/VisitPlanPage.jsx`**: the single `max-w-3xl` column becomes a two-column grid at **all** screen widths (developer choice - plan list left, map right) with `min-w-0` columns so nothing overflows on narrow phones; the map column is `lg:sticky lg:top-24` so it stays visible while the list scrolls; map height `h-72 sm:h-96 lg:h-[560px]`; the loading state and the empty-plan card keep the centred single column (no map until the first place is added)
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (10.72s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
