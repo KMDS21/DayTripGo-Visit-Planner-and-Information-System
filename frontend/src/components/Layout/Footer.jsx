@@ -76,8 +76,8 @@ export default function Footer() {
       <div className="relative border-t border-white/15 px-6 py-5 text-center text-xs text-white/70 sm:px-10 lg:flex lg:items-center lg:justify-between lg:px-14 lg:text-left">
         <p>© 2026 DayTripGO · Wadduwa, Sri Lanka</p>
         <p>
-          Visit planning only — no booking or payment services (deliberately out of
-          scope). ITE2953 Programming Group Project · E2410884 · De Silva P.K.M.
+          Visit planning only — no booking or payment services. Plan your day with
+          DayTripGO.
         </p>
       </div>
     </footer>

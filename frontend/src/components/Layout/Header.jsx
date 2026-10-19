@@ -17,17 +17,17 @@ export default function Header() {
         <div className="md:col-start-2 md:justify-self-center">
           <Navbar />
         </div>
-        {/* Separate green CTA button, right side of the bar */}
+        {/* Green plan CTA, right corner of the bar → My Day Plan */}
         <div className="ml-auto md:col-start-3 md:ml-0 md:justify-self-end">
           <NavLink
-            to="/contact"
+            to="/visit-plan"
             className={({ isActive }) =>
               `block rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark ${
                 isActive ? 'ring-2 ring-brand-dark ring-offset-2 ring-offset-background' : ''
               }`
             }
           >
-            Contact us
+            Let&apos;s plan your tour
           </NavLink>
         </div>
       </div>
