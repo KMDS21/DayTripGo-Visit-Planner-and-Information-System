@@ -496,3 +496,41 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:47 - Per-page browser tab titles via a usePageTitle hook
+
+- **New hook `frontend/src/hooks/usePageTitle.js`**: sets `document.title` to `DayTripGO | <page title>` inside a `useEffect` keyed on the title, falling back to the brand tagline `DayTripGO — Tour Visit Planner` when no title is passed
+
+- **Wired into six pages**: Home (`Home`), Explore (`Explore Places`), My Day Plan (`My Day Plan`), Place Detail (the fetched place name once loaded, otherwise `Place Details`), Admin Login (`Admin Login`) and Admin Dashboard (`Admin Dashboard`) - the Contact page call ships with its own rebuild entry below
+
+- **Verification**: `npm run lint` warnings-only with nothing new in the changed files · `npm run build` passes (5.95s, chunk-size warning only, unchanged)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:48 - Contact page rebuilt as message form + company details; header/nav CTA swapped; footer wording shortened
+
+- **`ContactPage` two-column rebuild**: left column is a `Send us a message` form (full name, email, phone, subject select, a `Country details` group with country select + optional city, message textarea) with client-side validation - required name/email/message and an email-regex check - plus inline `role="alert"` error and `role="status"` success states; it stays local with no backend endpoint, so the planning-only scope (NFR-4) is unchanged. Right column is a company-details card: favicon logo, brand blurb and the four detail rows (address, email, phone, hours) now carrying lucide icons (MapPin / Mail / Phone / Clock)
+
+- **Academic credit removed from public copy**: the About card line `Operated as the ITE2953 Programming Group Project (E2410884 · De Silva P.K.M.)` was replaced with a local-team / future-expansion note, and the footer bottom bar dropped `ITE2953 Programming Group Project · E2410884 · De Silva P.K.M.` in favour of `Plan your day with DayTripGO.` - the planning-only scope note on the right of the footer bar is kept
+
+- **Header/Navbar CTA swap**: the green `Let's plan your tour` box moved out of the navbar into the header's third grid column (right corner, `→ /visit-plan`, same ring active state), and `Contact us` became a plain `NavLink` in the navbar - nav links stay centred in the middle grid column
+
+- **Contact tab title** set with `usePageTitle('Contact Us')` (hook from the entry above)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:49 - Home page sections reordered; featured carousel padding tightened
+
+- **New home order**: hero (the four highlight chips - 10 verified places / 4 categories / no account needed / free to use - were removed) → **Why DayTripGO** moved up from the page bottom to sit directly under the hero → **Featured escapes** (heading now centred in a max-w-2xl block) → **How DayTripGO works** now occupies the tinted `bg-brand-light/50` rounded band with the decorative brand circles → **All places** preview band lost its tint (plain `w-full`, keeps the `#places` id and the `Explore all places →` link) → footer
+
+- **Carousel padding tightened**: the Aceternity Apple Cards track dropped `py-10 md:py-20` to `py-2 md:py-6` so the cards sit close under the section heading
+
+- **Verification**: `npm run lint` warnings-only (vendor carousel warnings pre-existing) · `npm run build` passes (5.95s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
