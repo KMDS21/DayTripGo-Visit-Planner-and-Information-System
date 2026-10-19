@@ -5,12 +5,14 @@
 import { useState } from 'react';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
+import usePageTitle from '../hooks/usePageTitle';
 import CategoryFilter from '../components/PlaceListing/CategoryFilter';
 import PlaceGrid from '../components/PlaceListing/PlaceGrid';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 
 export default function ExplorePage() {
+  usePageTitle('Explore Places');
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);

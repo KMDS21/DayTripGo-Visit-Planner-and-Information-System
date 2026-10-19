@@ -6,6 +6,7 @@ import { getPlaceById } from '../services/placeService';
 import { getCategories } from '../services/categoryService';
 import { errorMessage } from '../services/api';
 import { useVisitPlan } from '../hooks/useVisitPlan';
+import usePageTitle from '../hooks/usePageTitle';
 import DetailView from '../components/PlaceDetail/DetailView';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
@@ -18,6 +19,7 @@ export default function PlaceDetailPage() {
   const [error, setError] = useState(null);
   const [added, setAdded] = useState(false);
   const { addPlace, hasPlace } = useVisitPlan();
+  usePageTitle(place ? place.name : 'Place Details');
 
   useEffect(() => {
     let cancelled = false;

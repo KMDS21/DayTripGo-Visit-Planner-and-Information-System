@@ -5,9 +5,11 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { errorMessage } from '../services/api';
+import usePageTitle from '../hooks/usePageTitle';
 import Button from '../components/Common/Button';
 
 export default function AdminLoginPage() {
+  usePageTitle('Admin Login');
   const { login, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

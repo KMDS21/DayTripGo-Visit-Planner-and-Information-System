@@ -8,6 +8,7 @@ import { createPlace, deletePlace, getPlaces, updatePlace } from '../services/pl
 import { getCategories } from '../services/categoryService';
 import { errorMessage } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import usePageTitle from '../hooks/usePageTitle';
 import { formatDistance } from '../utils/formatDistance';
 import Button from '../components/Common/Button';
 import Modal from '../components/Common/Modal';
@@ -30,6 +31,7 @@ const inputClass =
   'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
 
 export default function AdminDashboardPage() {
+  usePageTitle('Admin Dashboard');
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
 

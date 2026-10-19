@@ -1,10 +1,12 @@
 // VisitPlanPage — /visit-plan (SRS FR-10…FR-13, NFR-7 session-based).
 
 import { useVisitPlan } from '../hooks/useVisitPlan';
+import usePageTitle from '../hooks/usePageTitle';
 import PlanList from '../components/VisitPlan/PlanList';
 import Loader from '../components/Common/Loader';
 
 export default function VisitPlanPage() {
+  usePageTitle('My Day Plan');
   const { items, loading, totalDistance, moveItem, removePlace, clearPlan } = useVisitPlan();
 
   return (
