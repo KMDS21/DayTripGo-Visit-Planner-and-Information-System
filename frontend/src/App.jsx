@@ -101,6 +101,23 @@ function ChevronIcon({ collapsed }) {
   );
 }
 
+// ── Admin auth shell — login/redirect screens only: no public Header/Footer ─
+function AdminAuthLayout() {
+  return (
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-10">
+      <Link to="/" className="mb-6 flex items-center gap-2.5">
+        <img src="/favicon.svg" alt="" className="h-9 w-9 shrink-0" />
+        <span className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">
+          DayTrip<span className="text-brand">GO</span>
+        </span>
+      </Link>
+      <div className="w-full max-w-md">
+        <Outlet />
+      </div>
+    </div>
+  );
+}
+
 // ── Admin shell — collapsible light sidebar, no public Header/Footer ───────
 function AdminLayout({ children }) {
   const { count } = useVisitPlan();
@@ -210,9 +227,12 @@ export default function App() {
           <Route path="/places/:id" element={<PlaceDetailPage />} />
           <Route path="/visit-plan" element={<VisitPlanPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        {/* Admin auth screens — isolated: no public navigation or footer */}
+        <Route element={<AdminAuthLayout />}>
+          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
         </Route>
         <Route
           path="/admin/dashboard"
