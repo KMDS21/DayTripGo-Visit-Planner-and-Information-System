@@ -12,7 +12,7 @@ import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 
 export default function HomePage() {
-  usePageTitle('Home');
+  usePageTitle();
   const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -33,8 +33,8 @@ export default function HomePage() {
             One perfect day around Wadduwa
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
-            Discover verified places of interest within 25 km of Wadduwa, Sri Lanka — temples, gardens, waterfalls
-            and beaches — and build a simple one-day visit plan.
+            Discover verified places of interest within 25 km of Wadduwa, Sri Lanka, such as temples, gardens,
+            waterfalls and beaches, and build a simple one-day visit plan.
           </p>
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
@@ -46,7 +46,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">Why DayTripGO</h2>
           <p className="mt-2 text-muted-foreground">
-            Travel blogs list everything; we list what is worth your day — and tell you when
+            Travel blogs list everything; we list what is worth your day, and tell you when
             to go.
           </p>
         </div>
@@ -58,11 +58,11 @@ export default function HomePage() {
             },
             {
               title: 'Distances up front',
-              text: 'Distances from Wadduwa town are shown on every card — you always know how far the trip is before you tap.',
+              text: 'Distances from Wadduwa town are shown on every card, so you always know how far the trip is before you tap.',
             },
             {
               title: 'Planning only',
-              text: 'DayTripGO helps you decide and organise. No bookings, no payments, no accounts — just a clear one-day plan.',
+              text: 'DayTripGO helps you decide and organise. No bookings, no payments and no accounts, just a clear one-day plan.',
             },
           ].map((point) => (
             <div key={point.title} className="rounded-2xl bg-muted/40 p-6 text-center">
@@ -77,7 +77,7 @@ export default function HomePage() {
       <section className="w-full">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="mb-2 font-heading text-2xl font-bold sm:text-3xl">Featured escapes</h2>
-          <p className="mb-2 text-muted-foreground">A taste of each category — tap a card for the full story.</p>
+          <p className="mb-2 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
         </div>
         <FeaturedCarousel places={places} categories={categories} />
       </section>
@@ -97,7 +97,7 @@ export default function HomePage() {
           {[
             {
               title: 'Browse verified places',
-              text: 'Temples, beaches, gardens and heritage sites within 25 km of Wadduwa — each one checked by our team before it is listed.',
+              text: 'Temples, beaches, gardens and heritage sites within 25 km of Wadduwa, each one checked by our team before it is listed.',
             },
             {
               title: 'Filter and compare',
@@ -105,7 +105,7 @@ export default function HomePage() {
             },
             {
               title: 'Build your one-day plan',
-              text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place — no sign-up, no payment.',
+              text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place, with no sign-up and no payment.',
             },
           ].map((step, i) => (
             <div key={step.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
@@ -125,7 +125,7 @@ export default function HomePage() {
           <div className="max-w-2xl">
             <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
             <p className="mt-1.5 leading-relaxed text-muted-foreground">
-              A taste of what is out there — open Explore for the full list, category
+              A taste of what is out there. Open Explore for the full list, category
               filters, opening hours and distances.
             </p>
           </div>

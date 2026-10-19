@@ -26,8 +26,8 @@ export default function Footer() {
             DayTrip<span className="text-white/70">GO</span>
           </p>
           <p className="mt-3 text-sm leading-relaxed text-white/80">
-            One perfect day around Wadduwa — verified places of interest within 25 km,
-            with opening times, distances and practical tips, plus a simple one-day
+            One perfect day around Wadduwa, with verified places of interest within 25 km,
+            opening times, distances and practical tips, plus a simple one-day
             plan builder.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function Footer() {
       <div className="relative border-t border-white/15 px-6 py-5 text-center text-xs text-white/70 sm:px-10 lg:flex lg:items-center lg:justify-between lg:px-14 lg:text-left">
         <p>© 2026 DayTripGO · Wadduwa, Sri Lanka</p>
         <p>
-          Visit planning only — no booking or payment services. Plan your day with
+          Visit planning only, with no booking or payment services. Plan your day with
           DayTripGO.
         </p>
       </div>

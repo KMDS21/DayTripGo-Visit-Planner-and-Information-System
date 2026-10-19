@@ -58,7 +58,7 @@ const inputClass =
   'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
 
 export default function ContactPage() {
-  usePageTitle('Contact Us');
+  usePageTitle();
 
   const [form, setForm] = useState({
     name: '',
@@ -110,7 +110,7 @@ export default function ContactPage() {
         <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <h2 className="font-heading text-2xl font-bold">Send us a message</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Tell us who you are and how we can help — we reply by email within two working days.
+            Tell us who you are and how we can help. We reply by email within two working days.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -237,7 +237,7 @@ export default function ContactPage() {
             )}
             {sent && (
               <p role="status" className="rounded-xl bg-emerald-100 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
-                Thanks — your message has been noted. We will get back to you by email.
+                Thanks. Your message has been noted, and we will get back to you by email.
               </p>
             )}
 
@@ -263,8 +263,8 @@ export default function ContactPage() {
               </div>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              A visitor information service for the Wadduwa area of Sri Lanka — verified
-              places, practical details and simple one-day plans for independent travellers.
+              A visitor information service for the Wadduwa area of Sri Lanka, offering
+              verified places, practical details and simple one-day plans for independent travellers.
             </p>
 
             <dl className="mt-6 space-y-4">
@@ -294,8 +294,8 @@ export default function ContactPage() {
           <h2 className="font-heading text-xl font-bold">About DayTripGO</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             DayTripGO is a visitor information service for the Wadduwa area of Sri Lanka. We
-            keep a verified list of places of interest within 25 km of Wadduwa — beaches,
-            temples, heritage houses and gardens — with opening times, distances and practical
+            keep a verified list of places of interest within 25 km of Wadduwa, including beaches,
+            temples, heritage houses and gardens, with opening times, distances and practical
             tips, and we help you assemble them into a simple one-day plan.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -306,7 +306,7 @@ export default function ContactPage() {
         <div className="rounded-2xl border border-border bg-muted/40 p-6">
           <h2 className="font-heading text-xl font-bold">Good to know</h2>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
-            <li>• DayTripGO is planning-only — we do not take bookings or payments.</li>
+            <li>• DayTripGO is planning-only, and we do not take bookings or payments.</li>
             <li>• Suggest a place by email and our team will verify it before listing.</li>
             <li>• Found wrong hours or details? Tell us the place name and we will fix it.</li>
           </ul>

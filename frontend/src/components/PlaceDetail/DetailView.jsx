@@ -32,7 +32,7 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
 
         <section className="rounded-2xl border border-border bg-card p-5">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Opening hours</h2>
-          <p className="text-base">{normaliseHours(place.opening_hours) || 'Hours not specified — contact before visiting.'}</p>
+          <p className="text-base">{normaliseHours(place.opening_hours) || 'Hours not specified. Contact us before visiting.'}</p>
         </section>
 
         {place.travel_tips && (
@@ -52,7 +52,7 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Planning only — DayTripGO does not book or sell anything.
+          Planning only. DayTripGO does not book or sell anything.
         </p>
       </div>
     </article>

@@ -31,7 +31,7 @@ const inputClass =
   'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
 
 export default function AdminDashboardPage() {
-  usePageTitle('Admin Dashboard');
+  usePageTitle();
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
     load();
   }, [load]);
 
-  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || '—';
+  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || 'Uncategorised';
 
   // ── Add / Edit form ──────────────────────────────────────────
   const openAdd = () => {
@@ -161,7 +161,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold sm:text-4xl">Place management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as <span className="font-semibold text-foreground">{admin?.username}</span> — add, edit or
+            Signed in as <span className="font-semibold text-foreground">{admin?.username}</span>. Add, edit or
             delete places of interest.
           </p>
         </div>
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
                   <td className="px-4 py-3">{categoryName(place.category_id)}</td>
                   <td className="px-4 py-3">{formatDistance(place.distance_km)}</td>
                   <td className="max-w-56 truncate px-4 py-3 text-muted-foreground" title={place.opening_hours || ''}>
-                    {place.opening_hours || '—'}
+                    {place.opening_hours || 'Not set'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex gap-2">
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
               {places.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
-                    No places yet — add the first one.
+                    No places yet. Add the first one.
                   </td>
                 </tr>
               )}

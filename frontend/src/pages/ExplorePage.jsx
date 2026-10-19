@@ -12,7 +12,7 @@ import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 
 export default function ExplorePage() {
-  usePageTitle('Explore Places');
+  usePageTitle();
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -30,7 +30,7 @@ export default function ExplorePage() {
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-heading text-4xl font-bold sm:text-5xl">Explore places</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
-            Every verified spot within 25 km of Wadduwa in one place — filter by category,
+            Every verified spot within 25 km of Wadduwa in one place. Filter by category,
             check opening times, and add your favourites straight to the day plan.
           </p>
         </div>

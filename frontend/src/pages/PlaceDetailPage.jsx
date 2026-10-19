@@ -19,7 +19,7 @@ export default function PlaceDetailPage() {
   const [error, setError] = useState(null);
   const [added, setAdded] = useState(false);
   const { addPlace, hasPlace } = useVisitPlan();
-  usePageTitle(place ? place.name : 'Place Details');
+  usePageTitle();
 
   useEffect(() => {
     let cancelled = false;

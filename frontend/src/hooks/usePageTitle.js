@@ -1,12 +1,13 @@
 // usePageTitle — sets the browser tab title for the current page.
-// Usage: usePageTitle('Explore')  →  "DayTripGO | Explore"
+// The tab always shows only the company/brand name.
+// Usage: usePageTitle('Explore')  →  "DayTripGO"
 
 import { useEffect } from 'react';
 
 const BRAND = 'DayTripGO';
 
-export default function usePageTitle(title) {
+export default function usePageTitle() {
   useEffect(() => {
-    document.title = title ? `${BRAND} | ${title}` : `${BRAND} — Tour Visit Planner`;
-  }, [title]);
+    document.title = BRAND;
+  }, []);
 }
