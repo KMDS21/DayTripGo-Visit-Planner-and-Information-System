@@ -106,9 +106,7 @@ function AdminAuthLayout() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-10">
       <Link to="/" className="mb-6">
-        <span className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">
-          DayTrip<span className="text-brand">GO</span>
-        </span>
+        <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto" />
       </Link>
       <div className="w-full max-w-md">
         <Outlet />

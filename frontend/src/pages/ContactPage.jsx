@@ -252,11 +252,9 @@ export default function ContactPage() {
         {/* Right side — company details */}
         <div className="space-y-5">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-            {/* Logo + brand — hardcoded text wordmark */}
-            <div>
-              <h2 className="font-heading text-2xl font-bold leading-tight">
-                DayTrip<span className="text-brand">GO</span>
-              </h2>
+            {/* Logo + brand — company logo */}
+            <div className="flex items-center gap-3">
+              <img src="/Logo.png" alt="DayTripGO" className="h-12 w-auto shrink-0" />
               <p className="text-xs font-semibold uppercase tracking-wide text-brand">
                 Company details
               </p>
