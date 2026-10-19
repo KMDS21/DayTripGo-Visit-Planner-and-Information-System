@@ -622,4 +622,20 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 02:40 - Company logo restored in the public header, footer and mobile drawer
+
+- **Developer request**: the public nav bar and footer should show the `Logo.png` company logo instead of the hardcoded `DayTripGO` text (the admin areas keep the text wordmark from the previous round)
+
+- **`Header.jsx`**: the brand lockup is now `<img src="/Logo.png">` (h-9, auto width) replacing the text wordmark; `alt="DayTripGO"` keeps the accessible name
+
+- **`Footer.jsx`**: the gradient footer's brand block now shows the logo on a small white chip (`bg-white px-3 py-2 rounded-xl`) - the logo's dark-navy lettering is unreadable on the dark teal gradient without it; the brand blurb below is unchanged
+
+- **`MobileMenu.jsx`**: the drawer header (the mobile face of the public nav) swaps its text wordmark for the same logo so the branding matches between the bar and the drawer at every width
+
+- **Unchanged by scope**: admin login shell, admin sidebar, admin mobile bar and the Contact company-details card keep the hardcoded text per the previous round's instruction
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (6.34s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
