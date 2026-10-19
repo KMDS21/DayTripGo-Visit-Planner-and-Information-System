@@ -3,6 +3,8 @@
 Append-only chronological record of build, integration and verification steps.
 **Rule: never overwrite this file — new entries are always appended at the bottom.**
 
+**Commit convention (from 2026-10-20 04:15, per developer instruction):** each round is committed as **one single commit** containing both the new log entry and its code changes (developer: "commit with log in all one commit"). The earlier docs-first-then-code commit pairs no longer apply.
+
 Reference: Project Plan §14 (E2410884_PROJECT_PLAN.md) · SRS v2.1 (E2410884_SRS DOCUMENT_FINAL.md)
 
 ---
@@ -705,6 +707,18 @@ _(Entries below are appended as further steps complete.)_
 - **`PlanRouteMap.jsx`**: map height `h-72` → `h-80` on the smallest screens (it is now full width there, so it can afford the extra room)
 
 - **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes
+
+---
+
+## 2026-10-20 04:05 - Clear plan button clearly visible with a soft red treatment
+
+- **Developer requests**: the "Clear plan" button on the My Day Plan page should show up clearly, but a solid red fill proved too heavy on the eyes (high contrast strain)
+
+- **`PlanList.jsx`**: the Clear plan button switches from the faint `ghost` variant (transparent background, muted grey text - easy to miss in the summary bar) to a clearly visible red treatment; the summary bar itself becomes `lg:sticky lg:top-0 lg:z-10` so the button stays in reach while the list column scrolls at lg+
+
+- **`Common/Button.jsx`**: new additive `danger-soft` variant - light red tint (`bg-red-50`), red text (`text-red-600`), thin `border-red-200` and a gentle `hover:bg-red-100 hover:text-red-700`, instead of the heavy solid `bg-red-600` fill of the existing `danger` variant; the Clear plan button uses it, so the action still reads as red but no longer strains the eyes
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (7.46s)
 
 ---
 
