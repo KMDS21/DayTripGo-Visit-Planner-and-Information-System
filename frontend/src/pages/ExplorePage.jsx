@@ -26,9 +26,9 @@ export default function ExplorePage() {
   return (
     <div className="space-y-8 pb-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-6 py-14 text-white sm:py-16">
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-heading text-4xl font-bold sm:text-5xl">Explore places</h1>
+          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">Explore places</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             Every verified spot within 25 km of Wadduwa in one place. Filter by category,
             check opening times, and add your favourites straight to the day plan.
@@ -55,10 +55,10 @@ export default function ExplorePage() {
         <PlaceGrid places={places} categories={categories} hasPlace={hasPlace} onAdd={handleAdd} />
       )}
 
-      {/* Add-to-plan confirmation flash */}
-      <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+      {/* Add-to-plan confirmation flash (max-width keeps long names on-screen) */}
+      <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2">
         {flash && (
-          <p className="rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background shadow-lg">
+          <p className="rounded-full bg-foreground px-5 py-2.5 text-center text-sm font-semibold text-background shadow-lg">
             {flash}
           </p>
         )}

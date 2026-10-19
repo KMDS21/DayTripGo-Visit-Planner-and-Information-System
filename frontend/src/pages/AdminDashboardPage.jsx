@@ -27,8 +27,10 @@ const EMPTY_FORM = {
   image_url: '',
 };
 
+// text-base on small screens prevents iOS Safari's focus auto-zoom (it only
+// zooms inputs under 16px); sm+ keeps the compact look on desktop.
 const inputClass =
-  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
+  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:text-sm';
 
 export default function AdminDashboardPage() {
   usePageTitle();
@@ -177,7 +179,45 @@ export default function AdminDashboardPage() {
       {!loading && error && <ErrorMessage message={error} onRetry={load} />}
 
       {!loading && !error && (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+        <>
+          {/* Card list — phones/tablets below md (a 640px table forces
+              horizontal scrolling there, which is painful on a phone). */}
+          <ul className="space-y-3 md:hidden">
+            {places.map((place, i) => (
+              <li key={place.place_id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">
+                      <span className="mr-2 text-sm text-muted-foreground">{i + 1}.</span>
+                      {place.name}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {categoryName(place.category_id)} · {formatDistance(place.distance_km)}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {place.opening_hours || 'Hours not set'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(place)}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="danger" className="flex-1" onClick={() => setDeleteTarget(place)}>
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            ))}
+            {places.length === 0 && (
+              <li className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+                No places yet. Add the first one.
+              </li>
+            )}
+          </ul>
+
+          {/* Table — md and up */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-border bg-card shadow-sm md:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
@@ -221,6 +261,7 @@ export default function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Add / Edit modal (FR-16, FR-17, FR-19) */}
@@ -290,9 +331,9 @@ export default function AdminDashboardPage() {
             </p>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add place'}</Button>
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button type="submit" className="w-full sm:w-auto" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add place'}</Button>
           </div>
         </form>
       </Modal>

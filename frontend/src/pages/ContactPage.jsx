@@ -54,8 +54,10 @@ const COUNTRIES = [
   'Other',
 ];
 
+// text-base on small screens prevents iOS Safari's focus auto-zoom (it only
+// zooms inputs under 16px); sm+ keeps the compact look on desktop.
 const inputClass =
-  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
+  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:text-sm';
 
 export default function ContactPage() {
   usePageTitle();
@@ -92,9 +94,9 @@ export default function ContactPage() {
   return (
     <div className="space-y-10 pb-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-6 py-14 text-white sm:py-16">
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-heading text-4xl font-bold sm:text-5xl">Contact us</h1>
+          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">Contact us</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             Questions about a place, a correction to an opening time, or a spot we should
             feature? DayTripGO is run from Wadduwa and we are happy to hear from visitors.
@@ -250,17 +252,14 @@ export default function ContactPage() {
         {/* Right side — company details */}
         <div className="space-y-5">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-            {/* Logo + brand */}
-            <div className="flex items-center gap-3">
-              <img src="/favicon.svg" alt="" className="h-12 w-12 shrink-0" />
-              <div>
-                <h2 className="font-heading text-2xl font-bold leading-tight">
-                  DayTrip<span className="text-brand">GO</span>
-                </h2>
-                <p className="text-xs font-semibold uppercase tracking-wide text-brand">
-                  Company details
-                </p>
-              </div>
+            {/* Logo + brand — hardcoded text wordmark */}
+            <div>
+              <h2 className="font-heading text-2xl font-bold leading-tight">
+                DayTrip<span className="text-brand">GO</span>
+              </h2>
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+                Company details
+              </p>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
               A visitor information service for the Wadduwa area of Sri Lanka, offering
@@ -271,8 +270,8 @@ export default function ContactPage() {
               {details.map((d) => {
                 const Icon = d.icon;
                 return (
-                  <div key={d.label} className="flex items-start gap-3 rounded-2xl bg-muted/40 p-4">
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+                  <div key={d.label} className="flex items-center gap-3 rounded-2xl bg-muted/40 p-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
                       <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">

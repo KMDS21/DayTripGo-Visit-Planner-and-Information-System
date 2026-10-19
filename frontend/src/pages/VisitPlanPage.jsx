@@ -12,9 +12,9 @@ export default function VisitPlanPage() {
   return (
     <div className="space-y-10 pb-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-6 py-14 text-white sm:py-16">
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-heading text-4xl font-bold sm:text-5xl">My one-day plan</h1>
+          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">My one-day plan</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             Your plan is kept for this browser session only, with no account and no personal
             details needed.
