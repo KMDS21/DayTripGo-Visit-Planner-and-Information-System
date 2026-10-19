@@ -85,9 +85,7 @@ export default function MobileMenu() {
             }`}
           >
             <div className="flex shrink-0 items-center justify-between">
-              <span className="font-heading text-lg font-bold tracking-tight">
-                DayTrip<span className="text-brand">GO</span>
-              </span>
+              <img src="/Logo.png" alt="DayTripGO" className="h-9 w-auto" />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

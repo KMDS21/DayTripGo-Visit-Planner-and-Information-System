@@ -14,9 +14,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 lg:px-8">
         <Link to="/" className="flex items-center md:justify-self-start">
-          <span className="font-heading text-xl font-bold tracking-tight">
-            DayTrip<span className="text-brand">GO</span>
-          </span>
+          <img src="/Logo.png" alt="DayTripGO" className="h-9 w-auto" />
         </Link>
         {/* Centred at md+ (1fr / auto / 1fr columns); hidden on mobile in favour of the drawer. */}
         <div className="hidden md:col-start-2 md:justify-self-center md:block">

@@ -20,11 +20,9 @@ export default function Footer() {
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-white/10" />
 
       <div className="relative grid gap-10 px-6 py-14 sm:px-10 lg:grid-cols-4 lg:px-14">
-        {/* Brand */}
+        {/* Brand — company logo on a light chip so it stays readable on the gradient */}
         <div>
-          <p className="font-heading text-2xl font-bold tracking-tight">
-            DayTrip<span className="text-white/70">GO</span>
-          </p>
+          <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto rounded-xl bg-white px-3 py-2" />
           <p className="mt-3 text-sm leading-relaxed text-white/80">
             One perfect day around Wadduwa, with verified places of interest within 25 km,
             opening times, distances and practical tips, plus a simple one-day
