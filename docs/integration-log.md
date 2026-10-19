@@ -565,4 +565,61 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 02:16 - Mobile usability and reliability pass: drawer navigation, day-plan crash fix, breakpoint corrections
+
+- **Developer request**: make every page more usable and reliable on mobile/small screens (below 1280px) and improve visibility on large screens; mobile nav = hamburger + slide-over drawer, admin list = card list below md (both confirmed by the developer)
+
+### Bug fixes (reliability)
+
+- **Visit Plan page crashed whenever the plan had items**: `PlanList` passed its row renderer as a children render function (`<DragReorder>{(item, index) => …}</DragReorder>`) but `DragReorder` destructured a `renderItem` prop and called it unconditionally - adding the first place threw `TypeError: renderItem is not a function`. `DragReorder` now accepts either form: children given as a function win, otherwise the `renderItem` prop, and a missing renderer renders nothing instead of throwing
+- **Dead `next/image` import removed from `ui/apple-cards-carousel.tsx`**: this is a Vite project with no `next` dependency - the import only survived because esbuild stripped the unused symbol, and `BlurImage`'s props type referenced `next/image`'s `ImageProps` (now typed against plain img attributes); the `fill` prop on the `BlurImage` call site (a next/image-only prop that leaked to the DOM) was dropped too
+- **Carousel `handleClose` initialised while being read**: the Escape-key effect referenced `handleClose` before its declaration (oxlint immutability warning) - both `handleOpen`/`handleClose` are now declared above the effects, and the card-open effect restores `document.body.style.overflow` to `''` instead of a hard-coded `auto`
+
+### Navigation (mobile)
+
+- **New `components/Layout/MobileMenu.jsx`**: hamburger trigger below md opening a right-side slide-over drawer (Home, Explore places, My Day Plan with count badge, Contact us, plus the plan CTA pinned at the bottom); closes on Escape / backdrop tap / link tap / close button, locks body scroll, moves focus into the panel on open, `inert` while closed
+- **Drawer rendered through a `createPortal` to `document.body`**: the public header uses `backdrop-blur`, and a backdrop-filter ancestor becomes the containing block for `position: fixed` descendants - without the portal the drawer was clipped to the ~56px header strip and appeared as a colourless sliver over the page content; the backdrop is `bg-black/60` and the panel `bg-background` so it never blends with content
+- **CTA pinned inside the display**: the nav list is the only scrollable region (`min-h-0 overflow-y-auto`) so `Let's plan your tour` stays at the bottom of the panel even on short/landscape phone screens; same treatment in the admin drawer (scrolling nav, `shrink-0` logout button)
+- **`Header.jsx`**: inline `Navbar` hidden below md in favour of the drawer; CTA reads `My plan` under sm (`Let's plan your tour` from sm up) and carries the plan-count badge, so the bar stays on one row
+- **Admin shell (`App.jsx`)**: the sidebar is `hidden lg:flex`, which left phones/tablets with no admin navigation at all - a new `AdminMobileBar` (sticky top bar: brand link, Log out, hamburger) plus a drawer (Dashboard / Explore / My Day Plan, signed-in line, Log out) now covers below lg; `AdminLayout` stacks (`flex-col lg:flex-row`) so the bar sits above the content
+
+### Breakpoint and visibility corrections
+
+- **Carousel card heights**: replaced the `h-80 → md:h-[40rem]` jump (a 640px card taller than a 768-1280px laptop viewport) with a gradual `h-[22rem] sm:h-[26rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem]`
+- **`PlaceGrid`**: capped at `xl:grid-cols-4` (dropped `2xl:grid-cols-5` which cramped wide-screen cards) and centred with `max-w-7xl mx-auto`
+- **Page heroes** (Home, Explore, My Day Plan, Contact): `text-3xl` at the smallest size up to `lg:text-5xl`, tighter `px-4 py-12` on phones
+- **`CategoryFilter`**: single horizontal scroll-snap row on phones with `min-h-10` pills (previously wrapped onto 3+ lines); wraps as before from sm
+- **Add-to-plan flash toast** (Home, Explore): constrained to `w-[calc(100vw-2rem)] max-w-md` and centred text so long place names cannot overflow the screen edge
+- **`DetailView`**: sticky bottom action bar on phones (`lg:hidden`, `safe-b` padding) keeps `Add to my day plan` reachable while scrolling; the in-flow button shows from lg; the planning-only note keeps `pb-24` on mobile so the bar never covers it
+- **`PlanItem`**: stacks below sm (order badge + name/distance/hours on top, reorder arrows + remove on their own row with 44px touch targets) - HTML5 drag does not fire on touchscreens, so the arrows are the primary reorder path on phones
+- **`AdminDashboardPage`**: the `min-w-[640px]` table forced horizontal scrolling on phones - below md each place is now a card (number, name, category, distance, hours, full-width Edit/Delete); the table stays from md up; modal action buttons stack full-width under sm (`flex-col-reverse`); form inputs are `text-base` on mobile to stop iOS focus auto-zoom (same applied to Contact and Admin Login inputs via their shared `inputClass`)
+- **`index.css`**: `touch-manipulation` on interactive elements, a `safe-b` utility (`env(safe-area-inset-bottom)`) for fixed bottom bars, `overscroll-y-contain` on html; **`index.html`**: light/dark `theme-color` meta for the mobile browser chrome
+
+### Contact page polish
+
+- **Company-details icon centred**: the detail rows switched `items-start` → `items-center` (and dropped the `mt-0.5` nudge) so the round icon centres against its three-line label/value/hint block instead of sitting on the top edge
+- **Company logo**: the company-details card now shows the real horizontal logo `public/Logo.png` (pin mark + wordmark) in place of the small square favicon plus the separate text wordmark
+
+### Verification
+
+- `npm run lint` warnings-only, nothing new in the changed files (the carousel `Image`/`handleClose`/`currentIndex` warnings are gone) · `npm run build` passes (6.77s / 8.30s re-checks, chunk-size warning only) · first production build ever run on this project - `frontend/dist/` now exists
+
+---
+
+## 2026-10-20 02:24 - Text wordmark branding everywhere; Logo pin.png becomes the tab icon; contact icon centred
+
+- **Developer request**: logo areas should show the hardcoded `DayTripGO` text wordmark (no logo image), the page-tab icon should use the new pin image, and the contact company-details icon should be vertically centred
+
+- **New brand assets in `frontend/public/`**: the developer added `Logo pin.png` (pin-only mark) and `Logo.png` (full horizontal lockup) and deleted the old `favicon.svg`; `Logo.png` is kept in public as the source asset but no component renders it
+
+- **Tab icon**: `frontend/index.html` now links `rel="icon" type="image/png"` to `/Logo%20pin.png` (space URL-encoded) in place of the deleted `/favicon.svg`
+
+- **Hardcoded text wordmark in every logo slot**: public `Header` (image removed, text kept), admin login shell `AdminAuthLayout` in `App.jsx`, the admin mobile top bar, and the collapsible admin sidebar - the collapsed 76px rail now shows a `GO` text mark instead of the image it previously used for the icon-only state; `ContactPage` company-details card reverted from the full `Logo.png` image back to the `DayTripGO` heading + `Company details` label; the mobile drawer, footer and login card were already text-only
+
+- **Contact icon centred**: the company-detail rows switched `items-start` → `items-center` (dropping the `mt-0.5` nudge) so the round icon centres against its three-line label/value/hint block instead of sitting on the top edge
+
+- **Verification**: repo-wide grep confirms zero `favicon.svg` / `Logo.png` references left in source · `npm run lint` reports nothing for the changed files · `npm run build` passes (6.01s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
