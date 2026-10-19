@@ -694,4 +694,18 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 03:50 - Day plan: list column scroll bar at lg+, clear stacked layout on phones
+
+- **Developer requests**: the location list on the My Day Plan page should have its own scroll bar, and the page should stay clearly visible in mobile view
+
+- **`VisitPlanPage.jsx` — scrollable list column**: at `lg+` the left (plan list) column scrolls inside its own box - `lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain`, aligned to the map column beside it (map `h-[560px]` plus the directions-button row); a long plan scrolls under its own scroll bar instead of pushing the map off screen
+
+- **`VisitPlanPage.jsx` — mobile layout revised**: the earlier always-side-by-side split (developer choice from the map round) made each column ~170px wide on phones - cramped and hard to use; the grid is now `grid-cols-1` below `lg` with the **route map first** (full width, the visual summary) and the **plan list below it**, and `lg:grid-cols-2` restores list-left / map-right on large screens (`order-1`/`order-2` handle the swap); the list scroll cap applies only at `lg+` since below that the list flows full width and the page scrolls naturally - no nested touch scrolling; the hero and empty-plan states are unchanged
+
+- **`PlanRouteMap.jsx`**: map height `h-72` → `h-80` on the smallest screens (it is now full width there, so it can afford the extra room)
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes
+
+---
+
 _(Entries below are appended as further steps complete.)_
