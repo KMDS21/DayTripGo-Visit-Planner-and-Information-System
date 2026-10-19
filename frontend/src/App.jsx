@@ -149,9 +149,7 @@ function AdminMobileBar() {
     <div className="lg:hidden">
       <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
         <Link to="/" className="flex min-w-0 items-center">
-          <span className="truncate font-heading text-lg font-bold tracking-tight">
-            DayTrip<span className="text-brand">GO</span>
-          </span>
+          <img src="/Logo.png" alt="DayTripGO" className="h-8 w-auto shrink-0" />
         </Link>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -196,9 +194,7 @@ function AdminMobileBar() {
         }`}
       >
         <div className="flex shrink-0 items-center justify-between">
-          <span className="truncate font-heading text-lg font-bold tracking-tight">
-            DayTrip<span className="text-brand">GO</span>
-          </span>
+          <img src="/Logo.png" alt="DayTripGO" className="h-8 w-auto" />
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -276,17 +272,13 @@ function AdminLayout({ children }) {
         }`}
       >
         <div className="space-y-6">
-          {/* Logo + collapse toggle — text wordmark (GO mark when collapsed) */}
+          {/* Logo + collapse toggle — full logo expanded, pin mark when collapsed */}
           <div className={`flex items-center px-1 ${collapsed ? 'flex-col gap-2.5' : 'justify-between gap-2'}`}>
             <Link to="/" className="flex items-center justify-center gap-2.5">
               {collapsed ? (
-                <span className="font-heading text-xl font-bold tracking-tight">
-                  <span className="text-brand">GO</span>
-                </span>
+                <img src="/Logo%20pin.png" alt="DayTripGO" className="h-8 w-auto" />
               ) : (
-                <span className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">
-                  DayTrip<span className="text-brand">GO</span>
-                </span>
+                <img src="/Logo.png" alt="DayTripGO" className="h-9 w-auto" />
               )}
             </Link>
             <button
