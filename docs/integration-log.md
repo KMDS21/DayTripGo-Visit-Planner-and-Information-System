@@ -678,4 +678,16 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-20 03:35 - Header logo and plan CTA sit in the bar corners on large screens
+
+- **Developer request**: on larger screens the company logo and the "Let's plan your tour" button should appear in the corners of the navigation bar
+
+- **`Header.jsx`**: the header bar dropped its `max-w-7xl mx-auto` (1280px) cap - it is now full-width with responsive padding (`px-4 sm:px-6 lg:px-10`, matching the public shell's gutters), so on wide monitors the logo hugs the left corner of the bar and the plan CTA the right corner; the existing `1fr / auto / 1fr` grid at md+ keeps the nav links centred between them; below 1280px nothing changes because the cap never bound there
+
+- **Branch note**: this header fix is committed on `feature/frontend-redesign` per the developer's instruction (the route-map work lives separately on `feature/plan-route-map`)
+
+- **Verification**: `npm run lint` reports nothing for the changed file · `npm run build` passes (5.90s)
+
+---
+
 _(Entries below are appended as further steps complete.)_
