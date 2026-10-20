@@ -1,6 +1,7 @@
 // Place Controller — request/response handling for /api/places.
 
 const placeService = require('../services/placeService');
+const imageService = require('../services/imageService');
 
 async function getAllPlaces(req, res, next) {
   try {
@@ -47,4 +48,32 @@ async function deletePlace(req, res, next) {
   }
 }
 
-module.exports = { getAllPlaces, getPlaceById, createPlace, updatePlace, deletePlace };
+// POST /api/places/:id/image — save to server folder, delete old file, update DB path.
+async function uploadImage(req, res, next) {
+  try {
+    const place = await imageService.setPlaceImage(req.params.id, req.file);
+    res.json({ success: true, data: place });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// DELETE /api/places/:id/image — delete the server file and clear the DB path.
+async function removeImage(req, res, next) {
+  try {
+    const place = await imageService.clearPlaceImage(req.params.id);
+    res.json({ success: true, data: place });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getAllPlaces,
+  getPlaceById,
+  createPlace,
+  updatePlace,
+  deletePlace,
+  uploadImage,
+  removeImage,
+};

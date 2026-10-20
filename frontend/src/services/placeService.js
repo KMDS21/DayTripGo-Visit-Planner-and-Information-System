@@ -27,3 +27,18 @@ export async function deletePlace(id) {
   const res = await api.delete(`/places/${id}`);
   return res.data.data;
 }
+
+// Image management — files are stored in the server folder, path saved in image_url.
+export async function uploadPlaceImage(id, file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await api.post(`/places/${id}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data.data;
+}
+
+export async function removePlaceImage(id) {
+  const res = await api.delete(`/places/${id}/image`);
+  return res.data.data;
+}

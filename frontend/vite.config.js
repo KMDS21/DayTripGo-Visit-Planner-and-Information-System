@@ -18,6 +18,8 @@ export default defineConfig({
     proxy: {
       // Route all /api calls to the Express backend (plan §14.3, Step 19)
       "/api": "http://localhost:5000",
+      // Uploaded place images are stored and served by the backend
+      "/uploads": "http://localhost:5000",
     },
   },
 })

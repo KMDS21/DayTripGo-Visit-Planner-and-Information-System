@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
+import usePageContent from '../hooks/usePageContent';
 import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
 import PlaceCard from '../components/PlaceListing/PlaceCard';
 import Loader from '../components/Common/Loader';
@@ -13,6 +14,15 @@ import ErrorMessage from '../components/Common/ErrorMessage';
 
 export default function HomePage() {
   usePageTitle();
+  const { get } = usePageContent('home', {
+    hero_title: 'One perfect day around Wadduwa',
+    hero_subtitle:
+      'Discover verified places of interest within 25 km of Wadduwa, Sri Lanka, such as temples, gardens, waterfalls and beaches, and build a simple one-day visit plan.',
+    why_title: 'Why DayTripGO',
+    why_body: 'Travel blogs list everything; we list what is worth your day, and tell you when to go.',
+    how_title: 'How DayTripGO works',
+    how_body: 'Three steps from landing on this page to standing in front of something worth the trip.',
+  });
   const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -30,11 +40,10 @@ export default function HomePage() {
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-            One perfect day around Wadduwa
+            {get('hero_title')}
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
-            Discover verified places of interest within 25 km of Wadduwa, Sri Lanka, such as temples, gardens,
-            waterfalls and beaches, and build a simple one-day visit plan.
+            {get('hero_subtitle')}
           </p>
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
@@ -44,10 +53,9 @@ export default function HomePage() {
       {/* Why DayTripGO — clear idea of the service, right under the hero */}
       <section className="w-full">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">Why DayTripGO</h2>
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">{get('why_title')}</h2>
           <p className="mt-2 text-muted-foreground">
-            Travel blogs list everything; we list what is worth your day, and tell you when
-            to go.
+            {get('why_body')}
           </p>
         </div>
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
@@ -88,9 +96,9 @@ export default function HomePage() {
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand/10" />
 
         <div className="relative mx-auto max-w-2xl text-center">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">How DayTripGO works</h2>
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">{get('how_title')}</h2>
           <p className="mt-2 text-muted-foreground">
-            Three steps from landing on this page to standing in front of something worth the trip.
+            {get('how_body')}
           </p>
         </div>
         <div className="relative mt-6 grid gap-5 sm:grid-cols-3">

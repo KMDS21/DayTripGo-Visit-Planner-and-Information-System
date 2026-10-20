@@ -37,9 +37,20 @@ async function updatePlace(placeId, fields) {
 }
 
 async function deletePlace(placeId) {
-  await getPlace(placeId); // 404 if it does not exist
+  const place = await getPlace(placeId); // 404 if it does not exist
   const { error } = await placeModel.remove(placeId);
   if (error) throw httpError(400, `Failed to delete place: ${error.message}`);
+
+  // Remove the stored server image so no orphan files are left behind.
+  if (place.image_url) {
+    try {
+      const uploadConfig = require('../utils/uploadConfig');
+      uploadConfig.removeStoredImage(place.image_url);
+    } catch (err) {
+      console.error('[PLACE] Image cleanup failed:', err.message);
+    }
+  }
+
   return { place_id: Number(placeId) };
 }
 

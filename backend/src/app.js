@@ -26,6 +26,14 @@ app.use('/api/places', require('./routes/placeRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/visit-plans', require('./routes/visitPlanRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin/stats', require('./routes/adminStatsRoutes'));
+app.use('/api/content', require('./routes/contentRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+
+// ─── Uploaded images (server folder → served to the frontend) ─
+const { ensureUploadDir, UPLOADS_ROOT } = require('./utils/uploadConfig');
+ensureUploadDir();
+app.use('/uploads', express.static(UPLOADS_ROOT));
 
 // ─── Health Check ────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

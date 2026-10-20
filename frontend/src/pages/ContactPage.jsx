@@ -1,33 +1,42 @@
 // ContactPage — /contact: two-column layout — a form to collect the visitor's
 // details on the left, company details on the right.
-// Static page: the form validates and confirms locally (no backend endpoint;
-// planning-only service).
+// The form posts to POST /api/messages; responses appear in the admin panel
+// under Contact responses.
 
 import { useState } from 'react';
 import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
+import usePageContent from '../hooks/usePageContent';
+import { submitMessage } from '../services/messageService';
+import { errorMessage } from '../services/api';
 import Button from '../components/Common/Button';
 
-const details = [
+// Company details shown on the right — values come from the admin-edited
+// content (usePageContent) and fall back to these built-in defaults.
+const DETAILS_META = [
   {
+    key: 'address',
     label: 'Address',
     value: 'No. 12, Galle Road, Wadduwa',
     hint: 'Kalutara District, Western Province, Sri Lanka',
     icon: MapPin,
   },
   {
+    key: 'email',
     label: 'Email',
     value: 'hello@daytripgo.lk',
     hint: 'General enquiries and place suggestions',
     icon: Mail,
   },
   {
+    key: 'phone',
     label: 'Phone',
     value: '+94 11 234 5678',
     hint: 'Monday to Friday, 9:00 – 17:00',
     icon: Phone,
   },
   {
+    key: 'hours',
     label: 'Opening hours',
     value: 'Mon – Sat · 9:00 – 18:00',
     hint: 'Closed on Sundays and public holidays',
@@ -62,6 +71,17 @@ const inputClass =
 export default function ContactPage() {
   usePageTitle();
 
+  const { get } = usePageContent('contact', {
+    hero_title: 'Contact us',
+    hero_subtitle:
+      'Questions about a place, a correction to an opening time, or a spot we should feature? DayTripGO is run from Wadduwa and we are happy to hear from visitors.',
+    address: 'No. 12, Galle Road, Wadduwa',
+    email: 'hello@daytripgo.lk',
+    phone: '+94 11 234 5678',
+    hours: 'Mon – Sat · 9:00 – 18:00',
+  });
+  const details = DETAILS_META.map((d) => ({ ...d, value: get(d.key) }));
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -73,10 +93,11 @@ export default function ContactPage() {
   });
   const [error, setError] = useState(null);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
       setError('Please fill in your name, email and message.');
@@ -86,9 +107,17 @@ export default function ContactPage() {
       setError('Please enter a valid email address.');
       return;
     }
+    setSending(true);
     setError(null);
-    setSent(true);
-    setForm({ name: '', email: '', phone: '', country: 'Sri Lanka', city: '', subject: 'General enquiry', message: '' });
+    try {
+      await submitMessage(form); // stored in contact_messages → admin "Contact responses"
+      setSent(true);
+      setForm({ name: '', email: '', phone: '', country: 'Sri Lanka', city: '', subject: 'General enquiry', message: '' });
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -96,10 +125,9 @@ export default function ContactPage() {
       {/* Hero */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">Contact us</h1>
+          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
-            Questions about a place, a correction to an opening time, or a spot we should
-            feature? DayTripGO is run from Wadduwa and we are happy to hear from visitors.
+            {get('hero_subtitle')}
           </p>
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
@@ -243,8 +271,8 @@ export default function ContactPage() {
               </p>
             )}
 
-            <Button type="submit" size="lg" className="w-full sm:w-auto">
-              Send message
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={sending}>
+              {sending ? 'Sending…' : 'Send message'}
             </Button>
           </form>
         </div>
