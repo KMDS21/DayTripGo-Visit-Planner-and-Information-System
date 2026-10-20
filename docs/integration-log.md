@@ -805,3 +805,54 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 16:51 - Photo galleries, short-link maps, the Explore popup, the publish switch and the "Attractive Places" rework
+
+- **Developer requests covered by this entry** (every uncommitted round since `92bea66`): (1) up to 10 photos per place with cover slots, (2) one Google Maps URL per place with short share links resolved, (3) an Explore-page place popup with a photo slider and the map under the details, (4) per-place publish/unpublish in the admin table, (5) the admin section renamed to **Attractive Places**, (6) the home page's All places section shows only admin-selected places, (7) Featured escapes raised to 12 cards
+
+### 1. Photo gallery (backend)
+
+- **Migration `database/schema/004_place_photos.sql`** - `place_photos` table (photo_id, place_id, photo_url, is_primary); applied and live (spot probe: place 1 returns 7 photos, one flagged primary)
+- **New `placePhotoModel` / `placePhotoService` / `placePhotoController`** replace the old single-image endpoints; `backend/src/services/imageService.js` is deleted
+- **Routes** on `/api/places`: `GET /:id/photos` (public), `POST /:id/photos` (multipart field `photo`), `POST /:id/photos/:photoId/primary`, `DELETE /:id/photos/:photoId` - all admin ones behind the JWT + quota gate
+- **Rules**: jpg/jpeg/png/webp/avif only, 5 MB per file, 500 MB total quota (HTTP **507** when exceeded); files live on disk under `/uploads`, paths in the DB; deleting a place deletes all of its files; the primary photo's path is what `place.image_url` holds, so cards/detail/featured covers keep working
+- **Frontend service**: `getPlacePhotos` / `uploadPlacePhoto` / `removePlacePhoto` / `setPlacePrimaryPhoto`
+
+### 2. Google Maps short links + coordinates derived at read time
+
+- **`resolveCoordsFromGoogleMapsUrl()`** in `backend/src/utils/googleMaps.js`: follows a `maps.app.goo.gl` / `goo.gl/maps` share link ONCE server-side (4 s timeout), parses the destination URL and caches successes for the life of the process (failures retried after 60 s); `withCoords` became async in `placeService` and `visitPlanService`
+- **Migration 003 rewritten (idempotent, safe on top of the earlier version)**: keeps `google_maps_url` and now **drops `latitude`/`longitude`** - coordinates only ever exist, derived from the link at read time; `001_create_tables.sql` and `002_seed_places.sql` updated to match, plus a new optional seed `003_seed_google_maps_links.sql` giving the 10 proposal places working links
+- **Frontend `googleMapEmbedSrc(place, zoom)`** (new `frontend/src/utils/googleMaps.js`): server coords first, then coords parsed from the URL, then a `q=<encoded url>` embed fallback - Google resolves short links inside the iframe, so even the fallback shows the right pin
+
+### 3. Explore popup + card/map behaviour
+
+- **New `PlacePreviewModal`**: photo slider - one photo at a time with small dots, cross-fade (fetches the gallery, falls back to the card photo), details + add-to-plan, and the Google map (from the place's URL) **under** the details; Esc / outside click closes; no link to the detail page
+- **`PlaceCard`**: when the parent passes `onOpen` (Explore) clicking photo/name opens the popup instead of navigating; cards **never embed a mini-map** any more (removed from Explore first, then from home at the developer's request) - the plain "Map" link stays; `PlaceGrid` passes `onOpen` through
+
+### 4. Publish switch - "Show on public site"
+
+- **Migration `005_place_published.sql`** (applied, column verified): `published boolean not null default true`
+- **`GET /api/places?scope=admin`** returns unpublished rows too, JWT-guarded by the `adminScope` middleware; public reads apply `published = true` (the model retries unfiltered with a fresh query factory if the column is missing, so nothing breaks before the migration); **`PUT /api/places/:id/publish`** toggles
+- **Admin table**: the Opening hours column is gone, replaced by a **Show on public site** pill (desktop column and mobile card); admin lists fetch with `scope: 'admin'`
+- **Data-layer probe**: unpublishing a place -> 9 public / 10 admin rows; re-publishing -> 10/10
+
+### 5. Admin "Attractive Places" rework (form + table)
+
+- **Renamed everywhere**: sidebar + mobile nav, page H1/subtitle, dashboard stat, content-editor hints
+- **Photo section split into**: (1) **cover photos** - the Explore cover slot (upload left, selection options right) and the Featured cover upload unlocked by ticking "Show in Featured escapes (home page)"; each slot has Change photo + Remove; (2) **More photos** - extra photos per location with Remove only. Covers never appear in the More-photos grid (saved cover paths and pending cover URLs are filtered out); the old "Use as the Explore page cover photo" checkbox is removed - the Explore slot upload sets the card photo directly (`setPlacePrimaryPhoto`), so the card cover and banner follow automatically
+- **Map thumbnail** beside the Maps URL only while **adding** a place (not while editing)
+- **New "Show on home" pill** per row (desktop column + mobile card): stores the selection in the home page content section `home_place_ids` (comma-separated ids, same per-key `page_content` storage the editors already use)
+
+### 6. Home page + Featured escapes
+
+- The home **All places** section is no longer a 4-card teaser: it renders the same `PlaceGrid` cards as Explore and shows **only the places ticked "Show on home"** (with no selection yet it shows every published place); the place-count line and the category filter pills were then removed from home at the developer's request - Explore keeps both
+- **Featured escapes cap raised 6 -> 12** (`FeaturedCarousel` + `AdminContentPage` MAX_FEATURED) and the carousel row gained a left "back" arrow that fades in after load, with the cards left-flush
+
+### Verification
+
+- `npx oxlint src` **0 errors** and `npm run build` green after every round; HMR spot-checks of the popup slider, cover slots, publish/home pills and the home listing
+- Live probes: all 10 `maps.app.goo.gl` places return real coordinates (first call ~4 s, then ~370 ms cached); publish toggle 200 and 9/10 row filtering; photo gallery GET returns the stored rows with the primary flag
+
+---
+
+_(Entries below are appended as further steps complete.)_
