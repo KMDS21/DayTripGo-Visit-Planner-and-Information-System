@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="mx-auto max-w-md py-14">
-      <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
+      <div className="rounded-3xl border border-border bg-card/95 p-8 shadow-xl ring-1 ring-brand/10 backdrop-blur">
         <h1 className="font-heading text-3xl font-bold">Administrator login</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Restricted area. Place management requires an authorised account.
