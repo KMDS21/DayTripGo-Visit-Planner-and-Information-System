@@ -759,3 +759,20 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 12:44 - Migration executed by the developer; content / messages / stats verified live end to end (14/14)
+
+- **Developer confirmed the `002_contact_content.sql` tables already exist in Supabase** - the friendly 503 fallbacks are no longer hit; every endpoint from the second-edition round now runs against real tables
+
+### Verification (live API, one script run, all PASS)
+
+- **Content**: `GET /api/content/home` and `/contact` return `200` with `{ page, sections }`; `PUT /api/content/home` saves a section and reads back exactly (`sections` is a **flat map of text fields <= 5000 chars each** - a nested-object body is correctly rejected with a per-key validation message); the probe key was blanked again afterwards (empty string = unset, pages fall back to their built-in defaults)
+- **Messages**: public `POST /api/messages` -> created; admin `GET /api/messages` lists it; `PATCH /:id/read` clears the unread flag (dashboard counter 1 -> 0); `DELETE /:id` removes it (test message cleaned up)
+- **Stats**: `GET /api/admin/stats` live - **places = 10, categories = 4, plans created = 5**, unread message count, storage usage (0 bytes used of the 500 MB quota so far)
+- **Script**: `%TEMP%\opencode\verify-migration.ps1` - 14 checks, 0 failures (login, content GET x2, content PUT + restore, message post/list/read/unread-count/delete, stats counts and storage)
+
+- **Everything from the admin panel second edition is now live**: image uploads with the 500 MB quota, dashboard counters + storage bar, the four per-page content editors, and the contact responses inbox
+
+---
+
+_(Entries below are appended as further steps complete.)_
