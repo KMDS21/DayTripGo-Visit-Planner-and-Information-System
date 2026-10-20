@@ -298,3 +298,396 @@ Developer instruction (verbatim intent): "firstly upload gitignore file with new
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 14:49 - All branches pushed; frontend editing round opens on feature/frontend-redesign
+
+- **Pushes completed per developer instruction**: `frontend` -> `1534011` (fast-forward from 3a2c5bb - brings the JWT-hardening / admin-review log entry), `feature/admin-ui-redesign` -> `893dd9b` (new remote branch), `feature/frontend-redesign` -> `893dd9b` (new remote branch); `main` (3a2c5bb) and `backend` (3510607) were already current; `archive/admin-ui-redesign-preSquash` (48a41a9) stays **local only** as the pre-consolidation history safety net
+
+- **Remote heads after push**: main `3a2c5bb` · frontend `1534011` · feature/admin-ui-redesign `893dd9b` · feature/frontend-redesign `893dd9b` · backend `3510607` · Documents `ab3d91b`
+
+- **New branch `feature/frontend-redesign`** created from `893dd9b` - the frontend (public-site) editing round starts here on top of: previous light design, collapsible admin sidebar, `/admin`-only access, the consolidated 4-commit admin panel history, hardened JWT login and the full log
+
+- **Log infrastructure note**: the append footer marker `_(Entries below are appended as further steps complete.)_` had been silently consumed by the status entry append (commit 48a41a9) due to a prefix/suffix insertion bug; it was restored during the consolidation - future entries are appended at end-of-file with the marker re-emitted, and no existing entry content is altered (append-only preserved)
+
+- **Continuing conventions**: integration-log entry committed **before** the code it documents, plain descriptive commit messages, stepwise commits (no single blobs), push on instruction
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:14 - Full-width large-screen layout; mobile below 1280 verified
+
+- **Audit first**: headless captures of home / visit-plan / place-detail at 390, 768, 1280 and 1920 px with horizontal-overflow measurement - **every viewport reports zero horizontal scroll**; below 1280 the site stacks correctly (1 col <640, 2 col grid >=640, 3 col >=1024) so no mobile fixes were needed and mobile padding stays `px-4`
+
+- **Large-screen gutters removed**: the public shell dropped its `max-w-6xl` (1152px) cap - `PublicLayout` main, `Header` and `Footer` inner rows are now full-width with responsive padding `px-4 / sm:px-6 / lg:px-10`, and the `HomePage` carousel + listing sections dropped their nested `max-w-7xl` / `max-w-6xl` caps; on a 1920px screen the dead side space went from ~384px per side to ~40px
+
+- **Grid reclaims the space**: `PlaceGrid` gains `xl:grid-cols-4 2xl:grid-cols-5` - the 10 seeded places render as two full rows at 1920 (previously 3 columns); featured-carousel cards are fixed 384px in the vendor component so they do not balloon
+
+- **Deliberately untouched**: `VisitPlanPage` keeps `max-w-3xl` (readable form column), the admin layout keeps its container, hero copy stays centered at `max-w-3xl`; lint clean, `npm run build` passes (5.40s), post-change re-audit again shows zero overflow at every width
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:20 - Navbar selected state and Home navigation
+
+- **Selected page = green text only**: the public `Navbar` active state dropped the light-green pill (`bg-brand-light`) - the current item now shows just `text-brand-dark` green text with a transparent background (verified via computed style: color `oklch(0.38 0.08 175)`, background `rgba(0,0,0,0)`); hover feedback and the plan-count badge are unchanged, admin sidebar untouched per scope
+
+- **Home navigation added**: navbar now reads `Home / Explore / My Day Plan` - `Home` links to `/` and is active only on the bare path; `Explore` now targets `/#places` (the listing section gained the places id) and highlights only when that anchor is selected, so the two never light up together
+
+- **Explore scroll behaviour**: `HomePage` smooth-scrolls to `#places` whenever that hash is present, re-running after data loads so the final grid position is respected - works from the home page and from any other route; headless check passed: click from `/visit-plan` navigates to `/#places` and scrolls (scrollY 1417), lint clean, `npm run build` passes (3.72s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:48 - Featured carousel: category ordering, arrows removed, centred dots
+
+- **Featured order = category order**: `FeaturedCarousel` now takes the first place per category and orders the cards alphabetically by category name, matching the filter pills below (headless check: Cultural, Heritage, Nature, Religious); still capped at 6
+
+- **Arrow navigation removed**: the Aceternity carousel dropped its prev/next circle buttons and their scroll helpers (and the now-unused tabler arrow imports)
+
+- **Centred dot indicators added**: small 2px dots under the carousel track - active dot is wider (24px) in brand green, inactive dots muted with hover; dots track hand-scrolling and clicking a dot scrolls to that card exactly (verified: dot 3 -> scrollLeft 800 = 2 steps, active index 2); row verified centred on the viewport, lint clean, `npm run build` passes (3.91s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:52 - Centred navbar links
+
+- **Header re-gridded**: the public header row switched from `justify-between` to a `md:grid-cols-[1fr_auto_1fr]` grid with the logo `justify-self-start` and the navbar wrapper in the middle column - the links are now dead-centre on screens 768px+ (measured at 1280: nav centre 640 = viewport centre 640, delta 0), aligned on the same row as the logo; below md the layout is untouched (logo + links row, wrapping as before)
+
+- lint clean, `npm run build` passes (3.93s), headless check at 1280 and 390 px
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:54 - Developer instruction - update the integration log on every commit
+
+- **New logging rule**: from now on every code commit is preceded by its own dedicated log entry (one entry per commit), instead of one batched entry covering a group of commits
+
+- **Mechanics stay the same**: entry appended at EOF with a fresh timestamp, `docs:` commit first, then the code commit; append-only - no existing entry is ever edited or reordered
+
+- Retroactive check done at the same time: every commit back to the start of the frontend editing round (`1a42e9a`) already has a covering log entry - no gaps to backfill
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 15:59 - Explore page created as a separate page
+
+- **New route `/explore`**: `ExplorePage` carries the full public listing - page hero with wording, result count, the category filter pills (All + every category, SRS FR-2/FR-3), `PlaceGrid` with all places, loading/error/retry states, and the same add-to-plan flash toast as home; it fetches through the existing `usePlaces` / `useVisitPlan` hooks so filter behaviour is identical to what home had
+
+- Home page untouched in this commit (full list still shows there until the next step)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:02 - Home page: four-place preview band with link to the Explore page
+
+- **All places no longer listed on home**: the home listing section now shows only the first 4 places as a preview; the full list and the category filter pills live on the new `/explore` page
+
+- **Separate background-colour area**: the preview sits in its own tinted band (`bg-brand-light/50`, large rounded corners, decorative brand circles top-right/bottom-left) so it reads as a distinct block between the featured carousel and the footer
+
+- **Arrow link to Explore**: the band header carries an `Explore all places →` link to `/explore` (arrow nudges right on hover)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:06 - Navbar Explore link now targets the /explore page
+
+- **Explore → `/explore`**: the navbar Explore item navigates to the new page instead of the home anchor, and its selected state is a plain `NavLink` match (still green text only); the home hash-scroll code (`/#places` effect and `useLocation`) was removed as dead
+
+- Home keeps its own `Home` and `My Day Plan` items unchanged
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:22 - Contact us page and header CTA button
+
+- **New page `/contact`**: `ContactPage` with a branded gradient hero and company details - address (No. 12, Galle Road, Wadduwa, Kalutara District), email `hello@daytripgo.lk`, phone `+94 11 234 5678`, opening hours - plus an About card (ITE2953 / E2410884 / De Silva P.K.M.) and a scope note (planning only, no bookings)
+
+- **Separate green button in the navbar right corner**: `Contact us` sits in the header's third grid column (`justify-self-end`), a rounded-2xl `bg-brand` box with hover/active ring states - nav links stay centred (measured: nav centre 640 = viewport centre 640, button 40px from the right edge); headless click verified → `/contact` renders with both detail cards
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:22 - Branded page heroes on My Day Plan and Explore
+
+- **Matching hero banners**: `VisitPlanPage` and `ExplorePage` now open with the same gradient hero treatment as home and contact (`from-brand-dark via-brand to-teal-500`, decorative white circles, `rounded-b-[2.5rem]`) - My Day Plan: title plus the session-only reassurance line; Explore: title plus the discovery wording
+
+- The old plain `<header>`/`<h1>` blocks were replaced by the hero sections; content below unchanged
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:27 - Creative footer across public pages
+
+- **Footer redesigned**: the plain centered text block became a full-width branded footer - the same `from-brand-dark via-brand to-teal-500` gradient as the heroes with `rounded-t-[2.5rem]` top corners and decorative translucent circles, four columns on desktop (brand blurb, quick links Home/Explore/My Day Plan/Contact us, the four categories, contact details), and a bottom bar (copyright + the planning-only scope note and ITE2953 / E2410884 credit)
+
+- Lives in `Footer.jsx` so every public page (home, explore, plan, contact, detail) gets it automatically via `PublicLayout`; stacks to one column on mobile
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:31 - Let's plan your tour box in the navbar
+
+- **New green CTA box, left side of the navigation**: a `rounded-2xl bg-brand` box styled exactly like the Contact us button, placed as the first item inside the navbar (left of Home) with the wording `Let's plan your tour` - it routes to `/visit-plan` and shows the same active ring when on that page
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:36 - Home page wording and highlight pass
+
+- **Hero highlights**: the hero paragraph is followed by four white/10 pill chips - 10 verified places, 4 categories, no account needed, free to use - so visitors grasp the offer at a glance
+
+- **How DayTripGO works strip** (new, between hero and featured escapes): three numbered step cards - Browse verified places / Filter and compare / Build your one-day plan - each with a one-line description, explaining the site flow to first-time visitors
+
+- **Why DayTripGO strip** (new, after the preview band before the footer): three trust points - Opening times checked, Distances up front, Planning only (no bookings or payments) - closing the page with a clear idea of what the service is
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:39 - Wording layout for Featured escapes and All places sections
+
+- **Featured escapes**: heading moved into a max-w-2xl block with a fuller description (one highlight from each category, tap for the full story, add straight to the day plan) plus a row of category name pills (Religious / Nature / Heritage / Cultural) between the text and the carousel
+
+- **All places band**: the header copy was expanded into a full sentence explaining what every card shows (photo, open/closed hint, distance from Wadduwa, one-tap add-to-plan), alongside the existing Explore all places arrow button
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:48 - Home section rework: wording trimmed, How-it-works repositioned
+
+- **Verbose wording removed per developer feedback**: the long paragraph, highlight chip rows and the `Showing:` category pill row added to the Featured escapes and All places sections were reverted - both sections are back to their short one-line descriptions; only the hero chips, How-it-works steps and Why strip kept
+
+- **How DayTripGO works moved**: the section now sits between Featured escapes and All places (verified order: Featured escapes, How DayTripGO works, All places, Why DayTripGO)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:54 - How DayTripGO works centred
+
+- **Section centred per developer instruction**: the How DayTripGO works block (kept between Featured escapes and All places) now centres its heading and intro (max-w-2xl mx-auto text-center) and each step card centres its number circle (mx-auto), title and description; verified via computed style (heading center, card center)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-15 16:55 - Frontend editing round - log committed and branches pushed
+
+- **Round summary (this session, all committed on `feature/frontend-redesign`)**: full-width large-screen layout with xl/2xl grid columns; navbar selected state as green text only plus Home link; featured carousel in category order with centred dot indicators (arrows removed); centred navbar links; Explore split into its own page (`/explore`) with a four-place tinted preview band on home; branded page heroes on Explore, My Day Plan and Contact; Contact us page with company details plus its separate green header button and the `Let's plan your tour` box on the left of the navbar; creative gradient footer with link columns; home wording pass (hero chips, How DayTripGO works centred between Featured and All places, Why DayTripGO strip)
+
+- **Logging rule applied**: entries were appended to this file as work happened but held uncommitted per developer instruction; this commit flushes all held entries (`16:27` footer through `16:54` How-it-works centred) - from the next change each entry is committed with its code again
+
+- **Push**: `feature/frontend-redesign` pushed to origin along with every other branch (`frontend`, `main`, `backend` already up to date; `archive/admin-ui-redesign-preSquash` stays local by design)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:47 - Per-page browser tab titles via a usePageTitle hook
+
+- **New hook `frontend/src/hooks/usePageTitle.js`**: sets `document.title` to `DayTripGO | <page title>` inside a `useEffect` keyed on the title, falling back to the brand tagline `DayTripGO — Tour Visit Planner` when no title is passed
+
+- **Wired into six pages**: Home (`Home`), Explore (`Explore Places`), My Day Plan (`My Day Plan`), Place Detail (the fetched place name once loaded, otherwise `Place Details`), Admin Login (`Admin Login`) and Admin Dashboard (`Admin Dashboard`) - the Contact page call ships with its own rebuild entry below
+
+- **Verification**: `npm run lint` warnings-only with nothing new in the changed files · `npm run build` passes (5.95s, chunk-size warning only, unchanged)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:48 - Contact page rebuilt as message form + company details; header/nav CTA swapped; footer wording shortened
+
+- **`ContactPage` two-column rebuild**: left column is a `Send us a message` form (full name, email, phone, subject select, a `Country details` group with country select + optional city, message textarea) with client-side validation - required name/email/message and an email-regex check - plus inline `role="alert"` error and `role="status"` success states; it stays local with no backend endpoint, so the planning-only scope (NFR-4) is unchanged. Right column is a company-details card: favicon logo, brand blurb and the four detail rows (address, email, phone, hours) now carrying lucide icons (MapPin / Mail / Phone / Clock)
+
+- **Academic credit removed from public copy**: the About card line `Operated as the ITE2953 Programming Group Project (E2410884 · De Silva P.K.M.)` was replaced with a local-team / future-expansion note, and the footer bottom bar dropped `ITE2953 Programming Group Project · E2410884 · De Silva P.K.M.` in favour of `Plan your day with DayTripGO.` - the planning-only scope note on the right of the footer bar is kept
+
+- **Header/Navbar CTA swap**: the green `Let's plan your tour` box moved out of the navbar into the header's third grid column (right corner, `→ /visit-plan`, same ring active state), and `Contact us` became a plain `NavLink` in the navbar - nav links stay centred in the middle grid column
+
+- **Contact tab title** set with `usePageTitle('Contact Us')` (hook from the entry above)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 12:49 - Home page sections reordered; featured carousel padding tightened
+
+- **New home order**: hero (the four highlight chips - 10 verified places / 4 categories / no account needed / free to use - were removed) → **Why DayTripGO** moved up from the page bottom to sit directly under the hero → **Featured escapes** (heading now centred in a max-w-2xl block) → **How DayTripGO works** now occupies the tinted `bg-brand-light/50` rounded band with the decorative brand circles → **All places** preview band lost its tint (plain `w-full`, keeps the `#places` id and the `Explore all places →` link) → footer
+
+- **Carousel padding tightened**: the Aceternity Apple Cards track dropped `py-10 md:py-20` to `py-2 md:py-6` so the cards sit close under the section heading
+
+- **Verification**: `npm run lint` warnings-only (vendor carousel warnings pre-existing) · `npm run build` passes (5.95s)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 14:42 - Admin login screen isolated from the public Header and Footer
+
+- **Developer request**: `http://localhost:5173/admin` should show only the admin screen (the login card) - not the public site navigation or footer, which the login page had been picking up from `PublicLayout`
+
+- **`App.jsx` routing**: `/admin/login` and the `/admin` → `/admin/login` redirect moved out of `PublicLayout` into a new **`AdminAuthLayout`** - a bare centred shell (`min-h-svh`, `bg-background`, `px-4`) holding only a small DayTripGO logo lockup that links back to the public site and the page itself in a `max-w-md` column. `PublicLayout` now wraps only the public routes: `/`, `/explore`, `/places/:id`, `/visit-plan`, `/contact` and the 404 catch-all
+
+- **Unchanged**: after login the dashboard still renders inside `AdminLayout` with the collapsible sidebar (it never had public chrome), and `ProtectedRoute` still bounces logged-out visits of `/admin/dashboard` to `/admin/login` with the `from` deep-link state
+
+- **Verification**: lint reports nothing for `App.jsx`, `npm run build` passes (5.42s); headless Chrome check - `/admin` → `/admin/login` renders with `header=false footer=false nav=false` (logo + Administrator-login card only, zero JS errors), `/` still has header + nav + footer, and login with the current `backend/.env` credentials lands on `/admin/dashboard` with the sidebar, 10 place rows and no footer
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-19 16:42 - Tab title reduced to the brand name only; em dashes stripped from visible copy
+
+- **Developer request 1 (page title)**: the browser tab should show only the company name. `frontend/src/hooks/usePageTitle.js` now sets `document.title = 'DayTripGO'` on mount (no `DayTripGO | <page>` suffix and no `DayTripGO — Tour Visit Planner` fallback), and the hook no longer takes a title argument - this supersedes the `12:47` hook entry and the `12:48` Contact tab-title note
+
+- **Call sites cleaned up**: all seven pages now call `usePageTitle()` with no argument (Home, Explore, Contact, My Day Plan, Place Detail - previously the fetched place name, Admin Login, Admin Dashboard), and `frontend/index.html` ships `<title>DayTripGO</title>` so the tab reads correctly before React mounts
+
+- **Developer request 2 (page copy)**: every em dash (—) was removed from rendered text and the sentences rewritten with commas/periods so they still read naturally - HomePage (hero, Why DayTripGO strip, three benefit cards, Featured escapes intro, three How-it-works cards, All places intro), Explore hero, Contact (form intro, success message, company blurb, About paragraph, Good-to-know bullet), VisitPlan session note, Admin Login note, Admin Dashboard (signed-in line and empty-table message), Footer (brand blurb and bottom bar), DetailView (hours fallback and planning-only note), PhotoGallery caption, FeaturedCarousel card line and the PlanList drag hint
+
+- **Placeholder dashes in the admin table**: the missing-data `—` cells now read `Uncategorised` (category) and `Not set` (opening hours)
+
+- **Deliberately unchanged**: `//` and `{/* */}` code comments are not rendered, and en-dash time ranges on Contact (`9:00 – 17:00`, `Mon – Sat · 9:00 – 18:00`) stay per the developer's scope choice
+
+- **Verification**: `npm run build` passes (8.64s, chunk-size warning only) - a repo-wide grep for `—` under `frontend/src` now returns comments only
+
+---
+
+## 2026-10-20 02:16 - Mobile usability and reliability pass: drawer navigation, day-plan crash fix, breakpoint corrections
+
+- **Developer request**: make every page more usable and reliable on mobile/small screens (below 1280px) and improve visibility on large screens; mobile nav = hamburger + slide-over drawer, admin list = card list below md (both confirmed by the developer)
+
+### Bug fixes (reliability)
+
+- **Visit Plan page crashed whenever the plan had items**: `PlanList` passed its row renderer as a children render function (`<DragReorder>{(item, index) => …}</DragReorder>`) but `DragReorder` destructured a `renderItem` prop and called it unconditionally - adding the first place threw `TypeError: renderItem is not a function`. `DragReorder` now accepts either form: children given as a function win, otherwise the `renderItem` prop, and a missing renderer renders nothing instead of throwing
+- **Dead `next/image` import removed from `ui/apple-cards-carousel.tsx`**: this is a Vite project with no `next` dependency - the import only survived because esbuild stripped the unused symbol, and `BlurImage`'s props type referenced `next/image`'s `ImageProps` (now typed against plain img attributes); the `fill` prop on the `BlurImage` call site (a next/image-only prop that leaked to the DOM) was dropped too
+- **Carousel `handleClose` initialised while being read**: the Escape-key effect referenced `handleClose` before its declaration (oxlint immutability warning) - both `handleOpen`/`handleClose` are now declared above the effects, and the card-open effect restores `document.body.style.overflow` to `''` instead of a hard-coded `auto`
+
+### Navigation (mobile)
+
+- **New `components/Layout/MobileMenu.jsx`**: hamburger trigger below md opening a right-side slide-over drawer (Home, Explore places, My Day Plan with count badge, Contact us, plus the plan CTA pinned at the bottom); closes on Escape / backdrop tap / link tap / close button, locks body scroll, moves focus into the panel on open, `inert` while closed
+- **Drawer rendered through a `createPortal` to `document.body`**: the public header uses `backdrop-blur`, and a backdrop-filter ancestor becomes the containing block for `position: fixed` descendants - without the portal the drawer was clipped to the ~56px header strip and appeared as a colourless sliver over the page content; the backdrop is `bg-black/60` and the panel `bg-background` so it never blends with content
+- **CTA pinned inside the display**: the nav list is the only scrollable region (`min-h-0 overflow-y-auto`) so `Let's plan your tour` stays at the bottom of the panel even on short/landscape phone screens; same treatment in the admin drawer (scrolling nav, `shrink-0` logout button)
+- **`Header.jsx`**: inline `Navbar` hidden below md in favour of the drawer; CTA reads `My plan` under sm (`Let's plan your tour` from sm up) and carries the plan-count badge, so the bar stays on one row
+- **Admin shell (`App.jsx`)**: the sidebar is `hidden lg:flex`, which left phones/tablets with no admin navigation at all - a new `AdminMobileBar` (sticky top bar: brand link, Log out, hamburger) plus a drawer (Dashboard / Explore / My Day Plan, signed-in line, Log out) now covers below lg; `AdminLayout` stacks (`flex-col lg:flex-row`) so the bar sits above the content
+
+### Breakpoint and visibility corrections
+
+- **Carousel card heights**: replaced the `h-80 → md:h-[40rem]` jump (a 640px card taller than a 768-1280px laptop viewport) with a gradual `h-[22rem] sm:h-[26rem] md:h-[28rem] lg:h-[32rem] xl:h-[36rem]`
+- **`PlaceGrid`**: capped at `xl:grid-cols-4` (dropped `2xl:grid-cols-5` which cramped wide-screen cards) and centred with `max-w-7xl mx-auto`
+- **Page heroes** (Home, Explore, My Day Plan, Contact): `text-3xl` at the smallest size up to `lg:text-5xl`, tighter `px-4 py-12` on phones
+- **`CategoryFilter`**: single horizontal scroll-snap row on phones with `min-h-10` pills (previously wrapped onto 3+ lines); wraps as before from sm
+- **Add-to-plan flash toast** (Home, Explore): constrained to `w-[calc(100vw-2rem)] max-w-md` and centred text so long place names cannot overflow the screen edge
+- **`DetailView`**: sticky bottom action bar on phones (`lg:hidden`, `safe-b` padding) keeps `Add to my day plan` reachable while scrolling; the in-flow button shows from lg; the planning-only note keeps `pb-24` on mobile so the bar never covers it
+- **`PlanItem`**: stacks below sm (order badge + name/distance/hours on top, reorder arrows + remove on their own row with 44px touch targets) - HTML5 drag does not fire on touchscreens, so the arrows are the primary reorder path on phones
+- **`AdminDashboardPage`**: the `min-w-[640px]` table forced horizontal scrolling on phones - below md each place is now a card (number, name, category, distance, hours, full-width Edit/Delete); the table stays from md up; modal action buttons stack full-width under sm (`flex-col-reverse`); form inputs are `text-base` on mobile to stop iOS focus auto-zoom (same applied to Contact and Admin Login inputs via their shared `inputClass`)
+- **`index.css`**: `touch-manipulation` on interactive elements, a `safe-b` utility (`env(safe-area-inset-bottom)`) for fixed bottom bars, `overscroll-y-contain` on html; **`index.html`**: light/dark `theme-color` meta for the mobile browser chrome
+
+### Contact page polish
+
+- **Company-details icon centred**: the detail rows switched `items-start` → `items-center` (and dropped the `mt-0.5` nudge) so the round icon centres against its three-line label/value/hint block instead of sitting on the top edge
+- **Company logo**: the company-details card now shows the real horizontal logo `public/Logo.png` (pin mark + wordmark) in place of the small square favicon plus the separate text wordmark
+
+### Verification
+
+- `npm run lint` warnings-only, nothing new in the changed files (the carousel `Image`/`handleClose`/`currentIndex` warnings are gone) · `npm run build` passes (6.77s / 8.30s re-checks, chunk-size warning only) · first production build ever run on this project - `frontend/dist/` now exists
+
+---
+
+## 2026-10-20 02:24 - Text wordmark branding everywhere; Logo pin.png becomes the tab icon; contact icon centred
+
+- **Developer request**: logo areas should show the hardcoded `DayTripGO` text wordmark (no logo image), the page-tab icon should use the new pin image, and the contact company-details icon should be vertically centred
+
+- **New brand assets in `frontend/public/`**: the developer added `Logo pin.png` (pin-only mark) and `Logo.png` (full horizontal lockup) and deleted the old `favicon.svg`; `Logo.png` is kept in public as the source asset but no component renders it
+
+- **Tab icon**: `frontend/index.html` now links `rel="icon" type="image/png"` to `/Logo%20pin.png` (space URL-encoded) in place of the deleted `/favicon.svg`
+
+- **Hardcoded text wordmark in every logo slot**: public `Header` (image removed, text kept), admin login shell `AdminAuthLayout` in `App.jsx`, the admin mobile top bar, and the collapsible admin sidebar - the collapsed 76px rail now shows a `GO` text mark instead of the image it previously used for the icon-only state; `ContactPage` company-details card reverted from the full `Logo.png` image back to the `DayTripGO` heading + `Company details` label; the mobile drawer, footer and login card were already text-only
+
+- **Contact icon centred**: the company-detail rows switched `items-start` → `items-center` (dropping the `mt-0.5` nudge) so the round icon centres against its three-line label/value/hint block instead of sitting on the top edge
+
+- **Verification**: repo-wide grep confirms zero `favicon.svg` / `Logo.png` references left in source · `npm run lint` reports nothing for the changed files · `npm run build` passes (6.01s)
+
+---
+
+## 2026-10-20 02:40 - Company logo restored in the public header, footer and mobile drawer
+
+- **Developer request**: the public nav bar and footer should show the `Logo.png` company logo instead of the hardcoded `DayTripGO` text (the admin areas keep the text wordmark from the previous round)
+
+- **`Header.jsx`**: the brand lockup is now `<img src="/Logo.png">` (h-9, auto width) replacing the text wordmark; `alt="DayTripGO"` keeps the accessible name
+
+- **`Footer.jsx`**: the gradient footer's brand block now shows the logo on a small white chip (`bg-white px-3 py-2 rounded-xl`) - the logo's dark-navy lettering is unreadable on the dark teal gradient without it; the brand blurb below is unchanged
+
+- **`MobileMenu.jsx`**: the drawer header (the mobile face of the public nav) swaps its text wordmark for the same logo so the branding matches between the bar and the drawer at every width
+
+- **Unchanged by scope**: admin login shell, admin sidebar, admin mobile bar and the Contact company-details card keep the hardcoded text per the previous round's instruction
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (6.34s)
+
+---
+
+## 2026-10-20 02:48 - Company logo on the admin login shell and the Contact company-details card
+
+- **Developer request**: the admin login page and the Contact us company-details area should show the `Logo.png` company logo rather than the hardcoded text wordmark
+
+- **`App.jsx` `AdminAuthLayout`**: the login shell's brand lockup above the card is now `<img src="/Logo.png">` (h-10, auto width, `alt="DayTripGO"`) replacing the `DayTripGO` text span; the light `bg-background` shell needs no backing behind the logo
+
+- **`ContactPage` company-details card**: the `DayTripGO` heading is replaced by the logo (h-12, `shrink-0`) sitting beside the `Company details` label; the card is white (`bg-card`) so the dark-navy lettering reads correctly without a chip
+
+- **Unchanged by scope**: the admin sidebar and admin mobile bar keep the text wordmark (the sidebar's collapsed 76px rail relies on the short `GO` text mark), the public header/footer/drawer keep the logo from the previous round
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (9.25s)
+
+---
+
+## 2026-10-20 02:55 - Company logo on the admin sidebar, admin mobile bar and admin drawer
+
+- **Developer request**: the admin panel sidebar logo had not been updated - it should show the company logo like the rest of the site
+
+- **Admin sidebar (`App.jsx` `AdminLayout`)**: the brand slot now switches on the collapse state - the expanded 240px sidebar shows the full `Logo.png` (h-9), and the collapsed 76px rail shows the pin-only `Logo%20pin.png` (h-8) because the full horizontal lockup is wider than the rail; both carry `alt="DayTripGO"`; this replaces the previous text wordmark and the `GO` text mark used for the collapsed state
+
+- **Admin mobile bar + drawer (`AdminMobileBar`)**: the top bar brand and the drawer header swap their text wordmarks for `Logo.png` (h-8) so the admin branding matches between the sidebar (lg+), the mobile bar and the drawer at every width
+
+- **Every logo slot in the app is now an image**: public header, public footer (white chip), public mobile drawer, admin login shell, admin sidebar (two states), admin mobile bar, admin drawer, Contact company-details card; the tab icon stays `Logo%20pin.png` - no `DayTripGO` text wordmark renders anywhere anymore
+
+- **Verification**: `npm run lint` reports nothing for `App.jsx` · `npm run build` passes (10.97s)
+
+---
+
+## 2026-10-20 03:05 - New logo artwork committed; Explore grid back to full screen width on large screens
+
+- **Developer replaced both logo assets**: `frontend/public/Logo.png` and `Logo pin.png` were swapped for new artwork (slate/navy pin with a teal road, `GO` in a teal pill matching the site's brand colours, replacing the earlier orange sun design) - both files verified as valid PNGs rendering correctly; no code changes needed since every slot already references these filenames · `npm run build` passes (8.97s)
+
+- **Developer request**: on large screens the Explore page cards should use the full screen width again
+
+- **`PlaceGrid.jsx`**: the `max-w-7xl mx-auto` cap and the 4-column ceiling added in the `02:16` mobile-pass round are removed - the grid is full-width once more with `xl:grid-cols-4 2xl:grid-cols-5`, restoring the large-screen layout logged on 2026-10-15 15:14 (gutters removed, grid reclaims the space); the mobile behaviour from that round (1 col < 640, 2 col >= 640, 3 col >= 1024) is unchanged
+
+- **Verification**: `npm run lint` reports nothing for the changed file · `npm run build` passes (5.56s)
+
+---
+
+## 2026-10-20 03:35 - Header logo and plan CTA sit in the bar corners on large screens
+
+- **Developer request**: on larger screens the company logo and the "Let's plan your tour" button should appear in the corners of the navigation bar
+
+- **`Header.jsx`**: the header bar dropped its `max-w-7xl mx-auto` (1280px) cap - it is now full-width with responsive padding (`px-4 sm:px-6 lg:px-10`, matching the public shell's gutters), so on wide monitors the logo hugs the left corner of the bar and the plan CTA the right corner; the existing `1fr / auto / 1fr` grid at md+ keeps the nav links centred between them; below 1280px nothing changes because the cap never bound there
+
+- **Branch note**: this header fix is committed on `feature/frontend-redesign` per the developer's instruction (the route-map work lives separately on `feature/plan-route-map`)
+
+- **Verification**: `npm run lint` reports nothing for the changed file · `npm run build` passes (5.90s)
+
+---
+
+_(Entries below are appended as further steps complete.)_

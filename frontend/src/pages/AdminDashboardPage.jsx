@@ -8,6 +8,7 @@ import { createPlace, deletePlace, getPlaces, updatePlace } from '../services/pl
 import { getCategories } from '../services/categoryService';
 import { errorMessage } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import usePageTitle from '../hooks/usePageTitle';
 import { formatDistance } from '../utils/formatDistance';
 import Button from '../components/Common/Button';
 import Modal from '../components/Common/Modal';
@@ -26,10 +27,13 @@ const EMPTY_FORM = {
   image_url: '',
 };
 
+// text-base on small screens prevents iOS Safari's focus auto-zoom (it only
+// zooms inputs under 16px); sm+ keeps the compact look on desktop.
 const inputClass =
-  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30';
+  'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:text-sm';
 
 export default function AdminDashboardPage() {
+  usePageTitle();
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -65,7 +69,7 @@ export default function AdminDashboardPage() {
     load();
   }, [load]);
 
-  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || '—';
+  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || 'Uncategorised';
 
   // ── Add / Edit form ──────────────────────────────────────────
   const openAdd = () => {
@@ -159,7 +163,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold sm:text-4xl">Place management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as <span className="font-semibold text-foreground">{admin?.username}</span> — add, edit or
+            Signed in as <span className="font-semibold text-foreground">{admin?.username}</span>. Add, edit or
             delete places of interest.
           </p>
         </div>
@@ -175,7 +179,45 @@ export default function AdminDashboardPage() {
       {!loading && error && <ErrorMessage message={error} onRetry={load} />}
 
       {!loading && !error && (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+        <>
+          {/* Card list — phones/tablets below md (a 640px table forces
+              horizontal scrolling there, which is painful on a phone). */}
+          <ul className="space-y-3 md:hidden">
+            {places.map((place, i) => (
+              <li key={place.place_id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">
+                      <span className="mr-2 text-sm text-muted-foreground">{i + 1}.</span>
+                      {place.name}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {categoryName(place.category_id)} · {formatDistance(place.distance_km)}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {place.opening_hours || 'Hours not set'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(place)}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="danger" className="flex-1" onClick={() => setDeleteTarget(place)}>
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            ))}
+            {places.length === 0 && (
+              <li className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+                No places yet. Add the first one.
+              </li>
+            )}
+          </ul>
+
+          {/* Table — md and up */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-border bg-card shadow-sm md:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
@@ -195,7 +237,7 @@ export default function AdminDashboardPage() {
                   <td className="px-4 py-3">{categoryName(place.category_id)}</td>
                   <td className="px-4 py-3">{formatDistance(place.distance_km)}</td>
                   <td className="max-w-56 truncate px-4 py-3 text-muted-foreground" title={place.opening_hours || ''}>
-                    {place.opening_hours || '—'}
+                    {place.opening_hours || 'Not set'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex gap-2">
@@ -212,13 +254,14 @@ export default function AdminDashboardPage() {
               {places.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
-                    No places yet — add the first one.
+                    No places yet. Add the first one.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Add / Edit modal (FR-16, FR-17, FR-19) */}
@@ -288,9 +331,9 @@ export default function AdminDashboardPage() {
             </p>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add place'}</Button>
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button type="submit" className="w-full sm:w-auto" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add place'}</Button>
           </div>
         </form>
       </Modal>

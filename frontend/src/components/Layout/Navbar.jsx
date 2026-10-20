@@ -1,13 +1,13 @@
-// Navbar — primary navigation (Explore, My Day Plan with count badge).
-// No admin link — the admin panel is reached only via the /admin URL.
+// Navbar — primary navigation (Home, Explore, My Day Plan, Contact us).
+// Selected item shows green text only (no filled pill), per developer instruction.
 
 import { NavLink } from 'react-router-dom';
 import { useVisitPlan } from '../../hooks/useVisitPlan';
 
-const linkClass = ({ isActive }) =>
-  `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-    isActive ? 'bg-brand-light text-brand-dark' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-  }`;
+const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-colors';
+const active = 'text-brand-dark';
+const inactive = 'text-muted-foreground hover:bg-muted hover:text-foreground';
+const linkClass = ({ isActive }) => `${base} ${isActive ? active : inactive}`;
 
 export default function Navbar() {
   const { count } = useVisitPlan();
@@ -15,6 +15,9 @@ export default function Navbar() {
   return (
     <nav className="flex flex-wrap items-center gap-1">
       <NavLink to="/" end className={linkClass}>
+        Home
+      </NavLink>
+      <NavLink to="/explore" className={linkClass}>
         Explore
       </NavLink>
       <NavLink to="/visit-plan" className={linkClass}>
@@ -24,6 +27,9 @@ export default function Navbar() {
             {count}
           </span>
         )}
+      </NavLink>
+      <NavLink to="/contact" className={linkClass}>
+        Contact us
       </NavLink>
     </nav>
   );

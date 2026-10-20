@@ -6,14 +6,9 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import {
-  IconArrowNarrowLeft,
-  IconArrowNarrowRight,
-  IconX,
-} from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
-import Image, { ImageProps } from "next/image";
 import { useOutsideClick } from "@/hooks/use-outside-click";
 
 interface CarouselProps {
@@ -38,36 +33,13 @@ export const CarouselContext = createContext<{
 
 export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
   const carouselRef = React.useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
-  const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (carouselRef.current) {
       carouselRef.current.scrollLeft = initialScroll;
-      checkScrollability();
     }
   }, [initialScroll]);
-
-  const checkScrollability = () => {
-    if (carouselRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth);
-    }
-  };
-
-  const scrollLeft = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -300, behavior: "smooth" });
-    }
-  };
-
-  const scrollRight = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
-  };
 
   const handleCardClose = (index: number) => {
     if (carouselRef.current) {
@@ -86,15 +58,34 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
     return window && window.innerWidth < 768;
   };
 
+  // One card plus row gap per step (w-56 / w-96 plus the gap-4 spacing).
+  const stepSize = () => (isMobile() ? 240 : 400);
+
+  // Dot navigation: track the centred card while the row is scrolled by hand.
+  const handleScroll = () => {
+    if (carouselRef.current) {
+      const index = Math.round(carouselRef.current.scrollLeft / stepSize());
+      setCurrentIndex(Math.max(0, Math.min(items.length - 1, index)));
+    }
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    carouselRef.current?.scrollTo({
+      left: index * stepSize(),
+      behavior: "smooth",
+    });
+  };
+
   return (
     <CarouselContext.Provider
       value={{ onCardClose: handleCardClose, currentIndex }}
     >
       <div className="relative w-full">
         <div
-          className="flex w-full overflow-x-scroll overscroll-x-auto scroll-smooth py-10 [scrollbar-width:none] md:py-20"
+          className="flex w-full overflow-x-scroll overscroll-x-auto scroll-smooth py-2 [scrollbar-width:none] md:py-6"
           ref={carouselRef}
-          onScroll={checkScrollability}
+          onScroll={handleScroll}
         >
           <div
             className={cn(
@@ -131,21 +122,21 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
             ))}
           </div>
         </div>
-        <div className="mr-10 flex justify-end gap-2">
-          <button
-            className="relative z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 disabled:opacity-50"
-            onClick={scrollLeft}
-            disabled={!canScrollLeft}
-          >
-            <IconArrowNarrowLeft className="h-6 w-6 text-gray-500" />
-          </button>
-          <button
-            className="relative z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 disabled:opacity-50"
-            onClick={scrollRight}
-            disabled={!canScrollRight}
-          >
-            <IconArrowNarrowRight className="h-6 w-6 text-gray-500" />
-          </button>
+        {/* Small dot indicators, centred under the carousel (replaces the arrows). */}
+        <div className="flex items-center justify-center gap-2 pb-2">
+          {items.map((_, index) => (
+            <button
+              key={index}
+              aria-label={`Go to featured card ${index + 1}`}
+              onClick={() => goToSlide(index)}
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                index === currentIndex
+                  ? "w-6 bg-brand"
+                  : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+              )}
+            />
+          ))}
         </div>
       </div>
     </CarouselContext.Provider>
@@ -163,7 +154,17 @@ export const Card = ({
 }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { onCardClose, currentIndex } = useContext(CarouselContext);
+  const { onCardClose } = useContext(CarouselContext);
+
+  // Defined before the effects below so they never read it mid-initialisation.
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    onCardClose(index);
+  };
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -175,23 +176,17 @@ export const Card = ({
     if (open) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto";
+      // Restore the previous value (empty string = default), not a hard-coded
+      // "auto" which could override a page that had locked scrolling itself.
+      document.body.style.overflow = "";
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useOutsideClick(containerRef, () => handleClose());
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    onCardClose(index);
-  };
 
   return (
     <>
@@ -238,7 +233,7 @@ export const Card = ({
       <motion.button
         layoutId={layout ? `card-${card.title}` : undefined}
         onClick={handleOpen}
-        className="relative z-10 flex h-80 w-56 flex-col items-start justify-start overflow-hidden rounded-3xl bg-gray-100 md:h-[40rem] md:w-96 dark:bg-neutral-900"
+        className="relative z-10 flex h-[22rem] w-56 flex-col items-start justify-start overflow-hidden rounded-3xl bg-gray-100 sm:h-[26rem] md:h-[28rem] md:w-96 lg:h-[32rem] xl:h-[36rem] dark:bg-neutral-900"
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-full bg-gradient-to-b from-black/50 via-transparent to-transparent" />
         <div className="relative z-40 p-8">
@@ -258,12 +253,19 @@ export const Card = ({
         <BlurImage
           src={card.src}
           alt={card.title}
-          fill
           className="absolute inset-0 z-10 object-cover"
         />
       </motion.button>
     </>
   );
+};
+
+// Local image props (the original Aceternity code typed this against
+// next/image's ImageProps; this project is Vite + plain <img>).
+type BlurImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
+  height?: number | string;
+  width?: number | string;
+  src: string;
 };
 
 export const BlurImage = ({
@@ -273,7 +275,7 @@ export const BlurImage = ({
   className,
   alt,
   ...rest
-}: ImageProps) => {
+}: BlurImageProps) => {
   const [isLoading, setLoading] = useState(true);
   return (
     <img
@@ -288,7 +290,6 @@ export const BlurImage = ({
       height={height}
       loading="lazy"
       decoding="async"
-      blurDataURL={typeof src === "string" ? src : undefined}
       alt={alt ? alt : "Background of a beautiful view"}
       {...rest}
     />

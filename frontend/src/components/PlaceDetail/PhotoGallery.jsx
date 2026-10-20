@@ -14,7 +14,7 @@ export default function PhotoGallery({ place, categoryName }) {
       />
       {!place.image_url && (
         <figcaption className="bg-muted px-4 py-2 text-center text-xs text-muted-foreground">
-          No photo yet — the administrator can add one from the dashboard.
+          No photo yet. The administrator can add one from the dashboard.
         </figcaption>
       )}
     </figure>

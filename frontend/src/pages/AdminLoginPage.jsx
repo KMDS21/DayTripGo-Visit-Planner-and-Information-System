@@ -5,9 +5,11 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { errorMessage } from '../services/api';
+import usePageTitle from '../hooks/usePageTitle';
 import Button from '../components/Common/Button';
 
 export default function AdminLoginPage() {
+  usePageTitle();
   const { login, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,7 +46,7 @@ export default function AdminLoginPage() {
       <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
         <h1 className="font-heading text-3xl font-bold">Administrator login</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Restricted area — place management requires an authorised account.
+          Restricted area. Place management requires an authorised account.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

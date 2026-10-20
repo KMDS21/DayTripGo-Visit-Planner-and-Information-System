@@ -35,7 +35,7 @@ export default function PlanList({ items, totalDistance, onMove, onRemove, onCle
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Drag rows (or use the ↑ ↓ buttons) to set your visiting order — this is the order you would follow on the
+        Drag rows (or use the ↑ ↓ buttons) to set your visiting order, as this is the order you would follow on the
         day.
       </p>
 

@@ -11,7 +11,7 @@ function PlaceCardContent({ place }) {
   return (
     <div className="rounded-3xl bg-[#F5F5F7] p-8 dark:bg-neutral-800">
       <p className="max-w-2xl text-base text-neutral-600 dark:text-neutral-300">
-        <span className="font-bold text-neutral-800 dark:text-neutral-100">{place.name}</span> — {place.description}
+        <span className="font-bold text-neutral-800 dark:text-neutral-100">{place.name}</span>. {place.description}
       </p>
       <p className="mt-3 text-sm font-semibold text-brand">
         {formatDistance(place.distance_km)} from Wadduwa ·{' '}
@@ -28,16 +28,17 @@ export default function FeaturedCarousel({ places, categories }) {
 
   const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || 'Place';
 
-  // Up to 6 featured places — one per category where possible.
-  const seen = new Set();
-  const featured = [];
+  // Up to 6 featured places — the first place of each category, shown in the
+  // same alphabetical category order as the filter pills below.
+  const firstOfCategory = new Map();
   for (const place of places) {
     const cat = categoryName(place.category_id);
-    if (!seen.has(cat) && featured.length < 6) {
-      seen.add(cat);
-      featured.push(place);
-    }
+    if (!firstOfCategory.has(cat)) firstOfCategory.set(cat, place);
   }
+  const featured = [...firstOfCategory.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, place]) => place)
+    .slice(0, 6);
 
   const cards = featured.map((place, index) => (
     <Card

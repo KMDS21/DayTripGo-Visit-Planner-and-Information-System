@@ -32,7 +32,7 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
 
         <section className="rounded-2xl border border-border bg-card p-5">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Opening hours</h2>
-          <p className="text-base">{normaliseHours(place.opening_hours) || 'Hours not specified — contact before visiting.'}</p>
+          <p className="text-base">{normaliseHours(place.opening_hours) || 'Hours not specified. Contact us before visiting.'}</p>
         </section>
 
         {place.travel_tips && (
@@ -44,15 +44,27 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
           </section>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
+        {/* Sticky bottom action bar on phones (the in-flow button below hides
+            at that breakpoint); the button stays reachable while scrolling. */}
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur safe-b lg:hidden">
+          <div className="flex items-center gap-3">
+            <Button size="lg" className="flex-1" disabled={inPlan} onClick={() => onAdd(place)}>
+              {inPlan ? '✓ Already in plan' : '＋ Add to my day plan'}
+            </Button>
+            {added && <span className="shrink-0 text-sm font-semibold text-brand">Added!</span>}
+          </div>
+        </div>
+
+        {/* Desktop / tablet in-flow control */}
+        <div className="hidden items-center gap-3 pt-2 lg:flex">
           <Button size="lg" disabled={inPlan} onClick={() => onAdd(place)}>
             {inPlan ? '✓ Already in your day plan' : '＋ Add to my day plan'}
           </Button>
           {added && <span className="text-sm font-semibold text-brand">Added!</span>}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Planning only — DayTripGO does not book or sell anything.
+        <p className="pb-24 text-xs text-muted-foreground lg:pb-0">
+          Planning only. DayTripGO does not book or sell anything.
         </p>
       </div>
     </article>

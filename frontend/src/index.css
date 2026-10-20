@@ -131,5 +131,17 @@
     }
   html {
     @apply font-sans;
+    /* Prevent the iOS "bounce" zooming out when the plan list is dragged. */
+    @apply overscroll-y-contain;
     }
+  /* Comfortable minimum touch targets on interactive elements (WCAG 2.5.5
+     recommends ~44px). Only applied where buttons/pills were smaller. */
+  button, a, input, select, textarea {
+    @apply touch-manipulation;
+  }
+}
+
+@utility safe-b {
+  /* Respect the iOS home-indicator area for fixed bottom bars. */
+  padding-bottom: env(safe-area-inset-bottom);
 }
