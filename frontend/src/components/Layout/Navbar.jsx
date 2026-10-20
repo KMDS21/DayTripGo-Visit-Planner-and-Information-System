@@ -1,8 +1,8 @@
-// Navbar — primary navigation (Home, Visit Plan with count badge, Admin).
+// Navbar — primary navigation (Explore, My Day Plan with count badge).
+// No admin link — the admin panel is reached only via the /admin URL.
 
 import { NavLink } from 'react-router-dom';
 import { useVisitPlan } from '../../hooks/useVisitPlan';
-import { useAuth } from '../../hooks/useAuth';
 
 const linkClass = ({ isActive }) =>
   `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
@@ -11,7 +11,6 @@ const linkClass = ({ isActive }) =>
 
 export default function Navbar() {
   const { count } = useVisitPlan();
-  const { isAdmin } = useAuth();
 
   return (
     <nav className="flex flex-wrap items-center gap-1">
@@ -25,9 +24,6 @@ export default function Navbar() {
             {count}
           </span>
         )}
-      </NavLink>
-      <NavLink to={isAdmin ? '/admin/dashboard' : '/admin/login'} className={linkClass}>
-        {isAdmin ? 'Dashboard' : 'Admin'}
       </NavLink>
     </nav>
   );
