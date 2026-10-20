@@ -259,7 +259,7 @@ function AdminMobileBar() {
           </NavLink>
           <NavLink to="/admin/places" onClick={() => setOpen(false)} className={drawerLinkClass}>
             <PlacesIcon />
-            Places
+            Attractive Places
           </NavLink>
 
           <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -364,7 +364,7 @@ function AdminLayout({ children }) {
             </NavLink>
             <NavLink to="/admin/places" className={sideLinkClass}>
               <PlacesIcon />
-              {!collapsed && 'Places'}
+              {!collapsed && 'Attractive Places'}
             </NavLink>
           </nav>
 

@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
-            label="Places"
+            label="Attractive Places"
             value={stats?.places}
             hint={loading ? 'Loading…' : 'Open the places page'}
             to="/admin/places"

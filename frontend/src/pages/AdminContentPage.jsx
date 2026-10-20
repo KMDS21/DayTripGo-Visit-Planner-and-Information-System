@@ -63,8 +63,8 @@ const PAGE_CONFIG = {
   },
 };
 
-// The carousel shows at most 6 cards (FeaturedCarousel cap).
-const MAX_FEATURED = 6;
+// The carousel shows at most 12 cards (FeaturedCarousel cap).
+const MAX_FEATURED = 12;
 
 const inputClass =
   'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:text-sm';
@@ -112,7 +112,7 @@ export default function AdminContentPage() {
     if (!needsPlaces) return () => {};
     let alive = true;
     setPlacesLoading(true);
-    getPlaces()
+    getPlaces({ scope: 'admin' })
       .then((data) => {
         if (alive) setPlaces(data || []);
       })
@@ -350,7 +350,7 @@ export default function AdminContentPage() {
                       <span className="text-xs text-muted-foreground">Maximum {MAX_FEATURED} cards.</span>
                     )}
                     {places.length === 0 && (
-                      <span className="text-xs text-muted-foreground">Add places first on the Places page.</span>
+                      <span className="text-xs text-muted-foreground">Add places first on the Attractive Places page.</span>
                     )}
                   </div>
                 </>
@@ -363,7 +363,7 @@ export default function AdminContentPage() {
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
               <h2 className="text-lg font-bold">Cover photo</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Pick the photo shown behind the Explore page banner. Any image uploaded on the Places page can be
+                Pick the photo shown behind the Explore page banner. Any image uploaded on the Attractive Places page can be
                 used.
               </p>
 
@@ -402,7 +402,7 @@ export default function AdminContentPage() {
                   </div>
                   {images.length === 0 && (
                     <p className="mt-3 text-xs text-muted-foreground">
-                      No uploaded images yet. Add a photo to a place on the Places page first.
+                      No uploaded images yet. Add a photo to a place on the Attractive Places page first.
                     </p>
                   )}
                 </>
