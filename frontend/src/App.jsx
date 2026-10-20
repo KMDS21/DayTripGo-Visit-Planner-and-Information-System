@@ -118,17 +118,6 @@ function AdminAuthLayout() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,255,255,0.9)_0%,transparent_70%)]"
       />
 
-      {/* Boxed logo with the Admin Panel label on its left */}
-      <div className="relative z-10 mb-7 flex items-center gap-3 rounded-2xl border border-brand/25 bg-card/85 px-4 py-3 shadow-lg ring-1 ring-brand/10 backdrop-blur">
-        <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-dark sm:text-sm">
-          Admin Panel
-        </span>
-        <span aria-hidden="true" className="h-6 w-px bg-brand/30" />
-        <Link to="/" className="flex items-center" aria-label="DayTripGO home">
-          <img src="/Logo.png" alt="DayTripGO" className="h-9 w-auto" />
-        </Link>
-      </div>
-
       <div className="relative z-10 w-full max-w-md">
         <Outlet />
       </div>
