@@ -1,7 +1,7 @@
 // AdminLoginPage — /admin/login (SRS FR-14: valid username/password required
 // before any place-management function).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { errorMessage } from '../services/api';
@@ -18,8 +18,13 @@ export default function AdminLoginPage() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
+  // Redirect in an effect, never during render: React Router v7 silently
+  // ignores navigate() on first paint, which used to leave this page blank.
+  useEffect(() => {
+    if (isAdmin) navigate('/admin/dashboard', { replace: true });
+  }, [isAdmin, navigate]);
+
   if (isAdmin) {
-    navigate('/admin/dashboard', { replace: true });
     return null;
   }
 
