@@ -723,3 +723,39 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 12:26 - Admin panel second edition: image uploads, stats, content editors, messages inbox (commit `1d71b6c`)
+
+- **Branch**: all work committed as one single commit per the developer's convention - **`1d71b6c admin panel second edition`** (43 files, +2132/-366) on `feature/admin-uploads-content-messages` (forked from `feature/admin-login-update`); the branch was then **renamed `admin-panel-second-edition`** - the rename is what gets pushed and the old remote branch is deleted
+
+### Backend - image upload to a server folder
+
+- **`backend/src/utils/uploadConfig.js`**: multer memory storage + rules - allowed formats **jpg / jpeg / png / webp / avif** (magic-byte sniff, not just MIME), **5 MB per file**, **500 MB total server quota** (HTTP 507 when full), `UPLOADS_ROOT` / `PUBLIC_PREFIX` constants, `removeStoredImage` helper; **`backend/src/middleware/upload.js`**: `uploader` + `quotaGate`; **`backend/src/services/imageService.js`**: set / replace / clear logic - replace uploads the new file then deletes the old one from disk, remove deletes the file and clears `image_url`
+- **Routes**: `POST /api/places/:id/image` + `DELETE /api/places/:id/image` (JWT) on `placeRoutes`; place delete now also removes the stored file (no orphans); `errorHandler.js` maps MulterError codes to friendly messages; `app.js` serves the folder at **`/uploads`** - the first mount was one level too deep (`/uploads/places/...` 404) and was fixed with `UPLOADS_ROOT`
+- **Smoke test (live API)**: 13/14 checks pass - login, create, upload, replace (old file deleted), >5 MB rejected, remove, place delete cleans the file, unauthenticated 401
+
+### Backend - dashboard stats, page content, contact messages
+
+- **`GET /api/admin/stats`** (JWT): counts of places, categories, visit plans (traffic) and unread contact messages plus storage usage (used / free / percent / full flag) for the 500 MB bar
+- **`GET/PUT /api/content/:page`** (pages `home`, `explore`, `plan`, `contact`): per-page editable text stored in a `page_content` table
+- **Messages**: `POST /api/messages` public (the Contact form now really submits), `GET /api/messages`, `PATCH /:id/read`, `DELETE /:id` (JWT)
+- Content and messages return a friendly **503** until migration `database/schema/002_contact_content.sql` (contact_messages + page_content + RLS) is run in the Supabase SQL Editor - **developer action still pending**
+
+### Frontend - admin restructure
+
+- **Dashboard = counters only**: four stat cards (Places -> /admin/places, Categories, Plans created = traffic, Contact messages = unread -> /admin/messages) + the **500 MB storage status bar** (`components/Admin/StorageBar.jsx`, green/amber/red at 70/90 %) + light-red Log out; the place table and Add place button moved off the dashboard
+- **New `pages/AdminPlacesPage.jsx` at `/admin/places`**: Add place button + full place table (cards below md) + add/edit modal with the image file picker (format/size validation, preview, upload-after-save, Replace/Remove of the stored file) + delete confirmation
+- **Sidebar restructure** (`App.jsx`, desktop + mobile drawer): public-page links (Explore -> `/`, My Day Plan -> `/visit-plan`) removed from the admin nav; main nav = Dashboard + Places; **Edit pages** group carries one editor per public page (Home, Explore, My Day Plan, Contact us -> `/admin/pages/:page`, `pages/AdminContentPage.jsx`); **Responses** is its own group (Contact responses -> `/admin/messages`, `pages/AdminMessagesPage.jsx` inbox with unread badge, mark-read, delete)
+- **Public pages wired to editable content**: `hooks/usePageContent.js` fetches `/api/content/:page` with built-in fallback defaults; Home / Explore / My Day Plan / Contact heroes and key texts read from it; `ContactPage` submits through `submitMessage()` (sending state, real backend endpoint)
+- **Single font in the admin area**: `font-heading` (Playfair) removed from every admin screen (dashboard, places, content editor, messages, StatCard, Modal) - admin renders in the body font only; the public site keeps the two-font treatment
+- **Dashboard Log out in light red**: the `danger-soft` variant from the Clear-plan round is reused (`bg-red-50`, `text-red-600`)
+
+### Housekeeping
+
+- **Commit `d5fb43b keep project logo at repository root`**: the developer wants `Logo.png` at the repo root; the working-tree copy had vanished and was restored from the identical `frontend/public/Logo.png`; root `.gitignore` also gained `backend/uploads/` (runtime image data never committed)
+- **Verification**: `npx oxlint src` 0 errors (warnings pre-existing), `npm run build` passes, live dev-server checks confirm the sidebar structure, the storage-bar removal from Places and the single-font admin
+- **Push**: `admin-panel-second-edition` pushed to origin under the new name; remote `feature/admin-uploads-content-messages` deleted after the rename
+
+---
+
+_(Entries below are appended as further steps complete.)_
