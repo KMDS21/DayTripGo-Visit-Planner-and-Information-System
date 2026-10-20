@@ -39,11 +39,11 @@ export default function FeaturedCarousel({ places, categories, featured }) {
   let cards = (featured || [])
     .map((row) => ({ place: byId.get(row.id), cover: row.cover || '' }))
     .filter((entry) => entry.place)
-    .slice(0, 6);
+    .slice(0, 12);
 
   if (!cards.length) {
     // Fallback — the first place of each category, in alphabetical category
-    // order (the same order as the filter pills below), capped at 6.
+    // order (the same order as the filter pills below), capped at 12.
     const firstOfCategory = new Map();
     for (const place of places) {
       const cat = categoryName(place.category_id);
@@ -52,7 +52,7 @@ export default function FeaturedCarousel({ places, categories, featured }) {
     cards = [...firstOfCategory.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, place]) => ({ place, cover: '' }))
-      .slice(0, 6);
+      .slice(0, 12);
   }
 
   const items = cards.map(({ place, cover }, index) => (

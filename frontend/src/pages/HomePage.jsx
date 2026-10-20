@@ -1,5 +1,6 @@
-// HomePage — place listing with category filter (SRS FR-1…FR-4) plus the
-// featured-places carousel and hero (plan §14.3 Step 17, T-4.1…T-4.3).
+// HomePage — hero, why/how sections, the Featured escapes carousel and the
+// full "All places" listing: the same cards and category selector as the
+// Explore page (published places from the Attractive Places table).
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
 import usePageContent from '../hooks/usePageContent';
 import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
-import PlaceCard from '../components/PlaceListing/PlaceCard';
+import PlaceGrid from '../components/PlaceListing/PlaceGrid';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 import { parseFeaturedRows } from '../utils/featuredConfig';
@@ -27,7 +28,14 @@ export default function HomePage() {
   const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
-  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name;
+
+  // Only the places the admin ticked "Show on home" for (Attractive Places
+  // table) appear here; with no selection yet the whole published list shows.
+  const homeIds = String(sections.home_place_ids || '')
+    .split(',')
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const listedPlaces = homeIds.length > 0 ? places.filter((place) => homeIds.includes(place.place_id)) : places;
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -133,14 +141,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Preview band — a few favourites; the full listing lives on the Explore page */}
-      <section id="places" className="w-full">
-        <div className="relative mb-6 flex flex-wrap items-center justify-between gap-4">
+      {/* All places — the same cards as the Explore page, showing only the
+          places ticked "Show on home" in the Attractive Places table. */}
+      <section id="places" className="w-full space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-2xl">
             <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
             <p className="mt-1.5 leading-relaxed text-muted-foreground">
-              A taste of what is out there. Open Explore for the full list, category
-              filters, opening hours and distances.
+              Our selected places within 25 km of Wadduwa — filter by category and add
+              your favourites straight to your day plan.
             </p>
           </div>
           <Link
@@ -157,17 +166,7 @@ export default function HomePage() {
         {loading && <Loader label="Loading places…" />}
         {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
         {!loading && !error && (
-          <div className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {places.slice(0, 4).map((place) => (
-              <PlaceCard
-                key={place.place_id}
-                place={place}
-                categoryName={categoryName(place.category_id)}
-                inPlan={hasPlace(place.place_id)}
-                onAdd={handleAdd}
-              />
-            ))}
-          </div>
+          <PlaceGrid places={listedPlaces} categories={categories} hasPlace={hasPlace} onAdd={handleAdd} />
         )}
       </section>
 

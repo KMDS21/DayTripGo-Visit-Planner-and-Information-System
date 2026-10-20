@@ -2,7 +2,7 @@
 
 import PlaceCard from './PlaceCard';
 
-export default function PlaceGrid({ places, categories, hasPlace, onAdd }) {
+export default function PlaceGrid({ places, categories, hasPlace, onAdd, onOpen }) {
   const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name;
 
   if (!places.length) {
@@ -24,6 +24,7 @@ export default function PlaceGrid({ places, categories, hasPlace, onAdd }) {
           categoryName={categoryName(place.category_id)}
           inPlan={hasPlace(place.place_id)}
           onAdd={onAdd}
+          onOpen={onOpen}
         />
       ))}
     </div>

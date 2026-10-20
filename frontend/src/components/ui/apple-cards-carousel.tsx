@@ -6,7 +6,7 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import { IconX } from "@tabler/icons-react";
+import { IconChevronLeft, IconX } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { useOutsideClick } from "@/hooks/use-outside-click";
@@ -58,6 +58,14 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
     return window && window.innerWidth < 768;
   };
 
+  // The left "back" arrow under the carousel fades in after load (the cards'
+  // entrance animation has had time to play).
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 900);
+    return () => clearTimeout(timer);
+  }, []);
+
   // One card plus row gap per step (w-56 / w-96 plus the gap-4 spacing).
   const stepSize = () => (isMobile() ? 240 : 400);
 
@@ -95,8 +103,8 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
 
           <div
             className={cn(
-              "flex flex-row justify-start gap-4 pl-4",
-              "mx-auto max-w-7xl", // remove max-w-4xl if you want the carousel to span the full width of its container
+              "flex flex-row justify-start gap-4",
+              "max-w-7xl", // left-flush (no pl/mx-auto): the first card starts at the corner
             )}
           >
             {items.map((item, index) => (
@@ -122,8 +130,25 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
             ))}
           </div>
         </div>
-        {/* Small dot indicators, centred under the carousel (replaces the arrows). */}
-        <div className="flex items-center justify-center gap-2 pb-2">
+        {/* Row under the carousel: the centred dots (kept as-is) plus a left
+            "back" arrow at the edge, fading in after the carousel loads. */}
+        <div className="relative flex items-center justify-center gap-2 pb-2">
+          <button
+            type="button"
+            aria-label="Scroll featured cards left"
+            disabled={currentIndex === 0}
+            onClick={() => {
+              const el = carouselRef.current;
+              if (el) el.scrollTo({ left: Math.max(0, el.scrollLeft - stepSize()), behavior: "smooth" });
+            }}
+            className={cn(
+              "absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-all duration-500 hover:text-brand",
+              !loaded && "pointer-events-none opacity-0",
+              loaded && currentIndex === 0 && "opacity-40",
+            )}
+          >
+            <IconChevronLeft className="h-5 w-5" />
+          </button>
           {items.map((_, index) => (
             <button
               key={index}

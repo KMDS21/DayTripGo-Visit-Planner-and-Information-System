@@ -1,6 +1,6 @@
 // ExplorePage — full public place listing as its own page (SRS FR-1 list,
-// FR-2 filter one category at a time, FR-3 clear filter). The home page only
-// previews a few places and links here.
+// FR-2 filter one category at a time, FR-3 clear filter) with the detail
+// popup. The home page shows the same listing (cards + selector) inline.
 
 import { useState } from 'react';
 import { usePlaces } from '../hooks/usePlaces';
@@ -9,6 +9,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import usePageContent from '../hooks/usePageContent';
 import CategoryFilter from '../components/PlaceListing/CategoryFilter';
 import PlaceGrid from '../components/PlaceListing/PlaceGrid';
+import PlacePreviewModal from '../components/PlaceListing/PlacePreviewModal';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 
@@ -24,6 +25,8 @@ export default function ExplorePage() {
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
+  // Clicked place → detail popup (blurred backdrop) instead of a page change.
+  const [preview, setPreview] = useState(null);
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -68,7 +71,25 @@ export default function ExplorePage() {
       {loading && <Loader label="Loading places…" />}
       {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
       {!loading && !error && (
-        <PlaceGrid places={places} categories={categories} hasPlace={hasPlace} onAdd={handleAdd} />
+        <PlaceGrid
+          places={places}
+          categories={categories}
+          hasPlace={hasPlace}
+          onAdd={handleAdd}
+          onOpen={setPreview}
+        />
+      )}
+
+      {/* Place detail popup (blur backdrop) — only mounted while open; rendered
+          before the flash so the "added to plan" toast stays above it. */}
+      {preview && (
+        <PlacePreviewModal
+          place={preview}
+          categoryName={categories.find((c) => c.category_id === preview.category_id)?.category_name || ''}
+          inPlan={hasPlace(preview.place_id)}
+          onAdd={handleAdd}
+          onClose={() => setPreview(null)}
+        />
       )}
 
       {/* Add-to-plan confirmation flash (max-width keeps long names on-screen) */}
