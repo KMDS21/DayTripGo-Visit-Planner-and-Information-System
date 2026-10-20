@@ -1,7 +1,7 @@
 // Place Service — business logic for place listing, filtering and CRUD (SRS FR-1…FR-9, FR-16…FR-19).
 
 const placeModel = require('../models/placeModel');
-const { parseCoordsFromGoogleMapsUrl } = require('../utils/googleMaps');
+const { resolveCoordsFromGoogleMapsUrl } = require('../utils/googleMaps');
 
 function httpError(status, message) {
   const err = new Error(message);
@@ -9,29 +9,32 @@ function httpError(status, message) {
   return err;
 }
 
-// Normalises the optional Google Maps link and derives latitude/longitude
-// from it when the caller did not supply coordinates (the admin pastes a
-// link instead of typing numbers).
+// Migration 003 replaced the manual latitude/longitude columns with one
+// optional Google Maps link. Coordinates are never written any more — strip
+// caller-supplied values so CRUD can never fail on the dropped columns.
 function preparePlaceFields(fields) {
   const out = { ...fields };
+  delete out.latitude;
+  delete out.longitude;
   if ('google_maps_url' in out) {
     out.google_maps_url = String(out.google_maps_url || '').trim() || null;
   }
-  const hasLat = out.latitude !== undefined && out.latitude !== null && out.latitude !== '';
-  const hasLng = out.longitude !== undefined && out.longitude !== null && out.longitude !== '';
-  if (out.google_maps_url && (!hasLat || !hasLng)) {
-    const coords = parseCoordsFromGoogleMapsUrl(out.google_maps_url);
-    if (coords) {
-      out.latitude = coords.lat;
-      out.longitude = coords.lng;
-    }
-  }
-  for (const key of ['latitude', 'longitude']) {
-    if (key in out && (out[key] === '' || out[key] === null)) out[key] = null;
-    else if (key in out) out[key] = Number(out[key]);
-    if (key in out && Number.isNaN(out[key])) delete out[key];
-  }
   return out;
+}
+
+// Coordinates live only inside the Google Maps link now: derive them at READ
+// time so the map embeds and the day-plan route map keep working. Short share
+// links (maps.app.goo.gl) are followed server-side once, then cached.
+async function withCoords(row) {
+  if (!row) return row;
+  const coords = row.google_maps_url ? await resolveCoordsFromGoogleMapsUrl(row.google_maps_url) : null;
+  const latitude = coords ? coords.lat : row.latitude !== undefined ? Number(row.latitude) : null;
+  const longitude = coords ? coords.lng : row.longitude !== undefined ? Number(row.longitude) : null;
+  return {
+    ...row,
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+  };
 }
 
 // Migration 003 adds the google_maps_url column. Until it is run, strip the
@@ -41,19 +44,36 @@ function isMissingMapsColumn(error) {
   return /google_maps_url/i.test(msg) && /does not exist|schema cache/i.test(msg);
 }
 
-async function listPlaces(categoryId) {
+async function listPlaces(categoryId, options = {}) {
   const { data, error } = categoryId
-    ? await placeModel.findByCategory(categoryId)
-    : await placeModel.findAll();
+    ? await placeModel.findByCategory(categoryId, options)
+    : await placeModel.findAll(options);
   if (error) throw httpError(500, `Failed to load places: ${error.message}`);
-  return data;
+  return await Promise.all((data || []).map(withCoords));
+}
+
+// Publish switch — publishes/unpublishes one place on the public site.
+async function setPlacePublished(placeId, published) {
+  const { data, error } = await placeModel.update(placeId, { published: Boolean(published) });
+  if (error) {
+    const msg = String(error.message || '');
+    if (/published/i.test(msg) && /does not exist|schema cache/i.test(msg)) {
+      throw httpError(
+        503,
+        'Publish switch is not available yet — run database/schema/005_place_published.sql in the Supabase SQL editor.'
+      );
+    }
+    throw httpError(400, `Failed to update publish state: ${error.message}`);
+  }
+  if (!data) throw httpError(404, 'Place not found.');
+  return await withCoords(data);
 }
 
 async function getPlace(placeId) {
   const { data, error } = await placeModel.findById(placeId);
   if (error) throw httpError(500, `Failed to load place: ${error.message}`);
   if (!data) throw httpError(404, 'Place not found.');
-  return data;
+  return await withCoords(data);
 }
 
 async function createPlace(fields, adminId) {
@@ -65,7 +85,7 @@ async function createPlace(fields, adminId) {
   }
   const { data, error } = result;
   if (error) throw httpError(400, `Failed to create place: ${error.message}`);
-  return data;
+  return await withCoords(data);
 }
 
 async function updatePlace(placeId, fields) {
@@ -78,25 +98,40 @@ async function updatePlace(placeId, fields) {
   }
   const { data, error } = result;
   if (error) throw httpError(400, `Failed to update place: ${error.message}`);
-  return data || { ...existing, ...prepared };
+  if (data) return await withCoords(data);
+  const merged = { ...existing, ...prepared };
+  delete merged.latitude;
+  delete merged.longitude;
+  return await withCoords(merged);
 }
 
 async function deletePlace(placeId) {
   const place = await getPlace(placeId); // 404 if it does not exist
+
+  // Collect every stored file for this place BEFORE the row disappears
+  // (its place_photos rows go with it via the FK cascade).
+  const stored = new Set();
+  if (place.image_url) stored.add(place.image_url);
+  try {
+    const placePhotoModel = require('../models/placePhotoModel');
+    const { data: photos } = await placePhotoModel.findByPlace(placeId);
+    (photos || []).forEach((photo) => photo.photo_url && stored.add(photo.photo_url));
+  } catch (err) {
+    console.error('[PLACE] Photo listing failed during delete:', err.message);
+  }
+
   const { error } = await placeModel.remove(placeId);
   if (error) throw httpError(400, `Failed to delete place: ${error.message}`);
 
-  // Remove the stored server image so no orphan files are left behind.
-  if (place.image_url) {
-    try {
-      const uploadConfig = require('../utils/uploadConfig');
-      uploadConfig.removeStoredImage(place.image_url);
-    } catch (err) {
-      console.error('[PLACE] Image cleanup failed:', err.message);
-    }
+  // Remove the stored server images so no orphan files are left behind.
+  try {
+    const uploadConfig = require('../utils/uploadConfig');
+    stored.forEach((url) => uploadConfig.removeStoredImage(url));
+  } catch (err) {
+    console.error('[PLACE] Image cleanup failed:', err.message);
   }
 
   return { place_id: Number(placeId) };
 }
 
-module.exports = { listPlaces, getPlace, createPlace, updatePlace, deletePlace };
+module.exports = { listPlaces, getPlace, createPlace, updatePlace, deletePlace, setPlacePublished, withCoords };

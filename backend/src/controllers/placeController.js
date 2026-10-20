@@ -1,12 +1,28 @@
 // Place Controller — request/response handling for /api/places.
 
 const placeService = require('../services/placeService');
-const imageService = require('../services/imageService');
 
 async function getAllPlaces(req, res, next) {
   try {
-    const places = await placeService.listPlaces(req.query.category);
+    // ?scope=admin (admin JWT checked in the route) also returns unpublished
+    // places; the default public list only contains published ones.
+    const includeUnpublished = req.query.scope === 'admin';
+    const places = await placeService.listPlaces(req.query.category, { includeUnpublished });
     res.json({ success: true, count: places.length, data: places });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// PUT /:id/publish — { published: true | false } (admin).
+async function setPlacePublished(req, res, next) {
+  try {
+    const { published } = req.body || {};
+    if (typeof published !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'published must be true or false.' });
+    }
+    const place = await placeService.setPlacePublished(req.params.id, published);
+    res.json({ success: true, data: place });
   } catch (err) {
     next(err);
   }
@@ -48,32 +64,11 @@ async function deletePlace(req, res, next) {
   }
 }
 
-// POST /api/places/:id/image — save to server folder, delete old file, update DB path.
-async function uploadImage(req, res, next) {
-  try {
-    const place = await imageService.setPlaceImage(req.params.id, req.file);
-    res.json({ success: true, data: place });
-  } catch (err) {
-    next(err);
-  }
-}
-
-// DELETE /api/places/:id/image — delete the server file and clear the DB path.
-async function removeImage(req, res, next) {
-  try {
-    const place = await imageService.clearPlaceImage(req.params.id);
-    res.json({ success: true, data: place });
-  } catch (err) {
-    next(err);
-  }
-}
-
 module.exports = {
   getAllPlaces,
   getPlaceById,
   createPlace,
   updatePlace,
   deletePlace,
-  uploadImage,
-  removeImage,
+  setPlacePublished,
 };

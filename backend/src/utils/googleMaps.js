@@ -1,6 +1,6 @@
-// Google Maps helpers — URL sanity check + coordinate parsing.
-// Admins paste a Google Maps link instead of typing latitude/longitude; the
-// coordinates for the embedded OpenStreetMap views are derived from it.
+// Google Maps helpers — URL sanity check + coordinate parsing + short-link
+// resolution. Admins paste a Google Maps link instead of typing coordinates;
+// the coordinates for every map view are derived from it.
 
 // Accepts the common share forms:
 //   https://www.google.com/maps/.../@6.9028,79.8699,17z
@@ -22,7 +22,7 @@ function parseCoordsFromGoogleMapsUrl(url) {
   const patterns = [
     /@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/, // /maps/.../@lat,lng,z
     /!3d(-?\d{1,3}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/, // data in the URL hash
-    /[?&](?:q|ll|center)=(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/, // ?q=lat,lng
+    /[?&](?:q|ll|center|query)=(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/, // ?q=lat,lng
   ];
   for (const pattern of patterns) {
     const match = text.match(pattern);
@@ -34,4 +34,39 @@ function parseCoordsFromGoogleMapsUrl(url) {
   return null;
 }
 
-module.exports = { isGoogleMapsUrl, parseCoordsFromGoogleMapsUrl };
+// ── Short share links (maps.app.goo.gl, goo.gl/maps) ─────────────────────
+// They carry no coordinates in the URL itself. Follow the redirect ONCE
+// server-side and parse the destination; successes are cached for the life
+// of the process, failed resolutions are retried after a minute.
+const RESOLVE_CACHE = new Map(); // url -> { coords: {lat,lng}|null, at: number }
+const RESOLVE_TIMEOUT_MS = 4000;
+const NEGATIVE_TTL_MS = 60 * 1000;
+
+function isShortMapsLink(url) {
+  const text = String(url || '');
+  return /^https:\/\/maps\.app\.goo\.gl\//i.test(text) || /^https:\/\/goo\.gl\/maps\//i.test(text);
+}
+
+async function resolveCoordsFromGoogleMapsUrl(url) {
+  const text = String(url || '').trim();
+  const direct = parseCoordsFromGoogleMapsUrl(text);
+  if (direct || !isShortMapsLink(text)) return direct;
+
+  const cached = RESOLVE_CACHE.get(text);
+  if (cached && (cached.coords || Date.now() - cached.at < NEGATIVE_TTL_MS)) return cached.coords;
+
+  let coords = null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), RESOLVE_TIMEOUT_MS);
+    const res = await fetch(text, { redirect: 'follow', signal: controller.signal });
+    clearTimeout(timer);
+    coords = (res && res.url && parseCoordsFromGoogleMapsUrl(res.url)) || null;
+  } catch {
+    coords = null; // offline / timeout — keep the plain link, no map
+  }
+  RESOLVE_CACHE.set(text, { coords, at: Date.now() });
+  return coords;
+}
+
+module.exports = { isGoogleMapsUrl, parseCoordsFromGoogleMapsUrl, resolveCoordsFromGoogleMapsUrl };
