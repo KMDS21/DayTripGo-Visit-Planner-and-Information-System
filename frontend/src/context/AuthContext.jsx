@@ -9,8 +9,30 @@ const AuthContext = createContext(null);
 const TOKEN_KEY = 'daytripgo_token';
 const ADMIN_KEY = 'daytripgo_admin';
 
+// A JWT carries its own expiry ("exp", seconds → ms). A stale token must not
+// count as a signed-in admin, otherwise protected routes dead-end on 401s and
+// the login screen can never be reached (SRS FR-14/FR-15).
+function tokenLooksValid(value) {
+  if (!value) return false;
+  try {
+    const payload = JSON.parse(atob(value.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (typeof payload.exp !== 'number') return true; // no exp claim → accept
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false; // malformed token → treat as signed out
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState(() => {
+    const stored = localStorage.getItem(TOKEN_KEY);
+    if (stored && !tokenLooksValid(stored)) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(ADMIN_KEY);
+      return null;
+    }
+    return stored;
+  });
   const [admin, setAdmin] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(ADMIN_KEY));
@@ -42,7 +64,7 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const value = useMemo(
-    () => ({ token, admin, login, logout, isAdmin: Boolean(token) }),
+    () => ({ token, admin, login, logout, isAdmin: tokenLooksValid(token) }),
     [token, admin, login, logout]
   );
 

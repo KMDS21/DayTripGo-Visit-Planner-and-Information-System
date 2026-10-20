@@ -104,11 +104,21 @@ function ChevronIcon({ collapsed }) {
 // ── Admin auth shell — login/redirect screens only: no public Header/Footer ─
 function AdminAuthLayout() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-10">
-      <Link to="/" className="mb-6">
-        <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto" />
-      </Link>
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-4 py-10">
+      {/* Brand green-teal gradient wash */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,#ffffff_0%,var(--color-brand-light)_48%,#e2faf3_100%)]"
+      />
+      {/* Soft brand glows for depth */}
+      <div aria-hidden="true" className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand/25 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-brand/20 blur-3xl" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,255,255,0.9)_0%,transparent_70%)]"
+      />
+
+      <div className="relative z-10 w-full max-w-md">
         <Outlet />
       </div>
     </div>
