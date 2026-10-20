@@ -49,23 +49,22 @@ export default function AdminLoginPage() {
   return (
     <div className="mx-auto max-w-md py-14">
       <div className="overflow-hidden rounded-3xl border border-border bg-card/95 shadow-xl ring-1 ring-brand/10 backdrop-blur">
-        {/* Brand banner — Admin Panel label on the left, boxed logo on the right */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/15 bg-[linear-gradient(120deg,var(--color-brand)_0%,var(--color-brand-dark)_100%)] px-6 py-4 sm:px-8">
-          <span className="text-xs font-bold uppercase tracking-[0.22em] text-white sm:text-sm">
-            Admin Panel
-          </span>
-          <Link
-            to="/"
-            aria-label="DayTripGO home"
-            className="flex items-center rounded-xl bg-white/95 px-3 py-1.5 shadow-sm"
-          >
-            <img src="/Logo.png" alt="DayTripGO" className="h-8 w-auto" />
-          </Link>
-        </div>
-
         <div className="p-6 sm:p-8">
-          <h1 className="font-heading text-3xl font-bold">Administrator login</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          {/* Brand row — same card surface as the form, no separate colour strip */}
+          <div className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-4">
+            <Link
+              to="/"
+              aria-label="DayTripGO home"
+              className="flex items-center rounded-xl border border-border bg-background px-3 py-1.5 shadow-sm"
+            >
+              <img src="/Logo.png" alt="DayTripGO" className="h-8 w-auto" />
+            </Link>
+            <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-dark sm:text-sm">
+              Admin Panel
+            </span>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
             Restricted area. Place management requires an authorised account.
           </p>
 
