@@ -11,10 +11,11 @@ import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
 import PlaceCard from '../components/PlaceListing/PlaceCard';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
+import { parseFeaturedRows } from '../utils/featuredConfig';
 
 export default function HomePage() {
   usePageTitle();
-  const { get } = usePageContent('home', {
+  const { get, sections } = usePageContent('home', {
     hero_title: 'One perfect day around Wadduwa',
     hero_subtitle:
       'Discover verified places of interest within 25 km of Wadduwa, Sri Lanka, such as temples, gardens, waterfalls and beaches, and build a simple one-day visit plan.',
@@ -87,7 +88,12 @@ export default function HomePage() {
           <h2 className="mb-2 font-heading text-2xl font-bold sm:text-3xl">Featured escapes</h2>
           <p className="mb-2 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
         </div>
-        <FeaturedCarousel places={places} categories={categories} />
+        {/* Admin-chosen selection (see the Home page content editor); empty = default order */}
+        <FeaturedCarousel
+          places={places}
+          categories={categories}
+          featured={parseFeaturedRows(sections.featured_place_ids, sections.featured_covers)}
+        />
       </section>
 
       {/* How it works — tinted band */}

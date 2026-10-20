@@ -42,7 +42,7 @@ export default function PlaceCard({ place, categoryName, inPlan, onAdd }) {
 
         <p className="line-clamp-2 flex-1 text-sm text-muted-foreground">{place.description}</p>
 
-        <div className="mt-1 flex items-center gap-2">
+        <div className="mt-1 flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant={inPlan ? 'outline' : 'primary'}
@@ -58,6 +58,17 @@ export default function PlaceCard({ place, categoryName, inPlan, onAdd }) {
           >
             Details
           </Link>
+          {place.google_maps_url && (
+            <a
+              href={place.google_maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-muted-foreground underline-offset-4 hover:text-brand hover:underline"
+              aria-label={`Open ${place.name} in Google Maps`}
+            >
+              Map ↗
+            </a>
+          )}
         </div>
       </div>
     </article>

@@ -19,6 +19,8 @@ export default function ExplorePage() {
     hero_subtitle:
       'Every verified spot within 25 km of Wadduwa in one place. Filter by category, check opening times, and add your favourites straight to the day plan.',
   });
+  // Cover photo chosen in the Explore page content editor (any uploaded place image).
+  const cover = get('explore_cover');
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -31,9 +33,18 @@ export default function ExplorePage() {
 
   return (
     <div className="space-y-8 pb-8">
-      {/* Hero */}
+      {/* Hero (with the admin-chosen cover photo when one is set) */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-3xl text-center">
+        {cover && (
+          <>
+            <img src={cover} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-gradient-to-br from-brand-dark/75 via-brand/65 to-teal-600/60"
+            />
+          </>
+        )}
+        <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             {get('hero_subtitle')}

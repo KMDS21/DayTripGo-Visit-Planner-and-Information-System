@@ -776,3 +776,32 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 13:07 - Featured escapes + cover pickers in the content editors; a Google Maps link replaces latitude/longitude on places
+
+- **Developer requests**: (1) drop the "External image URL" field from the place form (upload only), (2) the admin picks which places the home page's **Featured escapes** carousel shows and the **cover image of each card**, (3) the admin picks the **Explore page cover photo** from the uploaded images, (4) places gain a **Google Maps location URL** instead of the manual latitude/longitude fields, and the public place cards show a **Map link** built from that URL
+
+### Content pickers (no new tables - stored in the existing `page_content` text sections)
+
+- **New `frontend/src/utils/featuredConfig.js`**: shared serialisation for the selection - `featured_place_ids` = CSV in display order ("3,7,1"), `featured_covers` = `id=cover` pairs ("3=/uploads/…;7="); one parser used by both the admin editor and the public home page
+- **Home page editor (`/admin/pages/home`) gains a "Featured escapes" section**: up to 6 rows, each = photo preview thumbnail + place dropdown (duplicates disabled) + cover dropdown (the place's own photo by default, or any image uploaded on the Places page) + remove; saved together with the text fields
+- **Explore page editor (`/admin/pages/explore`) gains a "Cover photo" section**: a thumbnail gallery of every uploaded place image with a "Default" gradient tile; the selection is stored as `explore_cover`
+- **Public side**: `FeaturedCarousel` accepts the admin's `featured` rows - chosen order and chosen covers, skipping places that were deleted since; with no selection it keeps the original "first place of each category" behaviour. `ExplorePage` renders the chosen cover behind the hero with a tinted overlay so the white text stays readable (gradient hero unchanged when no cover is set)
+- **Place form cleanup**: the "External image URL (optional)" input is gone (upload-only now), and the update payload no longer carries `image_url` at all, so editing a place can never wipe its stored server image path
+
+### Google Maps link per place (replaces manual coordinates)
+
+- **Migration `database/schema/003_place_google_maps_url.sql`** (developer action pending): `add column google_maps_url text` + `latitude/longitude drop not null` (they are derived from the link now); `select('*')` in the model picks the column up automatically
+- **New `backend/src/utils/googleMaps.js`**: `isGoogleMapsUrl` (accepts `google.*/maps`, `maps.app.goo.gl`, `goo.gl/maps`) and `parseCoordsFromGoogleMapsUrl` (`@lat,lng`, `!3d!4d`, `?q=`/`ll=`/`center=` patterns, range-checked)
+- **`placeService`**: `preparePlaceFields` trims the link and derives `latitude`/`longitude` from it whenever the caller did not supply coordinates, so the embedded OpenStreetMap views (detail page, day-plan route map) keep working; `validatePlace` no longer requires coordinates (still range-checks any that are sent) and rejects non-Google links with a clear 400
+- **Graceful degradation before the migration runs**: if the insert/update fails because the `google_maps_url` column is missing, the service strips just that field and retries - place CRUD keeps working (verified live: create/update succeeded and coordinates were still derived while the column was absent)
+- **Frontend**: the place form swaps the Latitude/Longitude inputs for one optional **Google Maps location URL** field (validated client-side too, with a hint that coordinates come from the link); `PlaceCard` shows a **Map ↗** link (new tab, `rel="noopener noreferrer"`) next to Details whenever the place has a link; `MapEmbed` already hides itself when coordinates are missing
+
+### Verification
+
+- `npx oxlint src` 0 errors - `npm run build` passes (7.19s) - live probes **12/12 PASS**: field swap in the form via HMR, Map link on the card, invalid URL -> 400, create without coordinates (derived 6.9028/79.8699 from the link), update follows a new link (7.2906), graceful fallback while the column is missing, probe place deleted; content round verified earlier at 13/13 (selection + cover round-trip and restore)
+- **Pending**: run `database/schema/003_place_google_maps_url.sql` in the Supabase SQL editor so the links themselves are stored and shown on the public cards
+
+---
+
+_(Entries below are appended as further steps complete.)_

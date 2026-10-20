@@ -29,9 +29,7 @@ const EMPTY_FORM = {
   opening_hours: '',
   travel_tips: '',
   distance_km: '',
-  latitude: '',
-  longitude: '',
-  image_url: '',
+  google_maps_url: '',
 };
 
 // text-base on small screens prevents iOS Safari's focus auto-zoom (it only
@@ -114,10 +112,7 @@ export default function AdminPlacesPage() {
       opening_hours: place.opening_hours || '',
       travel_tips: place.travel_tips || '',
       distance_km: place.distance_km ?? '',
-      latitude: place.latitude ?? '',
-      longitude: place.longitude ?? '',
-      image_url:
-        place.image_url && !place.image_url.startsWith('/uploads/') ? place.image_url : '',
+      google_maps_url: place.google_maps_url || '',
     });
     setFormErrors({});
     setFormOpen(true);
@@ -131,8 +126,9 @@ export default function AdminPlacesPage() {
     if (!form.description.trim()) errs.description = 'Description is required.';
     if (form.distance_km === '' || isNaN(Number(form.distance_km)) || Number(form.distance_km) < 0)
       errs.distance_km = 'Distance (km) must be a non-negative number.';
-    if (form.latitude === '' || isNaN(Number(form.latitude))) errs.latitude = 'Latitude is required (number).';
-    if (form.longitude === '' || isNaN(Number(form.longitude))) errs.longitude = 'Longitude is required (number).';
+    const mapUrl = form.google_maps_url.trim();
+    if (mapUrl && !/^https:\/\/(www\.|m\.)?google\.[a-z.]+\/maps\b/i.test(mapUrl) && !/^https:\/\/maps\.app\.goo\.gl\//i.test(mapUrl) && !/^https:\/\/goo\.gl\/maps\//i.test(mapUrl))
+      errs.google_maps_url = 'Enter a Google Maps link, e.g. https://www.google.com/maps/… or https://maps.app.goo.gl/…';
     return errs;
   };
 
@@ -147,9 +143,7 @@ export default function AdminPlacesPage() {
       ...form,
       category_id: Number(form.category_id),
       distance_km: Number(form.distance_km),
-      latitude: Number(form.latitude),
-      longitude: Number(form.longitude),
-      image_url: form.image_url.trim() || null,
+      google_maps_url: form.google_maps_url.trim() || null,
       travel_tips: form.travel_tips.trim() || null,
       opening_hours: form.opening_hours.trim() || null,
     };
@@ -203,8 +197,6 @@ export default function AdminPlacesPage() {
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
-    // A chosen file wins over the external URL field.
-    setForm((prev) => ({ ...prev, image_url: '' }));
   };
 
   // Remove the stored server image immediately (file deleted + image_url cleared).
@@ -216,8 +208,6 @@ export default function AdminPlacesPage() {
       await removePlaceImage(editing.place_id);
       setEditing((prev) => ({ ...prev, image_url: null }));
       setPlaces((prev) => prev.map((p) => (p.place_id === editing.place_id ? { ...p, image_url: null } : p)));
-      // The stored path no longer exists — never write it back on the next save.
-      setForm((prev) => ({ ...prev, image_url: '' }));
     } catch (err) {
       setImageError(errorMessage(err));
     } finally {
@@ -423,22 +413,22 @@ export default function AdminPlacesPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-image">
-                External image URL (optional)
+              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-maps">
+                Google Maps location URL
               </label>
-              <input id="f-image" className={inputClass} placeholder="https://… (optional)" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-lat">Latitude *</label>
-              <input id="f-lat" type="number" step="0.000001" className={inputClass} value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} />
-              {formErrors.latitude && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.latitude}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-lng">Longitude *</label>
-              <input id="f-lng" type="number" step="0.000001" className={inputClass} value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} />
-              {formErrors.longitude && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.longitude}</p>}
+              <input
+                id="f-maps"
+                className={inputClass}
+                placeholder="https://www.google.com/maps/… (copy the link from Google Maps)"
+                value={form.google_maps_url}
+                onChange={(e) => setForm({ ...form, google_maps_url: e.target.value })}
+              />
+              {formErrors.google_maps_url && (
+                <p className="mt-1 text-xs font-medium text-red-600">{formErrors.google_maps_url}</p>
+              )}
+              <p className="mt-1 text-xs text-muted-foreground">
+                Shown as a Map link on the place card. The map coordinates are taken from it automatically.
+              </p>
             </div>
 
             <div className="sm:col-span-2">
