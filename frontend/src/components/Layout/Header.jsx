@@ -12,7 +12,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 lg:px-8">
+      {/* Full-width bar (no max-width cap) so on large screens the logo sits in the
+          left corner and the plan CTA in the right corner; the 1fr/ auto / 1fr grid
+          keeps the nav links centred between them. */}
+      <div className="flex w-full items-center justify-between gap-4 px-4 py-3 sm:px-6 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 lg:px-10">
         <Link to="/" className="flex items-center md:justify-self-start">
           <img src="/Logo.png" alt="DayTripGO" className="h-9 w-auto" />
         </Link>
