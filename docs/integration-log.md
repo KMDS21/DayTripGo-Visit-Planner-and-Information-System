@@ -3,6 +3,8 @@
 Append-only chronological record of build, integration and verification steps.
 **Rule: never overwrite this file — new entries are always appended at the bottom.**
 
+**Commit convention (from 2026-10-20 04:15, per developer instruction):** each round is committed as **one single commit** containing both the new log entry and its code changes (developer: "commit with log in all one commit"). The earlier docs-first-then-code commit pairs no longer apply.
+
 Reference: Project Plan §14 (E2410884_PROJECT_PLAN.md) · SRS v2.1 (E2410884_SRS DOCUMENT_FINAL.md)
 
 ---
@@ -678,15 +680,45 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
-## 2026-10-20 03:35 - Header logo and plan CTA sit in the bar corners on large screens
+## 2026-10-20 03:20 - Live route map on the My Day Plan page (new branch `feature/plan-route-map`)
 
-- **Developer request**: on larger screens the company logo and the "Let's plan your tour" button should appear in the corners of the navigation bar
+- **Developer request**: the day plan page should show the planned destinations on a map beside the plan list, and the route must update automatically when the visit order changes (move up/down, drag reorder, add, remove, clear)
 
-- **`Header.jsx`**: the header bar dropped its `max-w-7xl mx-auto` (1280px) cap - it is now full-width with responsive padding (`px-4 sm:px-6 lg:px-10`, matching the public shell's gutters), so on wide monitors the logo hugs the left corner of the bar and the plan CTA the right corner; the existing `1fr / auto / 1fr` grid at md+ keeps the nav links centred between them; below 1280px nothing changes because the cap never bound there
+- **Branch**: work moves to a dedicated `feature/plan-route-map` branch forked from `feature/frontend-redesign` (`63d61e0`), per the developer's instruction
 
-- **Branch note**: this header fix is committed on `feature/frontend-redesign` per the developer's instruction (the route-map work lives separately on `feature/plan-route-map`)
+- **Map engine decision**: the developer first chose the Google Maps JS API but could not obtain an API key, then approved the earlier recommendation - OpenStreetMap + Leaflet, the same free/no-quota stack (plan §4.5) already used by the place-detail map; a free "Open route in Google Maps" directions link under the map supplies real Google turn-by-turn without any API key
 
-- **Verification**: `npm run lint` reports nothing for the changed file · `npm run build` passes (5.90s)
+- **New `components/VisitPlan/PlanRouteMap.jsx`**: derives the ordered stop list from the plan items (invalid coordinates skipped) and renders - numbered DayTripGO pins (custom `L.divIcon`, same pin silhouette as `MapMarker`, stop number inside) with a "Stop N of M" popup; a brand-teal route polyline with a white casing connecting the stops **in visit order**, so the line re-draws the moment the order changes; a `FitBounds` child (`useMap()`) that refits the viewport with padding on every change (single stop → centred view); OSM tile layer with attribution, `scrollWheelZoom={false}` like `MapEmbed`; renders nothing for an empty plan; the Google Maps directions link builds origin → ordered waypoints (max 9, the URL API limit) → destination and opens in a new tab
+
+- **`pages/VisitPlanPage.jsx`**: the single `max-w-3xl` column becomes a two-column grid at **all** screen widths (developer choice - plan list left, map right) with `min-w-0` columns so nothing overflows on narrow phones; the map column is `lg:sticky lg:top-24` so it stays visible while the list scrolls; map height `h-72 sm:h-96 lg:h-[560px]`; the loading state and the empty-plan card keep the centred single column (no map until the first place is added)
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (10.72s)
+
+---
+
+## 2026-10-20 03:50 - Day plan: list column scroll bar at lg+, clear stacked layout on phones
+
+- **Developer requests**: the location list on the My Day Plan page should have its own scroll bar, and the page should stay clearly visible in mobile view
+
+- **`VisitPlanPage.jsx` — scrollable list column**: at `lg+` the left (plan list) column scrolls inside its own box - `lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain`, aligned to the map column beside it (map `h-[560px]` plus the directions-button row); a long plan scrolls under its own scroll bar instead of pushing the map off screen
+
+- **`VisitPlanPage.jsx` — mobile layout revised**: the earlier always-side-by-side split (developer choice from the map round) made each column ~170px wide on phones - cramped and hard to use; the grid is now `grid-cols-1` below `lg` with the **route map first** (full width, the visual summary) and the **plan list below it**, and `lg:grid-cols-2` restores list-left / map-right on large screens (`order-1`/`order-2` handle the swap); the list scroll cap applies only at `lg+` since below that the list flows full width and the page scrolls naturally - no nested touch scrolling; the hero and empty-plan states are unchanged
+
+- **`PlanRouteMap.jsx`**: map height `h-72` → `h-80` on the smallest screens (it is now full width there, so it can afford the extra room)
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes
+
+---
+
+## 2026-10-20 04:05 - Clear plan button clearly visible with a soft red treatment
+
+- **Developer requests**: the "Clear plan" button on the My Day Plan page should show up clearly, but a solid red fill proved too heavy on the eyes (high contrast strain)
+
+- **`PlanList.jsx`**: the Clear plan button switches from the faint `ghost` variant (transparent background, muted grey text - easy to miss in the summary bar) to a clearly visible red treatment; the summary bar itself becomes `lg:sticky lg:top-0 lg:z-10` so the button stays in reach while the list column scrolls at lg+
+
+- **`Common/Button.jsx`**: new additive `danger-soft` variant - light red tint (`bg-red-50`), red text (`text-red-600`), thin `border-red-200` and a gentle `hover:bg-red-100 hover:text-red-700`, instead of the heavy solid `bg-red-600` fill of the existing `danger` variant; the Clear plan button uses it, so the action still reads as red but no longer strains the eyes
+
+- **Verification**: `npm run lint` reports nothing for the changed files · `npm run build` passes (7.46s)
 
 ---
 

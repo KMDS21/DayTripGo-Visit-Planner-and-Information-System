@@ -24,12 +24,15 @@ export default function PlanList({ items, totalDistance, onMove, onRemove, onCle
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-light px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-light px-5 py-4 lg:sticky lg:top-0 lg:z-10">
         <p className="text-sm text-brand-dark">
           <span className="font-bold">{items.length}</span> place{items.length > 1 ? 's' : ''} in your day plan ·
           roughly <span className="font-bold">{formatDistance(totalDistance)}</span> of travel
         </p>
-        <Button variant="ghost" size="sm" onClick={onClear}>
+        {/* Soft-red button (light tint + red text, was a faint ghost link) so the
+            clear action is clearly visible without a heavy solid red; sticky at
+            lg+ so it stays in reach while the list column scrolls. */}
+        <Button variant="danger-soft" onClick={onClear}>
           Clear plan
         </Button>
       </div>

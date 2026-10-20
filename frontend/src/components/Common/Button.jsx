@@ -8,6 +8,9 @@ const variants = {
   outline: 'border border-brand/40 text-brand bg-transparent hover:bg-brand-light/60',
   ghost: 'bg-transparent text-muted-foreground hover:text-foreground',
   danger: 'bg-red-600 text-white hover:bg-red-700',
+  // Soft destructive: light red tint instead of a solid red fill (gentler on
+  // the eyes while still clearly a red action).
+  'danger-soft': 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700',
 };
 
 const sizes = {
