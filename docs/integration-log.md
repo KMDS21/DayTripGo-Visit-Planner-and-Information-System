@@ -855,4 +855,83 @@ _(Entries below are appended as further steps complete.)_
 
 ---
 
+## 2026-10-21 11:20 - Featured escapes auto-glide that loops for ever; distance badge removed from every place card
+
+### 1. Featured escapes carousel (home page)
+
+- **Left auto-glide after the entrance**: the staggered fade-up entrance of the cards is unchanged; once the last card has landed (0.2 s per card + 0.6 s), the row starts gliding **one card to the left at a time** (1.4 s eased glide, 1.2 s pause) and carries on for as long as the visitor leaves it alone
+- **Seamless infinite loop**: a duplicate of every card is appended after the real ones, so the first card appears again at the end of the row. When the glide lands on that clone (pixel-identical to the real first card) it rewinds by exactly one loop width on the same frame the animation completes - the flow never visibly steps back or reverses
+- **Motion is hand-animated** (`requestAnimationFrame` + ease-in-out) instead of the browser's `behavior: "smooth"`, so duration and easing are identical on every browser; dots, the left chevron and card-to-card glides use the same curve
+- **Dots follow the card on screen**: position is floored (not rounded) with a 2 px tolerance, so a dot flips exactly when the next card reaches the left edge, never halfway through a glide; the clone segment maps back onto the same dots by position
+- **Control returns to the visitor** on pointer down / drag, horizontal wheel, the left chevron or a dot tap - the automatic glide cancels for good at that point
+
+### 2. Place cards
+
+- **Distance badge removed from every place card** (`PlaceCard`, used by the Explore grid and the home page's All places section): the name now sits alone in the card header and the `formatDistance` import goes with it. Distance still shows on the place preview popup, the detail page, the day-plan list and the admin table
+
+### Verification
+
+- `npx oxlint` clean (only the pre-existing `CarouselContext` fast-refresh warning) and `npm run build` green after each round
+
+---
+
+## 2026-10-21 11:50 - Tapping a home "All places" card opens that place's popup on Explore
+
+- **Home `PlaceGrid` gained `onOpen`** (`openOnExplore`): tapping a card's photo or name navigates to `/explore` and hands the place id over in the router state. "Add to plan" and the "Details" link keep working exactly as before
+- **`ExplorePage` reads `location.state.previewPlaceId`** into `previewId` once on mount, and derives the popup place from the loaded listing, so the popup appears the moment the data lands with no extra render flash. The router state is cleared with `navigate('.', { replace: true, state: null })`, so a reload or a back/forward step does not reopen it
+- The in-page Explore flow is untouched: tapping a card there still opens its popup, and closing it clears `previewId`
+
+---
+
+## 2026-10-21 12:05 - distance_km removed from the database, API and every remaining screen
+
+The distance badge was dropped from the place cards in the previous round; this round removes the field itself, end to end.
+
+### 1. Database
+
+- **New migration `database/schema/006_place_drop_distance_km.sql`**: `alter table places drop column if exists distance_km;` (idempotent, same pattern as migrations 003-005)
+- **`001_create_tables.sql`** loses the `distance_km decimal(4,1) not null` line, with a comment pointing at migration 006
+- **`002_seed_places.sql`**: the distance values and the column are gone; the insert is now 6 columns / 6 values per row (it previously listed 8 columns against 7 values, which would have failed on a fresh setup)
+
+### 2. Backend
+
+- **`middleware/validate.js`**: `distance_km` is no longer a required field and no longer range-checked
+- **`models/placeModel.js`**: `findAll` / `findByCategory` ordered by `distance_km`; they now order by `place_id` ascending (creation order), which is stable across reloads and category filters
+
+### 3. Frontend
+
+- **Admin Places**: the Distance column in the table and mobile card list, the "Distance from Wadduwa (km)" form field, its validation rule and its payload key are all gone (empty-table `colSpan` 7 -> 6)
+- **Preview popup** and **detail page**: the distance badge is removed, leaving category + open/closed
+- **Day plan**: the per-row distance badge is gone, and the summary line now reads "N places in your day plan" without the "roughly X of travel" figure; `totalDistance` is dropped from `VisitPlanContext`, `VisitPlanPage` and `PlanList`
+- **Featured escapes card content**: "12.5 km from Wadduwa · View details →" is now just "View details →"
+- **`utils/formatDistance.js` deleted** and the `distance` variant removed from `Badge` (no remaining callers)
+- **Copy that promised distances was rewritten**: the home page's "Distances up front" trust point becomes "Maps in one tap", the how-it-works step and the footer / contact blurbs no longer mention distances
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings (confirmed by stashing the working tree and re-running), `npm run build` green, `node --check` clean on the two backend files
+- Only remaining `distance` mentions are in the submitted SRS / project plan documents and in historical integration-log entries, which are left as written
+
+---
+
+## 2026-10-21 12:40 - Explore place popup rebuilt as a two-column detail layout; "Planning only" note dropped
+
+### 1. `PlacePreviewModal` (the popup opened by an Explore / home place card)
+
+- **Two-column body on lg+**: details on the left, photos on the right, inside a wider `max-w-4xl` panel. On phones the columns stack with the photo first, so the picture still leads the popup
+- **Left column**: category + open/closed badges, name, description, opening-hours card, travel-tips card, the add-to-plan button with the Google Maps link, and the embedded map underneath
+- **Right column**: the active photo in a fixed `aspect-[4/3]` frame with the close button over it, and below it a **small "More photos" box** — a 4-up grid of thumbnails with the active one ringed in brand colour. Tapping a thumbnail switches the big photo. The box only appears from 2 images up; the dot row it replaces is gone
+- Behaviour unchanged: Esc, backdrop click and scroll-lock all still work, and a place with no gallery still falls back to its card photo
+
+### 2. "Planning only. DayTripGO does not book or sell anything." removed
+
+- Dropped from the popup and from the place detail page (`DetailView`). The `pb-24 lg:pb-0` that paragraph carried now sits on the detail column itself, so nothing hides behind the fixed mobile action bar
+
+### Verification
+
+- `npx oxlint` clean apart from the modal's pre-existing `set-state-in-effect` warning (same code, only the line number moved) and `npm run build` green
+- **Migration 006 still needs running against Supabase** (`database/schema/006_place_drop_distance_km.sql`) to drop the live `distance_km` column
+
+---
+
 _(Entries below are appended as further steps complete.)_

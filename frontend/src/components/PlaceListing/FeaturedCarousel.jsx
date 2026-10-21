@@ -10,7 +10,6 @@
 
 import { Link } from 'react-router-dom';
 import { Carousel, Card } from '@/components/ui/apple-cards-carousel';
-import { formatDistance } from '../../utils/formatDistance';
 import { placeImage } from '../../utils/placeImage';
 
 function PlaceCardContent({ place }) {
@@ -20,7 +19,6 @@ function PlaceCardContent({ place }) {
         <span className="font-bold text-neutral-800 dark:text-neutral-100">{place.name}</span>. {place.description}
       </p>
       <p className="mt-3 text-sm font-semibold text-brand">
-        {formatDistance(place.distance_km)} from Wadduwa ·{' '}
         <Link to={`/places/${place.place_id}`} className="underline underline-offset-4">
           View details →
         </Link>

@@ -5,8 +5,6 @@
 // so the arrows are the primary reorder method on phones).
 
 import { Link } from 'react-router-dom';
-import Badge from '../Common/Badge';
-import { formatDistance } from '../../utils/formatDistance';
 
 const controlClass =
   'flex h-11 w-11 items-center justify-center rounded-full transition-colors disabled:opacity-30';
@@ -36,7 +34,6 @@ export default function PlanItem({ item, index, total, onMove, onRemove }) {
             <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-light text-xs font-bold text-brand-dark sm:hidden" aria-hidden="true">
               {index + 1}
             </span>
-            <Badge variant="distance">{formatDistance(place.distance_km)}</Badge>
             <span className="truncate text-xs text-muted-foreground">
               {place.opening_hours || 'Hours not specified'}
             </span>

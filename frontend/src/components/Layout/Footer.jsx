@@ -25,7 +25,7 @@ export default function Footer() {
           <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto rounded-xl bg-white px-3 py-2" />
           <p className="mt-3 text-sm leading-relaxed text-white/80">
             One perfect day around Wadduwa, with verified places of interest within 25 km,
-            opening times, distances and practical tips, plus a simple one-day
+            opening times and practical tips, plus a simple one-day
             plan builder.
           </p>
         </div>

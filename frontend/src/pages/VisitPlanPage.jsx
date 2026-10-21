@@ -18,7 +18,7 @@ export default function VisitPlanPage() {
     hero_subtitle:
       'Your plan is kept for this browser session only, with no account and no personal details needed.',
   });
-  const { items, loading, totalDistance, moveItem, removePlace, clearPlan } = useVisitPlan();
+  const { items, loading, moveItem, removePlace, clearPlan } = useVisitPlan();
 
   return (
     <div className="space-y-10 pb-8">
@@ -44,7 +44,6 @@ export default function VisitPlanPage() {
         <div className="mx-auto max-w-3xl">
           <PlanList
             items={items}
-            totalDistance={totalDistance}
             onMove={moveItem}
             onRemove={removePlace}
             onClear={clearPlan}
@@ -58,7 +57,6 @@ export default function VisitPlanPage() {
           <div className="order-2 min-w-0 lg:order-1 lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <PlanList
               items={items}
-              totalDistance={totalDistance}
               onMove={moveItem}
               onRemove={removePlace}
               onClear={clearPlan}

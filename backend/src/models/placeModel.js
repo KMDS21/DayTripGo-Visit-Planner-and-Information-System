@@ -19,9 +19,12 @@ async function applyPublishedFilter(build, { includeUnpublished = false } = {}) 
   return filtered;
 }
 
+// Places used to be sorted by distance from Wadduwa; that column is gone
+// (migration 006), so listings now come back in creation order — oldest
+// first, which is stable across reloads and filters.
 async function findAll(options = {}) {
   return applyPublishedFilter(
-    () => supabase.from(TABLE).select('*').order('distance_km', { ascending: true }),
+    () => supabase.from(TABLE).select('*').order('place_id', { ascending: true }),
     options
   );
 }
@@ -33,7 +36,7 @@ async function findByCategory(categoryId, options = {}) {
         .from(TABLE)
         .select('*')
         .eq('category_id', categoryId)
-        .order('distance_km', { ascending: true }),
+        .order('place_id', { ascending: true }),
     options
   );
 }

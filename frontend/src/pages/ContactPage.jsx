@@ -320,7 +320,7 @@ export default function ContactPage() {
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             DayTripGO is a visitor information service for the Wadduwa area of Sri Lanka. We
             keep a verified list of places of interest within 25 km of Wadduwa, including beaches,
-            temples, heritage houses and gardens, with opening times, distances and practical
+            temples, heritage houses and gardens, with opening times and practical
             tips, and we help you assemble them into a simple one-day plan.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

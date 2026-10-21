@@ -3,7 +3,7 @@
 // Explore page (published places from the Attractive Places table).
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
@@ -28,6 +28,7 @@ export default function HomePage() {
   const { places, categories, loading, error, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
+  const navigate = useNavigate();
 
   // Only the places the admin ticked "Show on home" for (Attractive Places
   // table) appear here; with no selection yet the whole published list shows.
@@ -41,6 +42,13 @@ export default function HomePage() {
     const added = await addPlace(place);
     setFlash(added ? `${place.name} added to your plan` : `${place.name} is already in your plan`);
     setTimeout(() => setFlash(null), 2500);
+  };
+
+  // Tapping a card in the All places grid heads to the Explore page and hands
+  // the place id over in the router state, so that place's detail popup opens
+  // there as soon as the listing has loaded (see ExplorePage).
+  const openOnExplore = (place) => {
+    navigate('/explore', { state: { previewPlaceId: place.place_id } });
   };
 
   return (
@@ -74,8 +82,8 @@ export default function HomePage() {
               text: 'Every listing carries real opening hours and an "open now" hint, so you never travel to a closed gate.',
             },
             {
-              title: 'Distances up front',
-              text: 'Distances from Wadduwa town are shown on every card, so you always know how far the trip is before you tap.',
+              title: 'Maps in one tap',
+              text: 'Every listing carries a Google Maps link, so you can see exactly where the place sits and head straight there.',
             },
             {
               title: 'Planning only',
@@ -123,7 +131,7 @@ export default function HomePage() {
             },
             {
               title: 'Filter and compare',
-              text: 'Narrow the list by category, see opening hours and distances up front, and pick what fits into a single day.',
+              text: 'Narrow the list by category, see opening hours up front, and pick what fits into a single day.',
             },
             {
               title: 'Build your one-day plan',
@@ -166,7 +174,13 @@ export default function HomePage() {
         {loading && <Loader label="Loading places…" />}
         {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
         {!loading && !error && (
-          <PlaceGrid places={listedPlaces} categories={categories} hasPlace={hasPlace} onAdd={handleAdd} />
+          <PlaceGrid
+            places={listedPlaces}
+            categories={categories}
+            hasPlace={hasPlace}
+            onAdd={handleAdd}
+            onOpen={openOnExplore}
+          />
         )}
       </section>
 

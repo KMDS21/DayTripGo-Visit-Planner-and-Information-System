@@ -3,23 +3,18 @@
 const { isGoogleMapsUrl } = require('../utils/googleMaps');
 
 function validatePlace(req, res, next) {
-  const { name, category_id, description, distance_km, latitude, longitude, google_maps_url } = req.body || {};
+  const { name, category_id, description, latitude, longitude, google_maps_url } = req.body || {};
 
   const missing = [];
   if (!name || String(name).trim() === '') missing.push('name');
   if (!category_id) missing.push('category_id');
   if (!description || String(description).trim() === '') missing.push('description');
-  if (distance_km === undefined || distance_km === null || distance_km === '') missing.push('distance_km');
 
   if (missing.length > 0) {
     return res.status(400).json({
       success: false,
       message: `Missing or empty required field(s): ${missing.join(', ')}.`,
     });
-  }
-
-  if (isNaN(Number(distance_km)) || Number(distance_km) < 0) {
-    return res.status(400).json({ success: false, message: 'distance_km must be a non-negative number.' });
   }
 
   // Coordinates are optional now (derived from google_maps_url when possible),

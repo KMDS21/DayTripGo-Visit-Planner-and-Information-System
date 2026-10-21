@@ -2,7 +2,8 @@
 // FR-2 filter one category at a time, FR-3 clear filter) with the detail
 // popup. The home page shows the same listing (cards + selector) inline.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
@@ -26,7 +27,19 @@ export default function ExplorePage() {
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
   // Clicked place → detail popup (blurred backdrop) instead of a page change.
-  const [preview, setPreview] = useState(null);
+  // A card tapped on the home page's "All places" grid hands its place id over
+  // through the router state, so that place's popup opens as soon as this page
+  // has loaded: the id is kept in state and the place itself is looked up from
+  // the listing (which arrives a moment later). The router state is dropped
+  // straight away so a reload or a back/forward step doesn't reopen it.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [previewId, setPreviewId] = useState(() => Number(location.state?.previewPlaceId) || null);
+  const preview = previewId === null ? null : places.find((p) => p.place_id === previewId) || null;
+
+  useEffect(() => {
+    if (previewId !== null) navigate('.', { replace: true, state: null });
+  }, [previewId, navigate]);
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -76,7 +89,7 @@ export default function ExplorePage() {
           categories={categories}
           hasPlace={hasPlace}
           onAdd={handleAdd}
-          onOpen={setPreview}
+          onOpen={(place) => setPreviewId(place.place_id)}
         />
       )}
 
@@ -88,7 +101,7 @@ export default function ExplorePage() {
           categoryName={categories.find((c) => c.category_id === preview.category_id)?.category_name || ''}
           inPlan={hasPlace(preview.place_id)}
           onAdd={handleAdd}
-          onClose={() => setPreview(null)}
+          onClose={() => setPreviewId(null)}
         />
       )}
 

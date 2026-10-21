@@ -1,14 +1,13 @@
-// PlaceCard — one place in the listing grid (SRS FR-1: photo, name, category,
-// distance; FR-4 open/closed badge; FR-6 quick add-to-plan). When the parent
-// passes `onOpen` (the Explore page), clicking the photo or name opens the
-// place preview popup instead of navigating to the detail page. Cards never
-// embed a map themselves: the popup and the detail page show the Google map
-// from the place's Maps link; the card keeps a plain "Map ↗" link.
+// PlaceCard — one place in the listing grid (SRS FR-1: photo, name, category;
+// FR-4 open/closed badge; FR-6 quick add-to-plan). When the parent passes
+// `onOpen` (the Explore page), clicking the photo or name opens the place
+// preview popup instead of navigating to the detail page. Cards never embed a
+// map themselves: the popup and the detail page show the Google map from the
+// place's Maps link; the card keeps a plain "Map ↗" link.
 
 import { Link } from 'react-router-dom';
 import Badge from '../Common/Badge';
 import Button from '../Common/Button';
-import { formatDistance } from '../../utils/formatDistance';
 import { isOpenFromText } from '../../utils/isOpenNow';
 import { placeImage } from '../../utils/placeImage';
 
@@ -52,24 +51,21 @@ export default function PlaceCard({ place, categoryName, inPlan, onAdd, onOpen }
       )}
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-heading text-lg font-bold leading-snug">
-            {onOpen ? (
-              <button
-                type="button"
-                onClick={() => onOpen(place)}
-                className="cursor-pointer text-left hover:text-brand"
-              >
-                {place.name}
-              </button>
-            ) : (
-              <Link to={`/places/${place.place_id}`} className="hover:text-brand">
-                {place.name}
-              </Link>
-            )}
-          </h3>
-          <Badge variant="distance">{formatDistance(place.distance_km)}</Badge>
-        </div>
+        <h3 className="font-heading text-lg font-bold leading-snug">
+          {onOpen ? (
+            <button
+              type="button"
+              onClick={() => onOpen(place)}
+              className="cursor-pointer text-left hover:text-brand"
+            >
+              {place.name}
+            </button>
+          ) : (
+            <Link to={`/places/${place.place_id}`} className="hover:text-brand">
+              {place.name}
+            </Link>
+          )}
+        </h3>
 
         <p className="line-clamp-2 flex-1 text-sm text-muted-foreground">{place.description}</p>
 

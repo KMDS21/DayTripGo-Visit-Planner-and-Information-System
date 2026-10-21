@@ -20,7 +20,6 @@ import { getCategories } from '../services/categoryService';
 import { getPageContent, savePageContent } from '../services/contentService';
 import { errorMessage } from '../services/api';
 import usePageTitle from '../hooks/usePageTitle';
-import { formatDistance } from '../utils/formatDistance';
 import { parseFeaturedRows, serializeFeaturedRows } from '../utils/featuredConfig';
 import { parseCoordsFromGoogleMapsUrl } from '../utils/googleMaps';
 import Button from '../components/Common/Button';
@@ -35,7 +34,6 @@ const EMPTY_FORM = {
   description: '',
   opening_hours: '',
   travel_tips: '',
-  distance_km: '',
   google_maps_url: '',
   // Publish selections (UI only — never sent to the places API)
   showInFeatured: false,
@@ -164,7 +162,6 @@ export default function AdminPlacesPage() {
       description: place.description || '',
       opening_hours: place.opening_hours || '',
       travel_tips: place.travel_tips || '',
-      distance_km: place.distance_km ?? '',
       google_maps_url: place.google_maps_url || '',
       showInFeatured: featuredRows.some((row) => row.id === place.place_id),
     });
@@ -178,8 +175,6 @@ export default function AdminPlacesPage() {
     if (!form.name.trim()) errs.name = 'Name is required.';
     if (!form.category_id) errs.category_id = 'Category is required.';
     if (!form.description.trim()) errs.description = 'Description is required.';
-    if (form.distance_km === '' || isNaN(Number(form.distance_km)) || Number(form.distance_km) < 0)
-      errs.distance_km = 'Distance (km) must be a non-negative number.';
     const mapUrl = form.google_maps_url.trim();
     if (mapUrl && !/^https:\/\/(www\.|m\.)?google\.[a-z.]+\/maps\b/i.test(mapUrl) && !/^https:\/\/maps\.app\.goo\.gl\//i.test(mapUrl) && !/^https:\/\/goo\.gl\/maps\//i.test(mapUrl))
       errs.google_maps_url = 'Enter a Google Maps link, e.g. https://www.google.com/maps/… or https://maps.app.goo.gl/…';
@@ -240,7 +235,6 @@ export default function AdminPlacesPage() {
       name: form.name,
       category_id: Number(form.category_id),
       description: form.description,
-      distance_km: Number(form.distance_km),
       google_maps_url: form.google_maps_url.trim() || null,
       travel_tips: form.travel_tips.trim() || null,
       opening_hours: form.opening_hours.trim() || null,
@@ -653,7 +647,7 @@ export default function AdminPlacesPage() {
                       {place.name}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {categoryName(place.category_id)} · {formatDistance(place.distance_km)}
+                      {categoryName(place.category_id)}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {publishPill(place)}
@@ -686,7 +680,6 @@ export default function AdminPlacesPage() {
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Distance</th>
                   <th className="px-4 py-3">Show on public site</th>
                   <th className="px-4 py-3">Show on home</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -698,7 +691,6 @@ export default function AdminPlacesPage() {
                     <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                     <td className="px-4 py-3 font-semibold">{place.name}</td>
                     <td className="px-4 py-3">{categoryName(place.category_id)}</td>
-                    <td className="px-4 py-3">{formatDistance(place.distance_km)}</td>
                     <td className="px-4 py-3">{publishPill(place)}</td>
                     <td className="px-4 py-3">{homePill(place)}</td>
                     <td className="px-4 py-3 text-right">
@@ -715,7 +707,7 @@ export default function AdminPlacesPage() {
                 ))}
                 {places.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                       No places yet. Add the first one.
                     </td>
                   </tr>
@@ -756,20 +748,14 @@ export default function AdminPlacesPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-distance">Distance from Wadduwa (km) *</label>
-              <input id="f-distance" type="number" step="0.1" min="0" className={inputClass} value={form.distance_km} onChange={(e) => setForm({ ...form, distance_km: e.target.value })} />
-              {formErrors.distance_km && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.distance_km}</p>}
+              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-hours">Opening hours</label>
+              <input id="f-hours" className={inputClass} placeholder="e.g. 6:00 AM - 8:00 PM daily" value={form.opening_hours} onChange={(e) => setForm({ ...form, opening_hours: e.target.value })} />
             </div>
 
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-description">Description *</label>
               <textarea id="f-description" rows={3} className={inputClass} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               {formErrors.description && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.description}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-hours">Opening hours</label>
-              <input id="f-hours" className={inputClass} placeholder="e.g. 6:00 AM - 8:00 PM daily" value={form.opening_hours} onChange={(e) => setForm({ ...form, opening_hours: e.target.value })} />
             </div>
 
             {/* Photo section — divided into (1) cover photos and (2) more photos */}

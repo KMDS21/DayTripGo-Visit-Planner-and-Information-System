@@ -131,7 +131,6 @@ export function VisitPlanProvider({ children }) {
       loading,
       error,
       count: items.length,
-      totalDistance: items.reduce((sum, it) => sum + (Number(it.place?.distance_km) || 0), 0),
       addPlace,
       removePlace,
       moveItem,
