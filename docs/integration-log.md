@@ -934,4 +934,20 @@ The distance badge was dropped from the place cards in the previous round; this 
 
 ---
 
+## 2026-10-21 13:05 - "Open now" / "Closed" badge removed from every place view
+
+The live open/closed chip is gone; opening hours themselves are still shown everywhere they were before (the Opening-hours card on the popup and detail page, the hours line on a day-plan row).
+
+- **Badge removed from all three views that showed it**: the place card (`PlaceCard`), the place popup (`PlacePreviewModal`) and the detail page (`DetailView`). The category badge stays, so the card photo and the detail header still carry it
+- **`utils/isOpenNow.js` deleted** - with no badge left to feed, `parseHours`, `isOpenNow` and `isOpenFromText` had no callers. `formatHours` / `normaliseHours` are untouched, so the hours text still renders in 12-hour form
+- **`Badge`** drops the `open` and `closed` variants, leaving `category` and `info`
+- **Home page copy** no longer promises the hint: the "Opening times checked" card now reads that every listing carries real opening hours so you know when a place welcomes visitors, rather than mentioning an "open now" hint
+- **`frontend/README.md`** utils line updated
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_

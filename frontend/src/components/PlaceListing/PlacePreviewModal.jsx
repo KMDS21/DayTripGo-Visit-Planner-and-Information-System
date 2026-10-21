@@ -11,7 +11,6 @@ import { getPlacePhotos } from '../../services/placeService';
 import { googleMapEmbedSrc } from '../../utils/googleMaps';
 import { placeImage } from '../../utils/placeImage';
 import { normaliseHours } from '../../utils/formatHours';
-import { isOpenFromText } from '../../utils/isOpenNow';
 
 export default function PlacePreviewModal({ place, categoryName, inPlan, onAdd, onClose }) {
   const [photos, setPhotos] = useState([]);
@@ -50,7 +49,6 @@ export default function PlacePreviewModal({ place, categoryName, inPlan, onAdd, 
 
   if (!place) return null;
 
-  const open = isOpenFromText(place.opening_hours);
   const images = photos.length > 0 ? photos : [placeImage(place, categoryName)];
   const activeIndex = Math.min(photoIndex, images.length - 1);
   // The map always comes from the place's Google Maps URL (server-resolved
@@ -71,7 +69,6 @@ export default function PlacePreviewModal({ place, categoryName, inPlan, onAdd, 
           <div className="order-2 space-y-4 lg:order-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="category">{categoryName || 'Place'}</Badge>
-              {open !== null && <Badge variant={open ? 'open' : 'closed'}>{open ? 'Open now' : 'Closed'}</Badge>}
             </div>
 
             <h2 className="font-heading text-2xl font-bold leading-tight sm:text-3xl">{place.name}</h2>

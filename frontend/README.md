@@ -41,7 +41,7 @@ src/
 │   ├── MapView/             ← MapEmbed, MapMarker (Leaflet)
 │   └── VisitPlan/           ← PlanList, PlanItem, DragReorder
 ├── pages/                   ← HomePage, PlaceDetailPage, VisitPlanPage, AdminLoginPage, AdminDashboardPage
-└── utils/                   ← formatHours, isOpenNow, placeImage
+└── utils/                   ← formatHours, placeImage
 ```
 
 ## Routes

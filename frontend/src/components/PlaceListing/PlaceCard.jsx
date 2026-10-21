@@ -1,19 +1,16 @@
 // PlaceCard — one place in the listing grid (SRS FR-1: photo, name, category;
-// FR-4 open/closed badge; FR-6 quick add-to-plan). When the parent passes
-// `onOpen` (the Explore page), clicking the photo or name opens the place
-// preview popup instead of navigating to the detail page. Cards never embed a
-// map themselves: the popup and the detail page show the Google map from the
-// place's Maps link; the card keeps a plain "Map ↗" link.
+// FR-6 quick add-to-plan). When the parent passes `onOpen` (the Explore page),
+// clicking the photo or name opens the place preview popup instead of
+// navigating to the detail page. Cards never embed a map themselves: the popup
+// and the detail page show the Google map from the place's Maps link; the card
+// keeps a plain "Map ↗" link.
 
 import { Link } from 'react-router-dom';
 import Badge from '../Common/Badge';
 import Button from '../Common/Button';
-import { isOpenFromText } from '../../utils/isOpenNow';
 import { placeImage } from '../../utils/placeImage';
 
 export default function PlaceCard({ place, categoryName, inPlan, onAdd, onOpen }) {
-  const open = isOpenFromText(place.opening_hours); // true | false | null (FR-4)
-
   const media = (
     <>
       <img
@@ -25,11 +22,6 @@ export default function PlaceCard({ place, categoryName, inPlan, onAdd, onOpen }
       <span className="absolute left-3 top-3">
         <Badge variant="category">{categoryName || 'Place'}</Badge>
       </span>
-      {open !== null && (
-        <span className="absolute right-3 top-3">
-          <Badge variant={open ? 'open' : 'closed'}>{open ? 'Open now' : 'Closed'}</Badge>
-        </span>
-      )}
     </>
   );
 

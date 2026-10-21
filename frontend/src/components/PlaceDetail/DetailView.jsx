@@ -6,11 +6,8 @@ import Button from '../Common/Button';
 import PhotoGallery from './PhotoGallery';
 import MapEmbed from '../MapView/MapEmbed';
 import { normaliseHours } from '../../utils/formatHours';
-import { isOpenFromText } from '../../utils/isOpenNow';
 
 export default function DetailView({ place, categoryName, inPlan, onAdd, added }) {
-  const open = isOpenFromText(place.opening_hours);
-
   return (
     <article className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-5">
@@ -22,7 +19,6 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
       <div className="space-y-5 pb-24 lg:pb-0">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="category">{categoryName || 'Place'}</Badge>
-          {open !== null && <Badge variant={open ? 'open' : 'closed'}>{open ? 'Open now' : 'Closed'}</Badge>}
         </div>
 
         <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{place.name}</h1>

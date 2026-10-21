@@ -1,8 +1,6 @@
-// Badge — status/label chip (open/closed for FR-4, categories, info).
+// Badge — status/label chip (categories, info).
 
 const styles = {
-  open: 'bg-emerald-100 text-emerald-800',
-  closed: 'bg-neutral-200 text-neutral-600',
   category: 'bg-brand-light text-brand-dark',
   info: 'bg-blue-100 text-blue-800',
 };

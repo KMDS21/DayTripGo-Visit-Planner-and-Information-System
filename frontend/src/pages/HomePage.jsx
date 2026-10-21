@@ -79,7 +79,7 @@ export default function HomePage() {
           {[
             {
               title: 'Opening times checked',
-              text: 'Every listing carries real opening hours and an "open now" hint, so you never travel to a closed gate.',
+              text: 'Every listing carries real opening hours, so you always know when a place welcomes visitors before you set off.',
             },
             {
               title: 'Maps in one tap',
