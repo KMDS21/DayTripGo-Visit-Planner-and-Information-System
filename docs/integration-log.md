@@ -1170,4 +1170,24 @@ Both landing pages carry a looping cover video, the footer carries a full-bleed 
 
 ---
 
+## 2026-10-21 16:40 - Home hero simplified to a centred cinematic block
+
+- **`HomePage.jsx`** (`+29 / −110`): the floating glass category cards (`HERO_HIGHLIGHTS` — Beaches, Gardens, Temples, Waterfalls), the `HERO_STATS` row (25 km / 50+ / 100% / Free) and the dual CTA buttons were all removed from the hero
+- The hero copy is now a single centred column (`max-w-5xl`, `text-center`) over the same `bg-slate-900` section, `from-slate-900/80 via-slate-900/55 to-slate-900/85` overlay and cover video
+- The title uses a fluid `text-[clamp(0.85rem,3.4vw,1.15rem)]` climbing to `xl:text-[3.25rem]` with `whitespace-nowrap`, so it holds one line at every width; the subtitle keeps its `max-w-2xl` measure
+- The copy block carries `[text-shadow:0_2px_24px_rgba(0,0,0,0.65)]` — stronger than the first pass, since the overlay behind the text is lighter
+- `lucide-react` imports trimmed to the icons the rest of the page still uses (`MapPin`, `Clock`, `Compass`, `Camera`); `Sun`, `Trees`, `Waves` and `Mountain` left with the cards
+- Padding tightened to `py-12`; `min-h-[70svh] md:min-h-[75svh]` unchanged
+- Still admin-editable: `hero_title` and `hero_subtitle` keep coming from `usePageContent('home', …)`
+
+### Carried in the previous commit, still not wired
+
+- **`HeroLocationCarousel.jsx`** (244 lines) is not imported by any component — the hero's own comment refers to an "interactive location card carousel", so it reads as the next piece to drop in. Nothing renders it yet, and the build is unaffected.
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_

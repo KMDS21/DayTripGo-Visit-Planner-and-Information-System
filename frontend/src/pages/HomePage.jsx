@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Compass, Sun, Trees, Waves, Mountain, Camera } from 'lucide-react';
+import { MapPin, Clock, Compass, Camera } from 'lucide-react';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
@@ -14,41 +14,6 @@ import PlaceGrid from '../components/PlaceListing/PlaceGrid';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
 import { parseFeaturedRows } from '../utils/featuredConfig';
-
-/* ─── Floating highlight cards shown inside the hero ─── */
-const HERO_HIGHLIGHTS = [
-  {
-    icon: Waves,
-    label: 'Beaches',
-    desc: 'Golden coastline',
-    gradient: 'from-sky-500/90 to-cyan-400/90',
-  },
-  {
-    icon: Trees,
-    label: 'Gardens',
-    desc: 'Tropical greenery',
-    gradient: 'from-emerald-500/90 to-teal-400/90',
-  },
-  {
-    icon: Sun,
-    label: 'Temples',
-    desc: 'Sacred heritage',
-    gradient: 'from-amber-500/90 to-orange-400/90',
-  },
-  {
-    icon: Mountain,
-    label: 'Waterfalls',
-    desc: 'Hidden cascades',
-    gradient: 'from-violet-500/90 to-purple-400/90',
-  },
-];
-
-const HERO_STATS = [
-  { value: '25 km', label: 'Radius' },
-  { value: '50+', label: 'Places' },
-  { value: '100%', label: 'Verified' },
-  { value: 'Free', label: 'Always' },
-];
 
 export default function HomePage() {
   usePageTitle();
@@ -90,10 +55,8 @@ export default function HomePage() {
   return (
     <div className="space-y-14 pb-8">
       {/* ── Hero ─────────────────────────────────────────────────────────
-          Redesigned: cinematic dark overlay (no green gradient), floating
-          glass place-category cards, stats row, and dual CTA buttons so
-          the previously empty area now showcases what the site offers. */}
-      <section className="relative flex min-h-[70svh] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-14 text-white sm:px-6 md:min-h-[75svh]">
+          Cinematic dark overlay with interactive location card carousel */}
+      <section className="relative flex min-h-[70svh] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[75svh]">
         {/* Cover video */}
         <video
           className="absolute inset-0 h-full w-full object-cover"
@@ -106,7 +69,7 @@ export default function HomePage() {
           aria-hidden="true"
         />
 
-        {/* Dark cinematic overlay — replaces old green gradient */}
+        {/* Dark cinematic overlay */}
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/55 to-slate-900/85"
@@ -116,76 +79,32 @@ export default function HomePage() {
         <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand/15 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
 
-        {/* Hero content */}
-        <div className="relative z-10 mx-auto w-full max-w-6xl">
-          <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:gap-14">
+        {/* Centered Hero content */}
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
+          <h1 className="font-heading font-bold leading-tight tracking-tight whitespace-nowrap text-[clamp(0.85rem,3.4vw,1.15rem)] sm:text-2xl md:text-[1.85rem] lg:text-[2.35rem] xl:text-[3.25rem]">
+            {get('hero_title')}
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-white/90 sm:mt-5 sm:text-base md:text-lg">
+            {get('hero_subtitle')}
+          </p>
 
-            {/* Left column — text + CTAs */}
-            <div className="flex-1 text-center lg:text-left [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]">
-              <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm">
-                <Compass className="h-3.5 w-3.5" /> Wadduwa · Sri Lanka
-              </span>
-              <h1 className="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl xl:text-[3.4rem]">
-                {get('hero_title')}
-              </h1>
-              <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-white/80 sm:text-lg lg:mx-0">
-                {get('hero_subtitle')}
-              </p>
-
-              {/* Dual CTA */}
-              <div className="mt-7 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                <Link
-                  to="/explore"
-                  className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30"
-                >
-                  <Camera className="h-4 w-4" />
-                  Explore places
-                  <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                </Link>
-                <Link
-                  to="/visit-plan"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/20"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Build your plan
-                </Link>
-              </div>
-
-              {/* Stats row */}
-              <div className="mt-8 flex flex-wrap justify-center gap-6 lg:justify-start">
-                {HERO_STATS.map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="font-heading text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/60">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right column — floating place-category cards (glass) */}
-            <div className="hidden w-full max-w-xs flex-shrink-0 md:block lg:max-w-sm">
-              <div className="grid grid-cols-2 gap-3">
-                {HERO_HIGHLIGHTS.map((card, i) => {
-                  const Icon = card.icon;
-                  return (
-                    <Link
-                      key={card.label}
-                      to="/explore"
-                      className="group relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md transition-all duration-300 hover:scale-[1.04] hover:border-white/30 hover:bg-white/15 hover:shadow-xl"
-                      style={{ animationDelay: `${i * 120}ms` }}
-                    >
-                      <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg`}>
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-                      <p className="font-heading text-base font-bold leading-tight text-white">{card.label}</p>
-                      <p className="mt-0.5 text-xs text-white/60">{card.desc}</p>
-                      {/* Corner glow */}
-                      <div aria-hidden="true" className={`pointer-events-none absolute -bottom-4 -right-4 h-16 w-16 rounded-full bg-gradient-to-br ${card.gradient} opacity-20 blur-xl transition-opacity duration-300 group-hover:opacity-40`} />
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Centered Dual CTA buttons */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-8 sm:gap-3">
+            <Link
+              to="/explore"
+              className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-7 sm:py-3 sm:text-sm"
+            >
+              <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Explore places
+              <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </Link>
+            <Link
+              to="/visit-plan"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/20 sm:px-7 sm:py-3 sm:text-sm"
+            >
+              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Build your plan
+            </Link>
           </div>
         </div>
       </section>
