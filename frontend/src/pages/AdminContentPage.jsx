@@ -363,8 +363,8 @@ export default function AdminContentPage() {
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
               <h2 className="text-lg font-bold">Cover photo</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Pick the photo shown behind the Explore page banner. Any image uploaded on the Attractive Places page can be
-                used.
+                Fallback photo shown behind the Explore page banner if its cover image is missing. Any image uploaded on the
+                Attractive Places page can be used.
               </p>
 
               {placesLoading && <Loader label="Loading images…" />}

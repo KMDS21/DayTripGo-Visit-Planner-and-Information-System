@@ -1076,4 +1076,33 @@ Requirement restated: **a cover photo shows only in its upload slot, and every o
 
 ---
 
+## 2026-10-21 15:43 - Page covers for the Explore and Contact heroes
+
+Both remaining public pages now carry their own cover image under a light green wash. On Explore the bundled cover deliberately outranks the admin-chosen photo, which stays on as a fallback.
+
+### Explore and Contact heroes — page cover images
+
+- **`ContactPage.jsx`**: the hero had no imagery at all; it now shows `/Contact us page page cover.webp` under the light green wash, matching the Explore hero's treatment
+- **`ExplorePage.jsx`**: `/explore page page cover.jpg` is now the Explore banner's cover and always wins. The admin-chosen photo (`explore_cover` in the content editor) was previously the only banner image; it is now used solely as an `onError` fallback so the banner is never left bare, and a `data-fallback` guard makes sure a broken fallback cannot loop
+  - A live check of `GET /api/content/explore` showed `explore_cover = /uploads/places/6eb5f31f….jpg` was already set, which is why the bundled cover had to take priority — otherwise the new image would never have appeared
+- **`AdminContentPage.jsx`**: the Explore cover picker's copy changed from "Pick the photo shown behind the Explore page banner" to "**Fallback** photo shown behind the Explore page banner **if its cover image is missing**", so the editor matches what the site now does
+
+### New public assets
+
+- `frontend/public/explore page page cover.jpg` — 0.4 MB
+- `frontend/public/Contact us page page cover.webp` — 1.1 MB
+- Both returned `200` with the expected content type from the running dev server on `:5173`
+
+### Shared hero tidy-up
+
+- Both heroes' green wash was lightened to **`from-brand-dark/60 via-brand/45 to-teal-500/30`** (Explore was `/75 /65 /60`) so the photo reads through instead of sitting under a colour block
+- The two decorative `bg-white/10` circles were removed from both heroes
+- The hero copy wrapper carries `[text-shadow:0_1px_16px_rgba(0,0,0,0.45)]`, which keeps the white text readable at that wash strength without darkening the picture again
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_
