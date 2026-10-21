@@ -22,6 +22,7 @@ import { errorMessage } from '../services/api';
 import usePageTitle from '../hooks/usePageTitle';
 import { parseFeaturedRows, serializeFeaturedRows } from '../utils/featuredConfig';
 import { parseCoordsFromGoogleMapsUrl } from '../utils/googleMaps';
+import { composeHours, parseHoursRange } from '../utils/hoursRange';
 import Button from '../components/Common/Button';
 import Modal from '../components/Common/Modal';
 import Loader from '../components/Common/Loader';
@@ -32,7 +33,11 @@ const EMPTY_FORM = {
   name: '',
   category_id: '',
   description: '',
-  opening_hours: '',
+  // Opening hours are edited as a time range plus an optional note; the two
+  // are joined back into the single free-text string on save (hoursRange.js).
+  hours_from: '',
+  hours_to: '',
+  hours_note: '',
   travel_tips: '',
   google_maps_url: '',
   // Publish selections (UI only — never sent to the places API)
@@ -136,6 +141,10 @@ export default function AdminPlacesPage() {
   const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name || 'Uncategorised';
 
   // ── Add / Edit form ──────────────────────────────────────────
+  // Live preview of the string the From/To pickers + note will be saved as,
+  // so the admin sees exactly what visitors will read.
+  const hoursPreview = composeHours(form.hours_from, form.hours_to, form.hours_note);
+
   const openAdd = () => {
     resetImageState();
     setEditing(null);
@@ -160,7 +169,7 @@ export default function AdminPlacesPage() {
       name: place.name || '',
       category_id: place.category_id || '',
       description: place.description || '',
-      opening_hours: place.opening_hours || '',
+      ...parseHoursRange(place.opening_hours),
       travel_tips: place.travel_tips || '',
       google_maps_url: place.google_maps_url || '',
       showInFeatured: featuredRows.some((row) => row.id === place.place_id),
@@ -175,6 +184,8 @@ export default function AdminPlacesPage() {
     if (!form.name.trim()) errs.name = 'Name is required.';
     if (!form.category_id) errs.category_id = 'Category is required.';
     if (!form.description.trim()) errs.description = 'Description is required.';
+    if (Boolean(form.hours_from) !== Boolean(form.hours_to))
+      errs.hours = 'Set both an opening and a closing time, or leave both empty.';
     const mapUrl = form.google_maps_url.trim();
     if (mapUrl && !/^https:\/\/(www\.|m\.)?google\.[a-z.]+\/maps\b/i.test(mapUrl) && !/^https:\/\/maps\.app\.goo\.gl\//i.test(mapUrl) && !/^https:\/\/goo\.gl\/maps\//i.test(mapUrl))
       errs.google_maps_url = 'Enter a Google Maps link, e.g. https://www.google.com/maps/… or https://maps.app.goo.gl/…';
@@ -237,7 +248,7 @@ export default function AdminPlacesPage() {
       description: form.description,
       google_maps_url: form.google_maps_url.trim() || null,
       travel_tips: form.travel_tips.trim() || null,
-      opening_hours: form.opening_hours.trim() || null,
+      opening_hours: composeHours(form.hours_from, form.hours_to, form.hours_note) || null,
     };
     try {
       let savedPlace;
@@ -747,9 +758,22 @@ export default function AdminPlacesPage() {
               {formErrors.category_id && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.category_id}</p>}
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-hours">Opening hours</label>
-              <input id="f-hours" className={inputClass} placeholder="e.g. 6:00 AM - 8:00 PM daily" value={form.opening_hours} onChange={(e) => setForm({ ...form, opening_hours: e.target.value })} />
+            <div className="sm:col-span-2">
+              <span className="mb-1.5 block text-sm font-semibold">Opening hours</span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="f-hours-from">Opens</label>
+                  <input id="f-hours-from" type="time" className={inputClass} value={form.hours_from} onChange={(e) => setForm({ ...form, hours_from: e.target.value })} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="f-hours-to">Closes</label>
+                  <input id="f-hours-to" type="time" className={inputClass} value={form.hours_to} onChange={(e) => setForm({ ...form, hours_to: e.target.value })} />
+                </div>
+              </div>
+              <label className="mb-1.5 mt-3 block text-xs font-medium text-muted-foreground" htmlFor="f-hours">Note <span className="font-normal">(optional)</span></label>
+              <input id="f-hours" className={inputClass} placeholder="e.g. daily, or visits by arrangement" value={form.hours_note} onChange={(e) => setForm({ ...form, hours_note: e.target.value })} />
+              {hoursPreview && <p className="mt-1.5 text-xs text-muted-foreground">Visitors see: {hoursPreview}</p>}
+              {formErrors.hours && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.hours}</p>}
             </div>
 
             <div className="sm:col-span-2">

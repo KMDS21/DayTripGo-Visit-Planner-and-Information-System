@@ -962,4 +962,24 @@ The live open/closed chip is gone; opening hours themselves are still shown ever
 
 ---
 
+## 2026-10-21 13:50 - Place edit modal: Opening hours set as a time range
+
+The Opening hours field on the add/edit form was one free-text box (placeholder `e.g. 6:00 AM - 8:00 PM daily`), so the time range had to be typed out. It is now a settable range.
+
+- **Three fields instead of one**: **Opens** and **Closes** are native `<input type="time">` pickers, plus a small optional **Note** box for wording like `daily`, `(visits by arrangement)` or `Open all day`. The section spans both form columns
+- **Stored value is unchanged.** `opening_hours` remains the same free-text string (SRS §6.1 `varchar(100)`), so the popup, detail page, day-plan rows and `normaliseHours` display are untouched. The three fields are only the admin's way of writing it
+- **New `frontend/src/utils/hoursRange.js`** translates both ways:
+  - `parseHoursRange(text)` → `{ from, to, note }` with 24-hour `HH:MM` values. The range is only taken when it **opens** the string, so `Open all day (boat rides 7:00 AM - 5:00 PM)` stays whole as the note instead of being cut in half
+  - `composeHours(from, to, note)` → the saved string, e.g. `5:30 AM - 8:00 PM daily`. It strips any range the note still carries so the two never repeat each other. Both times are required for a range; otherwise only the note is kept
+- **Live preview**: a `Visitors see: 5:30 AM - 8:00 PM daily` line under the fields shows exactly what will be saved
+- **Validation**: setting only one of the two times fails with *"Set both an opening and a closing time, or leave both empty."* rather than silently dropping the half-finished range
+- `frontend/README.md` utils line updated
+
+### Verification
+
+- Round-trip tested against all eight seeded hours values plus the empty and `null` cases: every one parses and composes back byte-identically (`5:30 AM - 8:00 PM daily` → `{05:30, 20:00, daily}` → `5:30 AM - 8:00 PM daily`, and the "Open all day" string passes through untouched)
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_
