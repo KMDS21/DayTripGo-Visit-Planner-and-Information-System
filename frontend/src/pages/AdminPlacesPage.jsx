@@ -721,7 +721,7 @@ export default function AdminPlacesPage() {
       {/* Add / Edit modal (FR-16, FR-17, FR-19) */}
       <Modal
         open={formOpen}
-        title={editing ? `Edit ${editing.name}` : 'Add a new place'}
+        title={editing ? editing.name : 'Add a new place'}
         onClose={() => {
           setFormOpen(false);
           resetImageState();

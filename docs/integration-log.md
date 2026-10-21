@@ -950,4 +950,16 @@ The live open/closed chip is gone; opening hours themselves are still shown ever
 
 ---
 
+## 2026-10-21 13:25 - Place edit modal title shows the place name only
+
+- **`AdminPlacesPage` add/edit modal** title was `Edit ${editing.name}`, which read "Edit Panadura Beach". It now renders **just the place name** - "Panadura Beach" - so the word "Edit" is no longer part of the heading
+- The add case is unchanged and still reads "Add a new place"
+- Only one modal carries this title (the form modal at `AdminPlacesPage.jsx:724`); the confirm/delete dialogs were untouched
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_
