@@ -22,16 +22,30 @@ export default function VisitPlanPage() {
 
   return (
     <div className="space-y-10 pb-8">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-brand-dark via-brand to-teal-500 px-4 py-12 text-white sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-3xl text-center">
+      {/* Hero — compact cover matching the Contact page size: cover video
+          under a dark cinematic wash so the white copy stays readable (the
+          dark background remains as the fallback if the video never arrives). */}
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/My%20day%20plan%20page%20cover.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/50 to-slate-900/80"
+        />
+        <div className="relative mx-auto w-full max-w-3xl text-center [text-shadow:0_1px_16px_rgba(0,0,0,0.45)]">
           <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             {get('hero_subtitle')}
           </p>
         </div>
-        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10" />
       </section>
 
       {/* Layout: mobile/tablet stacked and full width (route map first, plan list

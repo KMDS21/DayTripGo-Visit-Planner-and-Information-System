@@ -1105,4 +1105,69 @@ Both remaining public pages now carry their own cover image under a light green 
 
 ---
 
+## 2026-10-21 16:22 - Full-screen video heroes, photo footer and the place-form cover rework
+
+Both landing pages carry a looping cover video, the footer carries a full-bleed photo, and the place form's cover slots were reworked to own their own picks. The Home hero was redesigned further in the same pass, to a dark cinematic treatment rather than the brand-green wash.
+
+### Cover video on both landing heroes
+
+- Both heroes gained the same `<video autoPlay muted loop playsInline preload="auto">` element — `/Home page cover.mp4` on Home, `/My day plan page cover.mp4` on My plan — `object-cover`, `absolute inset-0`, and marked `aria-hidden`
+- `autoPlay` is paired with `muted` and `playsInline`, the combination iOS Safari and Chrome Android require before they will start a background video
+- Each section keeps a solid background behind the video, so a file that fails to load still leaves a finished hero, and the copy sits last in a `relative` wrapper so nothing can ever cover it
+
+### My plan hero — full visible screen height
+
+- **`VisitPlanPage.jsx`**: the hero changed from fixed padding (`py-12 sm:py-16`) to `min-h-[calc(100svh-4.5rem)] md:min-h-[calc(100svh-4rem)]` with `flex items-center`, so it occupies exactly the screen area left below the sticky header when a visitor lands
+  - The header is `sticky top-0` with `py-3` and an `h-11` drawer button on phones, so it measures ~69px below `md` and ~61px from `md` up — the two `calc()` values round those to 72px / 64px and deliberately undershoot by a few pixels, which keeps the "no scroll needed to see the whole hero" behaviour even when a phone URL bar resizes the viewport
+  - `100svh` (not `100vh`) is used so mobile browsers with a collapsing address bar never push the hero past the fold
+- Its green wash was lightened from `from-brand-dark/95 via-brand/85 to-teal-500/75` to **`from-brand-dark/75 via-brand/55 to-teal-500/40`**
+
+### Home hero — redesigned to a cinematic dark treatment
+
+- **`HomePage.jsx`** was reworked further in the same pass: the section is now `min-h-[70svh] md:min-h-[75svh]` on `bg-slate-900`, with a `from-slate-900/80 via-slate-900/55 to-slate-900/85` overlay **instead of** the brand-green gradient, so the cover video is what carries the colour
+- The previously empty hero area now shows four floating glass highlight cards (`HERO_HIGHLIGHTS` — Beaches, Gardens, Temples, Waterfalls; each an icon, a label and a line on its own tinted gradient chip), a `HERO_STATS` row (25 km / 50+ / 100% / Free) and dual CTA buttons
+- The cards are driven by `lucide-react` icons (`Waves`, `Trees`, `Sun`, `Mountain`, plus `MapPin`, `Clock`, `Compass`, `Camera`)
+- The hero title and subtitle stay admin-editable through `usePageContent('home', …)` exactly as before
+
+### Green wash — lightened until the video reads through
+
+- **My plan** hero wash: `from-brand-dark/95 via-brand/85 to-teal-500/75` → **`from-brand-dark/75 via-brand/55 to-teal-500/40`**; the Home hero left the green wash behind entirely (see above)
+- Footer: **`from-brand-dark/80 via-brand/65 to-teal-500/55`** — kept the strongest of the three because it carries the smallest text
+- Footer text was nudged up to compensate for the lighter wash: column headings `text-white/60` → `/75`, the brand blurb `/80` → `/90`, bottom bar `/70` → `/85`
+- With the wash that light, hero legibility comes from `[text-shadow:0_1px_16px_rgba(0,0,0,0.45)]` on the copy wrapper rather than from darkening the picture again (My plan, Explore and Contact — the Home hero uses its dark overlay instead)
+- The two decorative `bg-white/10` circles were removed from every page hero; the footer keeps its two
+
+### Footer — foter.jpg full bleed behind the whole footer
+
+- **`Footer.jsx`**: `foter.jpg` stretches edge to edge behind the entire footer (`absolute inset-0 h-full w-full object-cover`, `brightness-90` to stop bright photo patches eating the white text) with the green wash over it
+- The image is `loading="lazy"` / `decoding="async"` — it sits below the fold on most pages, so it costs nothing on first paint
+- The footer itself still carries the solid gradient underneath, so a missing or slow image degrades to the previous plain green footer
+- The file comment was rewritten to describe the photo footer rather than the old gradient-only one
+
+### Place form — cover slots now own their pick
+
+- **`AdminPlacesPage.jsx`**: the Explore and Featured cover slots each take exactly one file, store it as a tagged entry (`cover: 'explore' | 'featured'`) that replaces that slot's previous pick, and can be cleared through the new `dropPendingCover(type)` helper, which also revokes the object URL
+- The upload loop was re-ordered to match what the slots mean: the **Explore cover uploads first and is set as the place's card photo** (`setPlacePrimaryPhoto`), then the **Featured cover**, then the remaining files as ordinary gallery photos
+- On publish, the Explore banner now records the place's **card photo** as `explore_cover` whenever the place owns the banner — the dedicated cover path is no longer tracked separately for it
+- `customFeaturedCoverRemoved` remembers that a custom Featured cover was taken off, so saving again cannot silently fall back to the card photo; picking a new file clears the flag
+- The `coverRecord` state (path + `photo_id` bookkeeping written by `publishPlaceToggles`) and the `image_url` safety net were both removed — the slots render from their own pending entry and the saved place, so a plain edit cannot lose or misplace a cover
+- The "at most 10 photos" check now runs **after** cover handling, so choosing a cover no longer counts against the gallery quota
+
+### New public assets
+
+| File | Size |
+| --- | --- |
+| `My day plan page cover.mp4` | 39.1 MB |
+| `Home page cover.mp4` | 9.1 MB |
+| `foter.jpg` | 1.9 MB |
+
+- All three returned `200` with `video/mp4` / `image/jpeg` from the running dev server on `:5173`
+- **Carry-forward note — still heavy.** The two videos add ~48 MB that a visitor downloads to watch a looping background. Re-encoding was attempted (a static `ffmpeg` via npm into the temp folder) but the install never finished, and no `ffmpeg` binary exists on this machine, so the originals ship as they are. A 720p H.264 re-encode at a low bitrate would land both in the 2-5 MB range at the same visual quality; `My day plan page cover.mp4` at 39 MB is the priority, since that is the file the user asked to match against the 1.1 MB Contact cover.
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_

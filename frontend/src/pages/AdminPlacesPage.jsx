@@ -77,28 +77,17 @@ export default function AdminPlacesPage() {
 
   // Photo gallery (form modal) — saved photos of the place being edited plus
   // files picked locally, which upload right after the place is saved.
+  // Photo gallery (form modal) — saved photos of the place being edited plus
+  // files picked locally, which upload right after the place is saved.
   const [photos, setPhotos] = useState([]);
-  const [pendingFiles, setPendingFiles] = useState([]); // { file, url, name, size }
+  const [pendingFiles, setPendingFiles] = useState([]); // { file, url, name, size, cover }
   const [photosLoading, setPhotosLoading] = useState(false);
-  // Cover photos this place owns — path AND photo_id, recorded from the save
-  // itself so the slots can render them and the grid can exclude them without
-  // waiting on a page_content round-trip (ids cannot mismatch a photo row).
-  const [coverRecord, setCoverRecord] = useState({
-    placeId: null,
-    explore: '',
-    featured: '',
-    exploreId: null,
-    featuredId: null,
-  });
-  const NO_COVER_RECORD = { placeId: null, explore: '', featured: '', exploreId: null, featuredId: null };
   const [imageBusy, setImageBusy] = useState(false);
   const [imageError, setImageError] = useState(null);
   const fileInputRef = useRef(null);
-  // Cover-slot picks: the file chosen through a cover slot becomes that page's
-  // cover (uploaded together with the gallery on save). fileTargetRef records
-  // which slot opened the shared file input.
-  const [pendingExploreCover, setPendingExploreCover] = useState(null); // { file, url, name, size }
-  const [pendingFeaturedCover, setPendingFeaturedCover] = useState(null);
+  const [pendingExploreCover, setPendingExploreCover] = useState(null); // { file, url, name, size, cover: 'explore' }
+  const [pendingFeaturedCover, setPendingFeaturedCover] = useState(null); // { file, url, name, size, cover: 'featured' }
+  const [customFeaturedCoverRemoved, setCustomFeaturedCoverRemoved] = useState(false);
   const fileTargetRef = useRef('gallery');
 
   const resetImageState = useCallback(() => {
@@ -114,6 +103,7 @@ export default function AdminPlacesPage() {
       if (prev) URL.revokeObjectURL(prev.url);
       return null;
     });
+    setCustomFeaturedCoverRemoved(false);
     fileTargetRef.current = 'gallery';
     setImageError(null);
     setImageBusy(false);
@@ -162,7 +152,7 @@ export default function AdminPlacesPage() {
     setEditing(null);
     setPhotos([]);
     setPhotosLoading(false);
-    setCoverRecord(NO_COVER_RECORD);
+    setCustomFeaturedCoverRemoved(false);
     setForm(EMPTY_FORM);
     setFormErrors({});
     setFormOpen(true);
@@ -173,11 +163,7 @@ export default function AdminPlacesPage() {
     setEditing(place);
     setPhotos([]); // never show another place's gallery while loading
     setPhotosLoading(true);
-    // Keep the covers recorded by this place's own last save; drop any other
-    // place's record so its covers cannot hide photos here.
-    setCoverRecord((prev) =>
-      Number(prev.placeId) === Number(place.place_id) ? prev : NO_COVER_RECORD
-    );
+    setCustomFeaturedCoverRemoved(false);
     getPlacePhotos(place.place_id)
       .then((rows) => setPhotos(rows || []))
       .catch(() => setPhotos([])) // gallery unavailable before migration 004 — empty state
@@ -216,42 +202,33 @@ export default function AdminPlacesPage() {
   };
 
   // ── Publish the modal's cover selections ─────────────────────
-  // Writes the same page_content sections the Home/Explore editors manage:
-  // explore cover photo, Featured escapes membership + card cover.
-  // coverPaths = { explore, featured } — photos chosen through the cover slots
-  // (paths captured during upload); they win over the place's card photo.
+  // ── Publish the modal's cover selections ─────────────────────
   const publishPlaceToggles = async (place, coverPaths = {}) => {
     const placeId = place.place_id;
     const imagePath = place.image_url || '';
     const oldPath = editing?.image_url || '';
     const currentCover = pageContent.explore.explore_cover || '';
-    const explorePath = coverPaths.explore || imagePath;
     const requests = [];
 
-    // Explore cover — no checkbox: an upload through the Explore cover slot
-    // directly sets it (and that photo also becomes the card photo), and the
-    // current cover owner's banner follows a card-photo change.
+    // Keep site-wide explore cover in sync if this place was previously the owner
     const ownsCover = Boolean(currentCover) && (currentCover === imagePath || currentCover === oldPath);
-    const exploreRequested =
-      (Boolean(coverPaths.explore) || ownsCover) && Boolean(explorePath) && currentCover !== explorePath;
-    if (exploreRequested) requests.push(savePageContent('explore', { explore_cover: explorePath }));
-    // What this place's banner will point at once the save lands: the path we
-    // just wrote, the existing one when this place already owns the banner, and
-    // nothing when the Explore banner belongs to another place (explore_cover
-    // is a single site-wide slot — someone else's cover is not this place's).
-    const storedExplore = exploreRequested ? explorePath : ownsCover ? currentCover : '';
+    if (ownsCover && imagePath && currentCover !== imagePath) {
+      requests.push(savePageContent('explore', { explore_cover: imagePath }));
+    }
 
     // Featured escapes membership + card cover.
     let rows = parseFeaturedRows(pageContent.home.featured_place_ids, pageContent.home.featured_covers);
-    // A cover already stored for this place wins when no new file was picked
-    // through the slot; the card photo is only the fallback for a place that
-    // never had a dedicated one. Without this, every save would quietly replace
-    // the carousel cover with the card photo and drop the real cover photo back
-    // into "More photos".
-    const storedFeaturedCover = rows.find((row) => row.id === placeId)?.cover || '';
-    const featuredPath = coverPaths.featured || storedFeaturedCover || imagePath;
-    const before = JSON.stringify(serializeFeaturedRows(rows));
     const inFeatured = rows.some((row) => row.id === placeId);
+    const existingFeaturedCover = rows.find((row) => row.id === placeId)?.cover || '';
+
+    let featuredPath = existingFeaturedCover;
+    if (coverPaths.featured) {
+      featuredPath = coverPaths.featured;
+    } else if (customFeaturedCoverRemoved) {
+      featuredPath = '';
+    }
+
+    const before = JSON.stringify(serializeFeaturedRows(rows));
     if (form.showInFeatured) {
       if (!inFeatured && rows.length >= 12) {
         throw new Error('Featured escapes already has 12 places — remove one in the Home page editor first.');
@@ -267,9 +244,7 @@ export default function AdminPlacesPage() {
     await Promise.all(requests);
     if (requests.length > 0) await refreshContent();
 
-    // The cover paths this save actually settled on — the caller records them
-    // so a reopened modal does not have to read them back from page_content.
-    return { explore: storedExplore, featured: form.showInFeatured ? featuredPath : '' };
+    return { explore: imagePath, featured: form.showInFeatured ? featuredPath : '' };
   };
 
   const handleSave = async (e) => {
@@ -279,7 +254,7 @@ export default function AdminPlacesPage() {
     if (Object.keys(errs).length > 0) return;
 
     setSaving(true);
-    // Explicit payload — the two publishing toggles are UI-only.
+    // Explicit payload — the publishing toggles are UI-only.
     const payload = {
       name: form.name,
       category_id: Number(form.category_id),
@@ -293,40 +268,44 @@ export default function AdminPlacesPage() {
       if (editing) savedPlace = await updatePlace(editing.place_id, payload);
       else savedPlace = await createPlace(payload);
 
-      // Upload the pending photos (server folder → place_photos rows; the first
-      // photo of a place automatically becomes the card photo). A file chosen
-      // through a cover slot becomes that page's cover path.
-      let exploreCoverPath = '';
       let featuredCoverPath = '';
-      let exploreCoverId = null;
-      let featuredCoverId = null;
+
+      // Upload pending photos
       if (pendingFiles.length > 0) {
         try {
-          const seen = new Set(photos.map((row) => row.photo_id));
-          for (const pending of pendingFiles) {
-            const result = await uploadPlacePhoto(savedPlace.place_id, pending.file);
-            savedPlace = result.place; // keeps image_url (card photo) in sync
-            const fresh = (result.photos || []).filter((row) => !seen.has(row.photo_id));
-            (result.photos || []).forEach((row) => seen.add(row.photo_id));
+          // 1. Upload explore card cover (if newly picked) and set as primary
+          const exploreFile = pendingFiles.find((p) => p.cover === 'explore');
+          if (exploreFile) {
+            const result = await uploadPlacePhoto(savedPlace.place_id, exploreFile.file);
+            const fresh = (result.photos || []);
             const created = fresh[fresh.length - 1];
-            if (created && pending.cover === 'explore') {
-              exploreCoverPath = created.photo_url;
-              exploreCoverId = created.photo_id;
-              // Directly wired with the card cover: the banner photo uploaded
-              // through the slot also becomes the place's card photo.
+            if (created) {
               const primary = await setPlacePrimaryPhoto(savedPlace.place_id, created.photo_id);
               savedPlace = primary.place;
               setPhotos(primary.photos || []);
-            } else {
-              if (created && pending.cover === 'featured') {
-                featuredCoverPath = created.photo_url;
-                featuredCoverId = created.photo_id;
-              }
+            }
+          }
+
+          // 2. Upload featured cover (if newly picked)
+          const featuredFile = pendingFiles.find((p) => p.cover === 'featured');
+          if (featuredFile) {
+            const result = await uploadPlacePhoto(savedPlace.place_id, featuredFile.file);
+            const fresh = (result.photos || []);
+            const created = fresh[fresh.length - 1];
+            if (created) {
+              featuredCoverPath = created.photo_url;
               setPhotos(result.photos || []);
             }
           }
+
+          // 3. Upload additional gallery photos
+          const galleryFiles = pendingFiles.filter((p) => p.cover !== 'explore' && p.cover !== 'featured');
+          for (const pending of galleryFiles) {
+            const result = await uploadPlacePhoto(savedPlace.place_id, pending.file);
+            savedPlace = result.place;
+            setPhotos(result.photos || []);
+          }
         } catch (err) {
-          // Keep the modal open so the admin sees the reason (format/size/quota).
           setEditing(savedPlace);
           setFormErrors({ form: `Place saved, but a photo upload failed: ${errorMessage(err)}` });
           resetImageState();
@@ -337,29 +316,9 @@ export default function AdminPlacesPage() {
         }
       }
 
-      // Safety net: an Explore pick always uploads and always forces its file
-      // to be the card photo, so if the per-file match produced nothing the
-      // place's image_url IS that cover. A chosen cover must never be recorded
-      // as empty — that empties the slot and drops the photo into "More photos".
-      if (!exploreCoverPath && pendingExploreCover && savedPlace.image_url) {
-        exploreCoverPath = savedPlace.image_url;
-      }
-
-      // Apply the cover selections to the page content.
+      // Apply the cover selections to the page content
       try {
-        const covers = await publishPlaceToggles(savedPlace, { explore: exploreCoverPath, featured: featuredCoverPath });
-        // Path AND photo_id. The id is carried over when this save uploaded no
-        // fresh cover and the recorded path is unchanged, so a plain edit cannot
-        // lose the exclusion the previous save earned.
-        setCoverRecord((prev) => {
-          const same = Number(prev.placeId) === Number(savedPlace.place_id) ? prev : null;
-          const next = { placeId: savedPlace.place_id, ...covers, exploreId: null, featuredId: null };
-          if (exploreCoverId != null) next.exploreId = exploreCoverId;
-          else if (same && covers.explore && covers.explore === same.explore) next.exploreId = same.exploreId;
-          if (featuredCoverId != null) next.featuredId = featuredCoverId;
-          else if (same && covers.featured && covers.featured === same.featured) next.featuredId = same.featuredId;
-          return next;
-        });
+        await publishPlaceToggles(savedPlace, { featured: featuredCoverPath });
       } catch (err) {
         setEditing(savedPlace);
         setFormErrors({ form: `Place saved, but publishing to the page failed: ${errorMessage(err)}` });
@@ -372,7 +331,7 @@ export default function AdminPlacesPage() {
       resetImageState();
       setFormOpen(false);
       await load();
-      await refreshContent(); // so a reopened modal never reads stale covers
+      await refreshContent();
     } catch (err) {
       setFormErrors({ form: errorMessage(err) });
     } finally {
@@ -381,8 +340,6 @@ export default function AdminPlacesPage() {
   };
 
   // ── Photo gallery controls ────────────────────────────────
-  // Opens the shared file input for one of the cover slots; the first file
-  // picked through a slot is designated as that cover on save.
   const openFilePicker = (target = 'gallery') => {
     fileTargetRef.current = target;
     fileInputRef.current && fileInputRef.current.click();
@@ -391,19 +348,11 @@ export default function AdminPlacesPage() {
   // Pick one or more files (validated client-side, capped at MAX_PHOTOS total).
   const handleFilesChange = (e) => {
     const chosen = Array.from(e.target.files || []);
-    e.target.value = ''; // allow re-picking the same file later
-    // Which slot opened the picker? Reset immediately so an empty selection
-    // cannot misdirect the next pick.
+    e.target.value = '';
     const target = fileTargetRef.current;
     fileTargetRef.current = 'gallery';
     setImageError(null);
     if (chosen.length === 0) return;
-
-    const room = MAX_PHOTOS - (photos.length + pendingFiles.length);
-    if (room <= 0) {
-      setImageError(`A place can have at most ${MAX_PHOTOS} photos — remove one first.`);
-      return;
-    }
 
     const accepted = [];
     let firstError = null;
@@ -418,6 +367,60 @@ export default function AdminPlacesPage() {
       }
       accepted.push(file);
     }
+    if (accepted.length === 0) {
+      if (firstError) setImageError(firstError);
+      return;
+    }
+
+    if (target === 'explore') {
+      const file = accepted[0];
+      const entry = {
+        file,
+        url: URL.createObjectURL(file),
+        name: file.name,
+        size: file.size,
+        cover: 'explore',
+      };
+      setPendingExploreCover((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return entry;
+      });
+      setPendingFiles((prev) => [
+        ...prev.filter((p) => p.cover !== 'explore'),
+        entry,
+      ]);
+      return;
+    }
+
+    if (target === 'featured') {
+      const file = accepted[0];
+      const entry = {
+        file,
+        url: URL.createObjectURL(file),
+        name: file.name,
+        size: file.size,
+        cover: 'featured',
+      };
+      setPendingFeaturedCover((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return entry;
+      });
+      setCustomFeaturedCoverRemoved(false);
+      setPendingFiles((prev) => [
+        ...prev.filter((p) => p.cover !== 'featured'),
+        entry,
+      ]);
+      setForm((prev) => ({ ...prev, showInFeatured: true }));
+      return;
+    }
+
+    // target === 'gallery'
+    const currentTotal = photos.length + pendingFiles.length;
+    const room = MAX_PHOTOS - currentTotal;
+    if (room <= 0) {
+      setImageError(`A place can have at most ${MAX_PHOTOS} photos — remove one first.`);
+      return;
+    }
     if (accepted.length > room) {
       firstError = `Only ${room} more photo${room === 1 ? '' : 's'} fit — a place can have at most ${MAX_PHOTOS}.`;
     }
@@ -428,22 +431,27 @@ export default function AdminPlacesPage() {
         url: URL.createObjectURL(file),
         name: file.name,
         size: file.size,
+        cover: 'gallery',
       }));
       setPendingFiles((prev) => [...prev, ...entries]);
-      // A cover slot opened this picker: its first file becomes that cover
-      // (flagged on the entry itself so the upload loop never has to match
-      // File objects across state), and the selection switches on automatically.
-      if (target === 'explore') {
-        entries[0].cover = 'explore';
-        setPendingExploreCover(entries[0]);
-      }
-      if (target === 'featured') {
-        entries[0].cover = 'featured';
-        setPendingFeaturedCover(entries[0]);
-        setForm((prev) => ({ ...prev, showInFeatured: true }));
-      }
     }
     if (firstError) setImageError(firstError);
+  };
+
+  const dropPendingCover = (type) => {
+    if (type === 'explore') {
+      setPendingExploreCover((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return null;
+      });
+      setPendingFiles((prev) => prev.filter((p) => p.cover !== 'explore'));
+    } else if (type === 'featured') {
+      setPendingFeaturedCover((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return null;
+      });
+      setPendingFiles((prev) => prev.filter((p) => p.cover !== 'featured'));
+    }
   };
 
   // Drop a not-yet-uploaded photo from the queue.
@@ -451,9 +459,8 @@ export default function AdminPlacesPage() {
     const removed = pendingFiles[idx];
     if (removed) {
       URL.revokeObjectURL(removed.url);
-      // A cover slot pointing at the dropped file loses its designation too.
-      setPendingExploreCover((prev) => (prev && prev.url === removed.url ? null : prev));
-      setPendingFeaturedCover((prev) => (prev && prev.url === removed.url ? null : prev));
+      if (removed.cover === 'explore') setPendingExploreCover(null);
+      if (removed.cover === 'featured') setPendingFeaturedCover(null);
     }
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -682,93 +689,74 @@ export default function AdminPlacesPage() {
     );
   };
 
-  // ── Cover slots (photo section, part 1) ──────────────────────
-  const currentExploreCover = pageContent.explore.explore_cover || '';
+  // ── Cover slots and More photos ──────────────────────────────
   const currentFeaturedRow = editing
     ? parseFeaturedRows(pageContent.home.featured_place_ids, pageContent.home.featured_covers).find(
         (row) => row.id === editing.place_id
       )
     : null;
 
-  // This place's own covers as its last save recorded them — the first source
-  // consulted by both slots and the grid, so neither depends on page_content
-  // having caught up. Always empty for a place other than the one just saved.
-  const recorded =
-    coverRecord.placeId != null && Number(coverRecord.placeId) === Number(editing?.place_id)
-      ? coverRecord
-      : null;
-
-  // Explore cover slot: a newly chosen file, else this place's recorded cover,
-  // else this place's photo when it is the current Explore cover.
+  // 1. Explore card cover slot (place's primary/card photo):
   let exploreSlotImg = '';
-  let exploreSlotBadge = 'Explore cover';
+  let exploreSlotBadge = 'Explore card cover';
   if (pendingExploreCover) {
     exploreSlotImg = pendingExploreCover.url;
     exploreSlotBadge = 'New cover';
-  } else if (recorded?.explore) {
-    exploreSlotImg = recorded.explore;
-  } else if (
-    currentExploreCover &&
-    (photos.some((row) => row.photo_url === currentExploreCover) || currentExploreCover === editing?.image_url)
-  ) {
-    exploreSlotImg = currentExploreCover;
+  } else if (editing?.image_url) {
+    exploreSlotImg = editing.image_url;
+    exploreSlotBadge = 'Explore card cover';
+  } else {
+    const primary = photos.find((p) => p.is_primary);
+    if (primary) {
+      exploreSlotImg = primary.photo_url;
+      exploreSlotBadge = 'Explore card cover';
+    }
   }
 
-  // Featured cover slot (unlocked by the toggle): a newly chosen file, else
-  // this place's recorded cover, else the stored carousel cover, else the card
-  // photo fallback.
+  // 2. Featured escapes cover slot (unlocked by showInFeatured checkbox):
   let featuredSlotImg = '';
   let featuredSlotBadge = 'Featured cover';
+  const hasCustomFeaturedSaved = Boolean(!customFeaturedCoverRemoved && currentFeaturedRow?.cover);
   if (pendingFeaturedCover) {
     featuredSlotImg = pendingFeaturedCover.url;
     featuredSlotBadge = 'New cover';
-  } else if (recorded?.featured) {
-    featuredSlotImg = recorded.featured;
-    if (recorded.featured === editing?.image_url) featuredSlotBadge = 'Card photo';
-  } else if (currentFeaturedRow?.cover) {
+  } else if (hasCustomFeaturedSaved) {
     featuredSlotImg = currentFeaturedRow.cover;
-  } else if (editing?.image_url) {
-    featuredSlotImg = editing.image_url;
-    featuredSlotBadge = 'Card photo';
+    featuredSlotBadge = 'Featured cover';
+  } else if (exploreSlotImg) {
+    featuredSlotImg = exploreSlotImg;
+    featuredSlotBadge = 'From Explore cover';
   }
 
-  // Cover-designated photos stay OUT of the "More photos" grid — that section
-  // is only for extra photos of the location; the covers live in their slots.
-  // Two sources are unioned: the paths recorded by this place's own last save
-  // (authoritative — it does not wait for a page_content round-trip) and the
-  // live page_content values, which cover a banner this place owns that no save
-  // through this modal recorded yet.
-  const savedCoverPaths = new Set();
-  const savedCoverIds = new Set();
-  if (recorded) {
-    if (recorded.explore) savedCoverPaths.add(recorded.explore);
-    if (recorded.featured) savedCoverPaths.add(recorded.featured);
-    if (recorded.exploreId != null) savedCoverIds.add(Number(recorded.exploreId));
-    if (recorded.featuredId != null) savedCoverIds.add(Number(recorded.featuredId));
+  // 3. URLs that belong to covers and MUST NOT appear in "More photos":
+  const coverUrlsToExclude = new Set();
+  if (editing?.image_url) coverUrlsToExclude.add(editing.image_url);
+  if (exploreSlotImg && !exploreSlotImg.startsWith('blob:')) coverUrlsToExclude.add(exploreSlotImg);
+  if (hasCustomFeaturedSaved && !currentFeaturedRow.cover.startsWith('blob:')) {
+    coverUrlsToExclude.add(currentFeaturedRow.cover);
   }
-  if (exploreSlotImg && !exploreSlotImg.startsWith('blob:')) savedCoverPaths.add(exploreSlotImg);
-  if (!pendingFeaturedCover && currentFeaturedRow?.cover) savedCoverPaths.add(currentFeaturedRow.cover);
-  const coverPendingUrls = new Set(
-    [pendingExploreCover, pendingFeaturedCover].filter(Boolean).map((entry) => entry.url)
-  );
-  // Matched on photo_id first — an id can never differ between the upload
-  // response and the gallery list — then on the path.
-  const galleryPhotos = photos.filter(
-    (row) => !savedCoverIds.has(Number(row.photo_id)) && !savedCoverPaths.has(row.photo_url)
-  );
+  if (featuredSlotImg && !featuredSlotImg.startsWith('blob:') && featuredSlotImg !== exploreSlotImg) {
+    coverUrlsToExclude.add(featuredSlotImg);
+  }
+
+  // Deduplicate and filter out cover photos for the "More photos" section
+  const seenGalleryUrls = new Set();
+  const galleryPhotos = [];
+  for (const photo of photos) {
+    if (photo.is_primary) continue;
+    if (coverUrlsToExclude.has(photo.photo_url)) continue;
+    if (seenGalleryUrls.has(photo.photo_url)) continue;
+    seenGalleryUrls.add(photo.photo_url);
+    galleryPhotos.push(photo);
+  }
+
+  // Only gallery-tagged files in pending:
   const galleryPending = pendingFiles
     .map((pending, idx) => ({ pending, idx }))
-    .filter(({ pending }) => !coverPendingUrls.has(pending.url));
-  // Counts: everything the place holds vs. what the grid actually draws. The
-  // difference is the covers, which live in their slots above but still count
-  // against the 10-photo cap (placePhotoService enforces the total).
+    .filter(({ pending }) => pending.cover !== 'explore' && pending.cover !== 'featured');
+
   const galleryCount = photos.length + pendingFiles.length;
   const moreCount = galleryPhotos.length + galleryPending.length;
-  const coverCount = galleryCount - moreCount;
-  const dropPendingByUrl = (url) => {
-    const idx = pendingFiles.findIndex((entry) => entry.url === url);
-    if (idx >= 0) dropPending(idx);
-  };
 
   return (
     <div className="space-y-6 py-10">
@@ -926,12 +914,14 @@ export default function AdminPlacesPage() {
 
             {/* Photo section — divided into (1) cover photos and (2) more photos */}
             <div className="sm:col-span-2 rounded-2xl border border-brand/30 bg-brand/[0.06] p-4">
-              {/* 1) Cover photos — the Explore cover slot on the left, its
-                  selecting options on the right; selecting "Show in Featured
-                  escapes" unlocks the upload for that cover. */}
+              {/* 1) Dedicated Cover photos section */}
               <div className="grid gap-4 sm:grid-cols-2">
+                {/* 1. Explore card cover slot */}
                 <div>
-                  <p className="text-sm font-semibold">Add photo to Explore page cover</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Explore card cover</p>
+                    <span className="text-[11px] font-medium text-brand">Required for card</span>
+                  </div>
                   <div className="mt-1.5">
                     {exploreSlotImg ? (
                       <figure className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted">
@@ -950,10 +940,10 @@ export default function AdminPlacesPage() {
                           {pendingExploreCover && (
                             <button
                               type="button"
-                              onClick={() => dropPendingByUrl(pendingExploreCover.url)}
+                              onClick={() => dropPendingCover('explore')}
                               className="border-l border-white/25 px-2 text-red-300 hover:bg-white/25"
                             >
-                              Remove
+                              Cancel
                             </button>
                           )}
                         </div>
@@ -965,16 +955,16 @@ export default function AdminPlacesPage() {
                         className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand/50 bg-brand/[0.07] text-brand transition-colors hover:border-brand hover:bg-brand/15"
                       >
                         <span className="text-2xl leading-none">＋</span>
-                        <span className="text-xs font-semibold">Add cover photo</span>
+                        <span className="text-xs font-semibold">Add Explore card cover</span>
                       </button>
                     )}
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    Uploaded here it becomes the card photo and the banner behind the Explore page hero — no extra
-                    selection needed.
+                    The primary photo displayed on the place card across the Explore page and listings.
                   </p>
                 </div>
 
+                {/* 2. Featured escapes (home page) cover slot */}
                 <div className="space-y-3">
                   <label className="flex cursor-pointer items-start gap-2.5">
                     <input
@@ -991,10 +981,12 @@ export default function AdminPlacesPage() {
                     </span>
                   </label>
 
-                  {/* Unlocked by the selection above: upload the carousel cover */}
                   {form.showInFeatured && (
                     <div>
-                      <p className="text-sm font-semibold">Upload image to that cover</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold">Featured escapes cover</p>
+                        <span className="text-[11px] font-medium text-muted-foreground">Carousel image</span>
+                      </div>
                       <div className="mt-1.5">
                         {featuredSlotImg ? (
                           <figure className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted">
@@ -1008,15 +1000,25 @@ export default function AdminPlacesPage() {
                                 onClick={() => openFilePicker('featured')}
                                 className="flex-1 py-1 hover:bg-white/25"
                               >
-                                Change photo
+                                {hasCustomFeaturedSaved || pendingFeaturedCover ? 'Change photo' : 'Upload custom cover'}
                               </button>
                               {pendingFeaturedCover && (
                                 <button
                                   type="button"
-                                  onClick={() => dropPendingByUrl(pendingFeaturedCover.url)}
+                                  onClick={() => dropPendingCover('featured')}
                                   className="border-l border-white/25 px-2 text-red-300 hover:bg-white/25"
                                 >
-                                  Remove
+                                  Cancel
+                                </button>
+                              )}
+                              {!pendingFeaturedCover && hasCustomFeaturedSaved && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomFeaturedCoverRemoved(true)}
+                                  title="Revert back to the Explore card cover"
+                                  className="border-l border-white/25 px-2 text-amber-300 hover:bg-white/25"
+                                >
+                                  Use card cover
                                 </button>
                               )}
                             </div>
@@ -1028,30 +1030,30 @@ export default function AdminPlacesPage() {
                             className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand/50 bg-brand/[0.07] text-brand transition-colors hover:border-brand hover:bg-brand/15"
                           >
                             <span className="text-2xl leading-none">＋</span>
-                            <span className="text-xs font-semibold">Upload image</span>
+                            <span className="text-xs font-semibold">Upload Featured cover</span>
                           </button>
                         )}
                       </div>
                       <p className="mt-1.5 text-xs text-muted-foreground">
-                        Card cover in the Featured escapes carousel.
+                        Card cover in the home page carousel (defaults to Explore card cover if no custom cover is set).
                       </p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* 2) More photos — the rest of the gallery */}
+              {/* 2) More photos — only additional photos */}
               <div className="mt-4 border-t border-brand/20 pt-3">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-brand">More photos</p>
+                  <div>
+                    <p className="text-sm font-semibold text-brand">More photos</p>
+                    <p className="text-xs text-muted-foreground">
+                      Additional photos for the place popup gallery (covers are kept separate above).
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-bold text-brand">
-                      {coverCount > 0 ? `${moreCount} more · ${galleryCount}/${MAX_PHOTOS}` : `${galleryCount}/${MAX_PHOTOS}`}
-                      {coverCount > 0 && (
-                        <span className="ml-1 font-medium text-brand/70">
-                          {coverCount === 1 ? '(1 as cover)' : `(${coverCount} as covers)`}
-                        </span>
-                      )}
+                      {galleryPhotos.length + galleryPending.length} photos
                     </span>
                     {(photos.length > 0 || pendingFiles.length > 0) && (
                       <button
@@ -1066,83 +1068,76 @@ export default function AdminPlacesPage() {
                   </div>
                 </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {/* Saved photos — cover picks live in their slots above */}
-                {galleryPhotos.map((photo) => (
-                  <figure
-                    key={photo.photo_id}
-                    className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted"
-                  >
-                    <img src={photo.photo_url} alt="" className="h-full w-full object-cover" />
-                    {photo.is_primary && (
-                      <figcaption className="absolute left-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white shadow">
-                        Card photo
-                      </figcaption>
-                    )}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {/* Saved additional photos */}
+                  {galleryPhotos.map((photo) => (
+                    <figure
+                      key={photo.photo_id}
+                      className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted"
+                    >
+                      <img src={photo.photo_url} alt="" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePhoto(photo.photo_id)}
+                        disabled={imageBusy}
+                        className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white hover:bg-black/75 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </figure>
+                  ))}
+
+                  {/* Pending additional photos */}
+                  {galleryPending.map(({ pending, idx }) => (
+                    <figure
+                      key={`${pending.name}-${idx}`}
+                      className="relative aspect-[4/3] overflow-hidden rounded-xl border border-dashed border-brand/60 bg-muted"
+                    >
+                      <img src={pending.url} alt="" className="h-full w-full object-cover" />
+                      <span
+                        title={`${pending.name} · ${formatBytes(pending.size)}`}
+                        className="absolute left-1.5 top-1.5 rounded-full bg-foreground/85 px-2 py-0.5 text-[10px] font-bold text-white"
+                      >
+                        New
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => dropPending(idx)}
+                        className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white hover:bg-black/75"
+                      >
+                        Remove
+                      </button>
+                    </figure>
+                  ))}
+
+                  {/* Add photo tile */}
+                  {!photosLoading && photos.length + pendingFiles.length < MAX_PHOTOS && (
                     <button
                       type="button"
-                      onClick={() => handleDeletePhoto(photo.photo_id)}
-                      disabled={imageBusy}
-                      className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white hover:bg-black/75 disabled:opacity-50"
+                      onClick={() => openFilePicker('gallery')}
+                      className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand/50 bg-brand/[0.07] text-brand transition-colors hover:border-brand hover:bg-brand/15"
                     >
-                      Remove
+                      <span className="text-2xl leading-none">＋</span>
+                      <span className="text-xs font-semibold">Add photo</span>
                     </button>
-                  </figure>
-                ))}
+                  )}
+                </div>
 
-                {/* Chosen but not uploaded yet (upload on save) — cover picks stay in their slots */}
-                {galleryPending.map(({ pending, idx }) => (
-                  <figure
-                    key={`${pending.name}-${idx}`}
-                    className="relative aspect-[4/3] overflow-hidden rounded-xl border border-dashed border-brand/60 bg-muted"
-                  >
-                    <img src={pending.url} alt="" className="h-full w-full object-cover" />
-                    <span
-                      title={`${pending.name} · ${formatBytes(pending.size)}`}
-                      className="absolute left-1.5 top-1.5 rounded-full bg-foreground/85 px-2 py-0.5 text-[10px] font-bold text-white"
-                    >
-                      New
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => dropPending(idx)}
-                      className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] font-semibold text-white hover:bg-black/75"
-                    >
-                      Remove
-                    </button>
-                  </figure>
-                ))}
-
-                {/* Add tile */}
-                {!photosLoading && photos.length + pendingFiles.length < MAX_PHOTOS && (
-                  <button
-                    type="button"
-                    onClick={() => openFilePicker('gallery')}
-                    className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand/50 bg-brand/[0.07] text-brand transition-colors hover:border-brand hover:bg-brand/15"
-                  >
-                    <span className="text-2xl leading-none">＋</span>
-                    <span className="text-xs font-semibold">Add photo</span>
-                  </button>
-                )}
-              </div>
-
-              <input
-                ref={fileInputRef}
-                id="f-image-file"
-                type="file"
-                multiple
-                aria-label="Add photos"
-                accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
-                onChange={handleFilesChange}
-                className="hidden"
-              />
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Up to {MAX_PHOTOS} photos per place · {ALLOWED_IMAGE_LABEL} · max 5 MB each · 500 MB server quota.
-                Photos upload on save; the first becomes the card photo, and the Explore cover slot above always sets
-                the card photo directly.
-              </p>
-              {photosLoading && <p className="mt-1 text-xs text-muted-foreground">Loading photos…</p>}
-              {imageError && <p className="mt-1.5 text-xs font-medium text-red-600">{imageError}</p>}
+                <input
+                  ref={fileInputRef}
+                  id="f-image-file"
+                  type="file"
+                  multiple
+                  aria-label="Add photos"
+                  accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
+                  onChange={handleFilesChange}
+                  className="hidden"
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Up to {MAX_PHOTOS} photos per place · {ALLOWED_IMAGE_LABEL} · max 5 MB each.
+                </p>
+                {photosLoading && <p className="mt-1 text-xs text-muted-foreground">Loading photos…</p>}
+                {imageError && <p className="mt-1.5 text-xs font-medium text-red-600">{imageError}</p>}
               </div>
             </div>
 
