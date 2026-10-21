@@ -26,16 +26,34 @@ export default function VisitPlanPage() {
           under a dark cinematic wash so the white copy stays readable (the
           dark background remains as the fallback if the video never arrives). */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          src="/My%20day%20plan%20page%20cover.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-        />
+        {/* Cover video or image */}
+        {(() => {
+          const cover = get('hero_cover');
+          const isVideo = !cover || cover.endsWith('.mp4') || cover.endsWith('.webm');
+          if (isVideo) {
+            return (
+              <video
+                key={cover || 'default-plan-video'}
+                className="absolute inset-0 h-full w-full object-cover"
+                src={cover || '/My%20day%20plan%20page%20cover.mp4'}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-hidden="true"
+              />
+            );
+          }
+          return (
+            <img
+              src={cover}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          );
+        })()}
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/50 to-slate-900/80"

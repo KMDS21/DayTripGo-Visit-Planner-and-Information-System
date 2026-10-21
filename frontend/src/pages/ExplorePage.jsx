@@ -21,9 +21,8 @@ export default function ExplorePage() {
     hero_subtitle:
       'Every verified spot within 25 km of Wadduwa in one place. Filter by category, check opening times, and add your favourites straight to the day plan.',
   });
-  // Fallback cover photo chosen in the Explore page content editor (any uploaded
-  // place image). It only appears if the bundled Explore page cover fails to load.
-  const cover = get('explore_cover');
+  // Fallback or admin-chosen cover photo
+  const cover = get('hero_cover') || get('explore_cover');
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -55,7 +54,7 @@ export default function ExplorePage() {
           only used if that file ever fails to load, so the banner is never bare. */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
         <img
-          src="/explore%20page%20page%20cover.jpg"
+          src={cover || '/explore%20page%20page%20cover.jpg'}
           alt=""
           aria-hidden="true"
           loading="lazy"

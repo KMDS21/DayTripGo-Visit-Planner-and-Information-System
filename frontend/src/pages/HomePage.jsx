@@ -57,17 +57,34 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────────────
           Cinematic dark overlay with interactive location card carousel */}
       <section className="relative flex min-h-[70svh] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[75svh]">
-        {/* Cover video */}
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          src="/Home%20page%20cover.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-        />
+        {/* Cover video or image */}
+        {(() => {
+          const cover = get('hero_cover');
+          const isVideo = !cover || cover.endsWith('.mp4') || cover.endsWith('.webm');
+          if (isVideo) {
+            return (
+              <video
+                key={cover || 'default-home-video'}
+                className="absolute inset-0 h-full w-full object-cover"
+                src={cover || '/Home%20page%20cover.mp4'}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-hidden="true"
+              />
+            );
+          }
+          return (
+            <img
+              src={cover}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          );
+        })()}
 
         {/* Dark cinematic overlay */}
         <div

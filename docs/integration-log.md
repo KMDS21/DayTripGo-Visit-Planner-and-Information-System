@@ -1190,4 +1190,42 @@ Both landing pages carry a looping cover video, the footer carries a full-bleed 
 
 ---
 
+## 2026-10-21 16:58 - Every public hero cover is now editable from the admin
+
+The four bundled covers stopped being hard-coded: each page reads a `hero_cover` section from page content first and only falls back to its bundled asset, so the admin can swap any hero for a photo or a video without touching the code.
+
+### Backend — a cover upload endpoint
+
+- **`contentRoutes.js`**: `POST /api/content/:page/cover`, guarded by `requireAuth` + `quotaGate` + `uploader.single('cover')` — the same multer middleware the place gallery already uses, so covers count against the same storage quota
+- **`contentController.js`**: new `uploadCover` returns `{ success: true, data: { url: '/uploads/places/<filename>' } }`, and a 400 when no file arrived. Files land in `backend/uploads/places/` next to the place photos
+- Both imports were checked against `middleware/upload.js` — `uploader` and `quotaGate` are both exported there
+
+### Frontend service
+
+- **`contentService.js`**: `uploadPageCover(page, file)` — multipart POST that resolves to the stored URL
+
+### The four public pages
+
+- Each reads `get('hero_cover')` first, then falls back to its bundled asset, so a fresh database behaves exactly as before
+- **Home and My plan**: a cover ending `.mp4` / `.webm` (or an empty value) renders the `<video>`; anything else renders an `<img>` — so either hero can be switched from video to a still photo. `key={cover}` forces a remount when the cover changes, which restarts a swapped-in video
+- **Explore and Contact**: `hero_cover` wins, then the legacy `explore_cover`, then the bundled `.jpg` / `.webp`
+
+### `AdminContentPage.jsx` — reworked (577 changed lines)
+
+- All four page configs now carry a `defaultCover`, matching the file each page falls back to, and the intro copy tells the admin it is editing "hero cover media"
+- The editor leads with a **Hero cover** block inside the single card: a live `aspect-video` preview (autoplaying when the cover is a video) showing the current path and a **Custom cover** / **Default bundled cover** badge
+- Three actions underneath: **Upload a photo** (`accept="image/jpeg,image/png,image/webp,image/avif"`), **Choose from place photos** (expanding gallery of every distinct place image, "tap any photo to set it as this page's hero cover") and **Reset to default**, which clears `hero_cover` back to the bundled file
+- Saving writes `hero_title`, `hero_subtitle` and `hero_cover`; on the Explore page it also mirrors `hero_cover` into the legacy `explore_cover` key, so any reader still using the old key stays correct
+
+### Repository changes carried in this commit
+
+- Place images churned in `backend/uploads/places/`: `20018a92…` → `47ad52d0…`, `3aa8314c…` → `bcc63b97…`, `7a051c20…` → `7a389b64…` — the same bytes under fresh UUID names (git records all three as 100% renames), i.e. identical covers re-uploaded through the new endpoint while exercising the editor
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+- `node --check` passes on `contentController.js` and `contentRoutes.js`
+
+---
+
 _(Entries below are appended as further steps complete.)_

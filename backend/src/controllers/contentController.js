@@ -20,4 +20,16 @@ async function updateContent(req, res, next) {
   }
 }
 
-module.exports = { getContent, updateContent };
+async function uploadCover(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded.' });
+    }
+    const publicUrl = `/uploads/places/${req.file.filename}`;
+    res.json({ success: true, data: { url: publicUrl } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getContent, updateContent, uploadCover };

@@ -125,7 +125,7 @@ export default function ContactPage() {
       {/* Hero — page cover image under the same green wash as the Explore hero */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
         <img
-          src="/Contact%20us%20page%20page%20cover.webp"
+          src={get('hero_cover') || '/Contact%20us%20page%20page%20cover.webp'}
           alt=""
           aria-hidden="true"
           loading="lazy"

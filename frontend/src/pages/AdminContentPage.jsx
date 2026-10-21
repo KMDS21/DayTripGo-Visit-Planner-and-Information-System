@@ -1,70 +1,57 @@
 // AdminContentPage — /admin/pages/:page
-// Separate editor per public page (Home / Explore / My Day Plan / Contact us).
-// Each text field is saved to `page_content` and shown on the public page with
-// a built-in fallback, so nothing breaks when a field is left empty.
-//
-// Beyond the text fields:
-//  - Home gets a "Featured escapes" section: pick which places the home-page
-//    carousel shows (in order) and the cover image of each card.
-//  - Explore gets a "Cover photo" section: pick any image uploaded on the
-//    Places page as the banner photo behind the Explore hero.
+// Streamlined page editor focused strictly on:
+//  1. Page cover media (live preview, custom photo upload, gallery picker, or default)
+//  2. Hero title
+//  3. Hero description (subtitle)
+//  4. Company details (for Contact us page only)
+// All fields and the Save changes button are placed inside a single unified card box.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getPageContent, savePageContent } from '../services/contentService';
+import { Upload, Image as ImageIcon, RotateCcw, Check } from 'lucide-react';
+import { getPageContent, savePageContent, uploadPageCover } from '../services/contentService';
 import { getPlaces } from '../services/placeService';
 import { errorMessage } from '../services/api';
-import { parseFeaturedRows, serializeFeaturedRows } from '../utils/featuredConfig';
 import usePageTitle from '../hooks/usePageTitle';
 import Button from '../components/Common/Button';
 import Loader from '../components/Common/Loader';
 
-// Editable text fields per page — "Heroes + key texts" scope agreed for this pass.
 const PAGE_CONFIG = {
   home: {
     title: 'Home page',
-    intro: 'Hero banner, the intro sections and the Featured escapes carousel of the home page.',
-    fields: [
-      { key: 'hero_title', label: 'Hero title', type: 'text', hint: 'Shown over the green gradient at the top.' },
-      { key: 'hero_subtitle', label: 'Hero subtitle', type: 'textarea' },
-      { key: 'why_title', label: '"Why DayTripGO" heading', type: 'text' },
-      { key: 'why_body', label: '"Why DayTripGO" text', type: 'textarea' },
-      { key: 'how_title', label: '"How DayTripGO works" heading', type: 'text' },
-      { key: 'how_body', label: '"How DayTripGO works" text', type: 'textarea' },
-    ],
+    intro: 'Update the hero cover media, title, and description for the home page.',
+    defaultCover: '/Home%20page%20cover.mp4',
+    titlePlaceholder: 'One perfect day around Wadduwa',
+    subtitlePlaceholder: 'Discover verified places of interest within 25 km of Wadduwa, Sri Lanka...',
   },
   explore: {
     title: 'Explore page',
-    intro: 'The banner visitors see above the place grid.',
-    fields: [
-      { key: 'hero_title', label: 'Hero title', type: 'text' },
-      { key: 'hero_subtitle', label: 'Hero subtitle', type: 'textarea' },
-    ],
+    intro: 'Update the hero banner photo, title, and description for the Explore page.',
+    defaultCover: '/explore%20page%20page%20cover.jpg',
+    titlePlaceholder: 'Explore places',
+    subtitlePlaceholder: 'Every verified spot within 25 km of Wadduwa in one place...',
   },
   plan: {
     title: 'My Day Plan page',
-    intro: 'The banner at the top of the visit-plan screen.',
-    fields: [
-      { key: 'hero_title', label: 'Hero title', type: 'text' },
-      { key: 'hero_subtitle', label: 'Hero subtitle', type: 'textarea' },
-    ],
+    intro: 'Update the hero cover media, title, and description for the visit-plan screen.',
+    defaultCover: '/My%20day%20plan%20page%20cover.mp4',
+    titlePlaceholder: 'My one-day plan',
+    subtitlePlaceholder: 'Your plan is kept for this browser session only, with no account...',
   },
   contact: {
     title: 'Contact us page',
-    intro: 'Banner text and the company details card on the right.',
-    fields: [
-      { key: 'hero_title', label: 'Hero title', type: 'text' },
-      { key: 'hero_subtitle', label: 'Hero subtitle', type: 'textarea' },
-      { key: 'address', label: 'Address', type: 'text' },
-      { key: 'email', label: 'Email', type: 'text' },
-      { key: 'phone', label: 'Phone', type: 'text' },
-      { key: 'hours', label: 'Opening hours', type: 'text' },
+    intro: 'Update the hero cover photo, title, description, and company contact details.',
+    defaultCover: '/Contact%20us%20page%20page%20cover.webp',
+    titlePlaceholder: 'Get in touch',
+    subtitlePlaceholder: 'Questions about Wadduwa or DayTripGO? We are here to help.',
+    companyFields: [
+      { key: 'address', label: 'Company address', placeholder: 'Galle Road, Wadduwa, Sri Lanka' },
+      { key: 'email', label: 'Email address', placeholder: 'hello@daytripgo.lk' },
+      { key: 'phone', label: 'Phone number', placeholder: '+94 11 234 5678' },
+      { key: 'hours', label: 'Opening hours', placeholder: 'Mon – Sat · 9:00 – 18:00' },
     ],
   },
 };
-
-// The carousel shows at most 12 cards (FeaturedCarousel cap).
-const MAX_FEATURED = 12;
 
 const inputClass =
   'w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:text-sm';
@@ -77,13 +64,16 @@ export default function AdminContentPage() {
   const [values, setValues] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
 
-  // Places + their uploaded images feed the Featured escapes and cover pickers.
+  const fileInputRef = useRef(null);
+
+  // Places images for the gallery picker
   const [places, setPlaces] = useState([]);
   const [placesLoading, setPlacesLoading] = useState(false);
-  const needsPlaces = page === 'home' || page === 'explore';
 
   useEffect(() => {
     let alive = true;
@@ -93,6 +83,9 @@ export default function AdminContentPage() {
     }
     setLoading(true);
     setError(null);
+    setSaved(false);
+    setShowGallery(false);
+
     getPageContent(page)
       .then((data) => {
         if (alive) setValues(data || {});
@@ -109,7 +102,6 @@ export default function AdminContentPage() {
   }, [page, config]);
 
   useEffect(() => {
-    if (!needsPlaces) return () => {};
     let alive = true;
     setPlacesLoading(true);
     getPlaces({ scope: 'admin' })
@@ -125,9 +117,9 @@ export default function AdminContentPage() {
     return () => {
       alive = false;
     };
-  }, [needsPlaces]);
+  }, []);
 
-  // Unique uploaded images (every place photo doubles as a possible cover).
+  // Distinct place images available as covers
   const images = useMemo(() => {
     const seen = new Set();
     const list = [];
@@ -140,49 +132,6 @@ export default function AdminContentPage() {
     return list;
   }, [places]);
 
-  const placeById = useMemo(() => {
-    const map = new Map();
-    for (const place of places) map.set(place.place_id, place);
-    return map;
-  }, [places]);
-
-  // The featured selection lives in `values` as the two text sections and is
-  // parsed into rows for the UI, so there is a single source of truth.
-  const featuredRows = useMemo(
-    () => (page === 'home' ? parseFeaturedRows(values.featured_place_ids, values.featured_covers) : []),
-    [page, values.featured_place_ids, values.featured_covers]
-  );
-
-  const setFeaturedRows = (rows) => {
-    setValues((prev) => ({ ...prev, ...serializeFeaturedRows(rows) }));
-    setSaved(false);
-  };
-
-  const addFeatured = () => {
-    const used = new Set(featuredRows.map((row) => row.id));
-    const next = places.find((place) => !used.has(place.place_id));
-    if (!next) return;
-    setFeaturedRows([...featuredRows, { id: next.place_id, cover: '' }]);
-  };
-
-  const changeFeaturedPlace = (index, placeId) => {
-    // A new place starts with its own photo as the cover.
-    setFeaturedRows(featuredRows.map((row, i) => (i === index ? { id: Number(placeId), cover: '' } : row)));
-  };
-
-  const changeFeaturedCover = (index, cover) => {
-    setFeaturedRows(featuredRows.map((row, i) => (i === index ? { ...row, cover } : row)));
-  };
-
-  const removeFeatured = (index) => {
-    setFeaturedRows(featuredRows.filter((_, i) => i !== index));
-  };
-
-  const setExploreCover = (cover) => {
-    setValues((prev) => ({ ...prev, explore_cover: cover }));
-    setSaved(false);
-  };
-
   if (!config) {
     return (
       <div className="py-16 text-center">
@@ -192,9 +141,47 @@ export default function AdminContentPage() {
     );
   }
 
+  const currentCover = values.hero_cover || (page === 'explore' ? values.explore_cover : '') || '';
+  const effectiveCover = currentCover || config.defaultCover;
+  const isVideo = effectiveCover && (effectiveCover.endsWith('.mp4') || effectiveCover.endsWith('.webm'));
+
   const handleChange = (key) => (e) => {
     setValues((prev) => ({ ...prev, [key]: e.target.value }));
     setSaved(false);
+  };
+
+  const handleSelectCover = (url) => {
+    setValues((prev) => ({
+      ...prev,
+      hero_cover: url,
+      ...(page === 'explore' ? { explore_cover: url } : {}),
+    }));
+    setSaved(false);
+  };
+
+  const handleResetCover = () => {
+    setValues((prev) => ({
+      ...prev,
+      hero_cover: '',
+      ...(page === 'explore' ? { explore_cover: '' } : {}),
+    }));
+    setSaved(false);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const uploadedUrl = await uploadPageCover(page, file);
+      handleSelectCover(uploadedUrl);
+    } catch (err) {
+      setError(`Cover upload failed: ${errorMessage(err)}`);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSave = async (e) => {
@@ -203,12 +190,19 @@ export default function AdminContentPage() {
     setError(null);
     setSaved(false);
     try {
-      const sections = {};
-      for (const field of config.fields) {
-        sections[field.key] = typeof values[field.key] === 'string' ? values[field.key] : '';
+      const sections = {
+        hero_title: typeof values.hero_title === 'string' ? values.hero_title : '',
+        hero_subtitle: typeof values.hero_subtitle === 'string' ? values.hero_subtitle : '',
+        hero_cover: typeof values.hero_cover === 'string' ? values.hero_cover : '',
+      };
+      if (page === 'explore') {
+        sections.explore_cover = sections.hero_cover;
       }
-      if (page === 'home') Object.assign(sections, serializeFeaturedRows(featuredRows));
-      if (page === 'explore') sections.explore_cover = typeof values.explore_cover === 'string' ? values.explore_cover : '';
+      if (page === 'contact' && config.companyFields) {
+        for (const field of config.companyFields) {
+          sections[field.key] = typeof values[field.key] === 'string' ? values[field.key] : '';
+        }
+      }
       const data = await savePageContent(page, sections);
       setValues(data);
       setSaved(true);
@@ -229,204 +223,231 @@ export default function AdminContentPage() {
       {loading && <Loader label="Loading content…" />}
 
       {!loading && (
-        <form onSubmit={handleSave} className="max-w-2xl space-y-6">
-          {/* Text fields */}
-          <div className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-            {config.fields.map((field) => (
-              <div key={field.key}>
-                <label className="mb-1.5 block text-sm font-semibold" htmlFor={`c-${field.key}`}>
-                  {field.label}
-                </label>
-                {field.type === 'textarea' ? (
-                  <textarea
-                    id={`c-${field.key}`}
-                    rows={3}
-                    className={inputClass}
-                    value={values[field.key] || ''}
-                    onChange={handleChange(field.key)}
+        <form onSubmit={handleSave} className="max-w-3xl">
+          {/* Single Box: Cover + Title + Description (+ Company details for contact) + Save button */}
+          <div className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            
+            {/* ── Page Hero Cover Section ──────────────────────────────── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold">Hero cover</label>
+                {currentCover ? (
+                  <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand">
+                    Custom cover
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    Default bundled cover
+                  </span>
+                )}
+              </div>
+
+              {/* Cover Media Preview */}
+              <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-slate-900 shadow-inner">
+                {isVideo ? (
+                  <video
+                    key={effectiveCover}
+                    src={effectiveCover}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <input
-                    id={`c-${field.key}`}
-                    className={inputClass}
-                    value={values[field.key] || ''}
-                    onChange={handleChange(field.key)}
+                  <img
+                    src={effectiveCover}
+                    alt="Current cover preview"
+                    className="h-full w-full object-cover"
                   />
                 )}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {field.hint || 'Leave empty to keep the built-in wording.'}
-                </p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+                <div className="absolute bottom-3 left-3 right-3 text-xs text-white/90 truncate [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                  {currentCover ? currentCover : 'Default bundled cover'}
+                </div>
               </div>
-            ))}
-          </div>
 
-          {/* Featured escapes picker (home only) */}
-          {page === 'home' && (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold">Featured escapes</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Choose which places the Featured escapes carousel on the home page shows, in order, and the cover
-                image of each card.{' '}
-                {featuredRows.length === 0 &&
-                  'Nothing selected yet, so the home page shows the first place of each category.'}
-              </p>
+              {/* Cover Action Controls */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
 
-              {placesLoading && <Loader label="Loading places…" />}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5"
+                >
+                  <Upload className="h-4 w-4" />
+                  {uploading ? 'Uploading photo…' : 'Upload photo'}
+                </Button>
 
-              {!placesLoading && (
-                <>
-                  <div className="mt-4 space-y-3">
-                    {featuredRows.map((row, index) => {
-                      const place = placeById.get(row.id);
-                      const effective = row.cover || place?.image_url || '';
-                      return (
-                        <div
-                          key={`${row.id}-${index}`}
-                          className="flex flex-wrap items-center gap-3 rounded-2xl border border-border p-3"
-                        >
-                          <div className="h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
-                            {effective ? (
-                              <img src={effective} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                No photo
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowGallery((prev) => !prev)}
+                  className="flex items-center gap-1.5"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  {showGallery ? 'Hide place photos' : 'Choose from place photos'}
+                </Button>
+
+                {currentCover && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetCover}
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset to default
+                  </Button>
+                )}
+              </div>
+
+              {/* Expandable Place Photos Gallery */}
+              {showGallery && (
+                <div className="mt-3 rounded-2xl border border-border bg-muted/40 p-4 space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Tap any photo to set it as this page's hero cover:
+                  </p>
+                  {placesLoading ? (
+                    <Loader label="Loading place images…" />
+                  ) : images.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No uploaded place photos found.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5 max-h-60 overflow-y-auto p-1">
+                      {images.map((img) => {
+                        const isSelected = currentCover === img.src;
+                        return (
+                          <button
+                            key={img.src}
+                            type="button"
+                            onClick={() => handleSelectCover(img.src)}
+                            className={`group relative aspect-video overflow-hidden rounded-xl border-2 transition-all ${
+                              isSelected
+                                ? 'border-brand ring-2 ring-brand/40 scale-[1.02]'
+                                : 'border-border hover:border-brand/50'
+                            }`}
+                            title={img.label}
+                          >
+                            <img src={img.src} alt="" className="h-full w-full object-cover" />
+                            {isSelected && (
+                              <span className="absolute inset-0 flex items-center justify-center bg-brand/30 text-white">
+                                <Check className="h-5 w-5 drop-shadow" />
                               </span>
                             )}
-                          </div>
-                          <select
-                            className={`${inputClass} min-w-40 flex-1`}
-                            value={row.id}
-                            onChange={(e) => changeFeaturedPlace(index, e.target.value)}
-                            aria-label="Featured place"
-                          >
-                            {places.map((p) => {
-                              const usedElsewhere = featuredRows.some((r, i) => i !== index && r.id === p.place_id);
-                              return (
-                                <option key={p.place_id} value={p.place_id} disabled={usedElsewhere}>
-                                  {p.name}
-                                  {usedElsewhere ? ' (already featured)' : ''}
-                                </option>
-                              );
-                            })}
-                          </select>
-                          <select
-                            className={`${inputClass} min-w-40 flex-1`}
-                            value={row.cover}
-                            onChange={(e) => changeFeaturedCover(index, e.target.value)}
-                            aria-label="Card cover photo"
-                          >
-                            <option value="">{place?.image_url ? "Place's own photo" : 'No photo yet'}</option>
-                            {images.map((img) => (
-                              <option key={img.src} value={img.src}>
-                                {img.label}
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFeatured(index)}
-                            aria-label={`Remove ${place?.name || 'featured place'}`}
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addFeatured}
-                      disabled={featuredRows.length >= MAX_FEATURED || places.length === 0}
-                    >
-                      ＋ Add featured place
-                    </Button>
-                    {featuredRows.length >= MAX_FEATURED && (
-                      <span className="text-xs text-muted-foreground">Maximum {MAX_FEATURED} cards.</span>
-                    )}
-                    {places.length === 0 && (
-                      <span className="text-xs text-muted-foreground">Add places first on the Attractive Places page.</span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Explore cover photo picker */}
-          {page === 'explore' && (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-              <h2 className="text-lg font-bold">Cover photo</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Fallback photo shown behind the Explore page banner if its cover image is missing. Any image uploaded on the
-                Attractive Places page can be used.
-              </p>
-
-              {placesLoading && <Loader label="Loading images…" />}
-
-              {!placesLoading && (
-                <>
-                  <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    <button
-                      type="button"
-                      onClick={() => setExploreCover('')}
-                      className={`flex aspect-video items-center justify-center overflow-hidden rounded-2xl border-2 bg-gradient-to-br from-brand-dark via-brand to-teal-500 text-xs font-semibold text-white transition-colors ${
-                        values.explore_cover ? 'border-border opacity-70 hover:opacity-100' : 'border-brand ring-2 ring-brand/40'
-                      }`}
-                    >
-                      Default
-                    </button>
-                    {images.map((img) => {
-                      const selected = values.explore_cover === img.src;
-                      return (
-                        <button
-                          type="button"
-                          key={img.src}
-                          onClick={() => setExploreCover(img.src)}
-                          title={img.label}
-                          aria-label={img.label}
-                          aria-pressed={selected}
-                          className={`aspect-video overflow-hidden rounded-2xl border-2 transition-colors ${
-                            selected ? 'border-brand ring-2 ring-brand/40' : 'border-border hover:border-brand/50'
-                          }`}
-                        >
-                          <img src={img.src} alt="" className="h-full w-full object-cover" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {images.length === 0 && (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      No uploaded images yet. Add a photo to a place on the Attractive Places page first.
-                    </p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </div>
-          )}
 
-          {/* Save feedback */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-            {error && (
-              <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
-                {error}
+            <hr className="border-border" />
+
+            {/* ── Hero Title ────────────────────────────────────────────── */}
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold" htmlFor="hero-title">
+                Hero title
+              </label>
+              <input
+                id="hero-title"
+                className={inputClass}
+                value={values.hero_title || ''}
+                onChange={handleChange('hero_title')}
+                placeholder={config.titlePlaceholder}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Leave empty to keep the default title.
               </p>
-            )}
-            {saved && (
-              <p role="status" className="rounded-xl bg-emerald-100 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
-                Saved. The public page updates immediately.
-              </p>
-            )}
-            <div className={error || saved ? 'pt-4' : ''}>
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Saving…' : 'Save changes'}
-              </Button>
             </div>
+
+            {/* ── Hero Description ──────────────────────────────────────── */}
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold" htmlFor="hero-desc">
+                Hero description
+              </label>
+              <textarea
+                id="hero-desc"
+                rows={3}
+                className={inputClass}
+                value={values.hero_subtitle || ''}
+                onChange={handleChange('hero_subtitle')}
+                placeholder={config.subtitlePlaceholder}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Leave empty to keep the default description.
+              </p>
+            </div>
+
+            {/* ── Company Details (Contact us page only) ─────────────────── */}
+            {page === 'contact' && config.companyFields && (
+              <>
+                <hr className="border-border" />
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-base font-bold">Company details</h2>
+                    <p className="text-xs text-muted-foreground">
+                      Contact information shown on the right side of the Contact Us page.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {config.companyFields.map((field) => (
+                      <div key={field.key}>
+                        <label className="mb-1.5 block text-sm font-semibold" htmlFor={`contact-${field.key}`}>
+                          {field.label}
+                        </label>
+                        <input
+                          id={`contact-${field.key}`}
+                          className={inputClass}
+                          value={values[field.key] || ''}
+                          onChange={handleChange(field.key)}
+                          placeholder={field.placeholder}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Save Feedback & Button (Inside the SAME box) ─────────── */}
+            <div className="pt-2 border-t border-border space-y-3">
+              {error && (
+                <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+                  {error}
+                </p>
+              )}
+              {saved && (
+                <p role="status" className="rounded-xl bg-emerald-100 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
+                  Saved. The public page updates immediately.
+                </p>
+              )}
+              <div className="flex items-center justify-between pt-1">
+                <Button type="submit" disabled={saving || uploading}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </Button>
+                {saved && (
+                  <span className="text-xs text-muted-foreground">
+                    All changes successfully saved
+                  </span>
+                )}
+              </div>
+            </div>
+
           </div>
         </form>
       )}
