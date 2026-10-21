@@ -930,7 +930,7 @@ The distance badge was dropped from the place cards in the previous round; this 
 ### Verification
 
 - `npx oxlint` clean apart from the modal's pre-existing `set-state-in-effect` warning (same code, only the line number moved) and `npm run build` green
-- **Migration 006 still needs running against Supabase** (`database/schema/006_place_drop_distance_km.sql`) to drop the live `distance_km` column
+- **Migration 006 applied against Supabase on 2026-10-21** — `alter table places drop column if exists distance_km` run in the SQL editor, so the live `distance_km` column is gone (new installs never get it: `001_create_tables.sql` already omits it). The drop was safe to run because nothing in `backend/src` references the column any more — `validate.js` no longer requires or range-checks it and `placeModel` no longer orders by it
 
 ---
 
