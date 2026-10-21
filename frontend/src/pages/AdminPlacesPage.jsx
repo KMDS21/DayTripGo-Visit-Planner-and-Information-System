@@ -71,6 +71,7 @@ export default function AdminPlacesPage() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false); // "Remove all photos" dialog
   const [publishBusyId, setPublishBusyId] = useState(null); // row being toggled
   const [homeBusyId, setHomeBusyId] = useState(null); // row being toggled
 
@@ -79,6 +80,17 @@ export default function AdminPlacesPage() {
   const [photos, setPhotos] = useState([]);
   const [pendingFiles, setPendingFiles] = useState([]); // { file, url, name, size }
   const [photosLoading, setPhotosLoading] = useState(false);
+  // Cover photos this place owns — path AND photo_id, recorded from the save
+  // itself so the slots can render them and the grid can exclude them without
+  // waiting on a page_content round-trip (ids cannot mismatch a photo row).
+  const [coverRecord, setCoverRecord] = useState({
+    placeId: null,
+    explore: '',
+    featured: '',
+    exploreId: null,
+    featuredId: null,
+  });
+  const NO_COVER_RECORD = { placeId: null, explore: '', featured: '', exploreId: null, featuredId: null };
   const [imageBusy, setImageBusy] = useState(false);
   const [imageError, setImageError] = useState(null);
   const fileInputRef = useRef(null);
@@ -150,6 +162,7 @@ export default function AdminPlacesPage() {
     setEditing(null);
     setPhotos([]);
     setPhotosLoading(false);
+    setCoverRecord(NO_COVER_RECORD);
     setForm(EMPTY_FORM);
     setFormErrors({});
     setFormOpen(true);
@@ -160,16 +173,26 @@ export default function AdminPlacesPage() {
     setEditing(place);
     setPhotos([]); // never show another place's gallery while loading
     setPhotosLoading(true);
+    // Keep the covers recorded by this place's own last save; drop any other
+    // place's record so its covers cannot hide photos here.
+    setCoverRecord((prev) =>
+      Number(prev.placeId) === Number(place.place_id) ? prev : NO_COVER_RECORD
+    );
     getPlacePhotos(place.place_id)
       .then((rows) => setPhotos(rows || []))
       .catch(() => setPhotos([])) // gallery unavailable before migration 004 — empty state
       .finally(() => setPhotosLoading(false));
     const featuredRows = parseFeaturedRows(pageContent.home.featured_place_ids, pageContent.home.featured_covers);
+    // parseHoursRange returns { from, to, note } with 24-hour values — mapped
+    // onto the form's own keys so the pickers show the stored hours.
+    const hours = parseHoursRange(place.opening_hours);
     setForm({
       name: place.name || '',
       category_id: place.category_id || '',
       description: place.description || '',
-      ...parseHoursRange(place.opening_hours),
+      hours_from: hours.from,
+      hours_to: hours.to,
+      hours_note: hours.note,
       travel_tips: place.travel_tips || '',
       google_maps_url: place.google_maps_url || '',
       showInFeatured: featuredRows.some((row) => row.id === place.place_id),
@@ -203,19 +226,30 @@ export default function AdminPlacesPage() {
     const oldPath = editing?.image_url || '';
     const currentCover = pageContent.explore.explore_cover || '';
     const explorePath = coverPaths.explore || imagePath;
-    const featuredPath = coverPaths.featured || imagePath;
     const requests = [];
 
     // Explore cover — no checkbox: an upload through the Explore cover slot
     // directly sets it (and that photo also becomes the card photo), and the
     // current cover owner's banner follows a card-photo change.
     const ownsCover = Boolean(currentCover) && (currentCover === imagePath || currentCover === oldPath);
-    if ((Boolean(coverPaths.explore) || ownsCover) && explorePath && currentCover !== explorePath) {
-      requests.push(savePageContent('explore', { explore_cover: explorePath }));
-    }
+    const exploreRequested =
+      (Boolean(coverPaths.explore) || ownsCover) && Boolean(explorePath) && currentCover !== explorePath;
+    if (exploreRequested) requests.push(savePageContent('explore', { explore_cover: explorePath }));
+    // What this place's banner will point at once the save lands: the path we
+    // just wrote, the existing one when this place already owns the banner, and
+    // nothing when the Explore banner belongs to another place (explore_cover
+    // is a single site-wide slot — someone else's cover is not this place's).
+    const storedExplore = exploreRequested ? explorePath : ownsCover ? currentCover : '';
 
     // Featured escapes membership + card cover.
     let rows = parseFeaturedRows(pageContent.home.featured_place_ids, pageContent.home.featured_covers);
+    // A cover already stored for this place wins when no new file was picked
+    // through the slot; the card photo is only the fallback for a place that
+    // never had a dedicated one. Without this, every save would quietly replace
+    // the carousel cover with the card photo and drop the real cover photo back
+    // into "More photos".
+    const storedFeaturedCover = rows.find((row) => row.id === placeId)?.cover || '';
+    const featuredPath = coverPaths.featured || storedFeaturedCover || imagePath;
     const before = JSON.stringify(serializeFeaturedRows(rows));
     const inFeatured = rows.some((row) => row.id === placeId);
     if (form.showInFeatured) {
@@ -232,6 +266,10 @@ export default function AdminPlacesPage() {
 
     await Promise.all(requests);
     if (requests.length > 0) await refreshContent();
+
+    // The cover paths this save actually settled on — the caller records them
+    // so a reopened modal does not have to read them back from page_content.
+    return { explore: storedExplore, featured: form.showInFeatured ? featuredPath : '' };
   };
 
   const handleSave = async (e) => {
@@ -260,6 +298,8 @@ export default function AdminPlacesPage() {
       // through a cover slot becomes that page's cover path.
       let exploreCoverPath = '';
       let featuredCoverPath = '';
+      let exploreCoverId = null;
+      let featuredCoverId = null;
       if (pendingFiles.length > 0) {
         try {
           const seen = new Set(photos.map((row) => row.photo_id));
@@ -269,17 +309,19 @@ export default function AdminPlacesPage() {
             const fresh = (result.photos || []).filter((row) => !seen.has(row.photo_id));
             (result.photos || []).forEach((row) => seen.add(row.photo_id));
             const created = fresh[fresh.length - 1];
-            if (created && pendingFeaturedCover && pending.file === pendingFeaturedCover.file) {
-              featuredCoverPath = created.photo_url;
-            }
-            if (created && pendingExploreCover && pending.file === pendingExploreCover.file) {
+            if (created && pending.cover === 'explore') {
               exploreCoverPath = created.photo_url;
+              exploreCoverId = created.photo_id;
               // Directly wired with the card cover: the banner photo uploaded
               // through the slot also becomes the place's card photo.
               const primary = await setPlacePrimaryPhoto(savedPlace.place_id, created.photo_id);
               savedPlace = primary.place;
               setPhotos(primary.photos || []);
             } else {
+              if (created && pending.cover === 'featured') {
+                featuredCoverPath = created.photo_url;
+                featuredCoverId = created.photo_id;
+              }
               setPhotos(result.photos || []);
             }
           }
@@ -295,9 +337,29 @@ export default function AdminPlacesPage() {
         }
       }
 
+      // Safety net: an Explore pick always uploads and always forces its file
+      // to be the card photo, so if the per-file match produced nothing the
+      // place's image_url IS that cover. A chosen cover must never be recorded
+      // as empty — that empties the slot and drops the photo into "More photos".
+      if (!exploreCoverPath && pendingExploreCover && savedPlace.image_url) {
+        exploreCoverPath = savedPlace.image_url;
+      }
+
       // Apply the cover selections to the page content.
       try {
-        await publishPlaceToggles(savedPlace, { explore: exploreCoverPath, featured: featuredCoverPath });
+        const covers = await publishPlaceToggles(savedPlace, { explore: exploreCoverPath, featured: featuredCoverPath });
+        // Path AND photo_id. The id is carried over when this save uploaded no
+        // fresh cover and the recorded path is unchanged, so a plain edit cannot
+        // lose the exclusion the previous save earned.
+        setCoverRecord((prev) => {
+          const same = Number(prev.placeId) === Number(savedPlace.place_id) ? prev : null;
+          const next = { placeId: savedPlace.place_id, ...covers, exploreId: null, featuredId: null };
+          if (exploreCoverId != null) next.exploreId = exploreCoverId;
+          else if (same && covers.explore && covers.explore === same.explore) next.exploreId = same.exploreId;
+          if (featuredCoverId != null) next.featuredId = featuredCoverId;
+          else if (same && covers.featured && covers.featured === same.featured) next.featuredId = same.featuredId;
+          return next;
+        });
       } catch (err) {
         setEditing(savedPlace);
         setFormErrors({ form: `Place saved, but publishing to the page failed: ${errorMessage(err)}` });
@@ -310,7 +372,7 @@ export default function AdminPlacesPage() {
       resetImageState();
       setFormOpen(false);
       await load();
-      refreshContent();
+      await refreshContent(); // so a reopened modal never reads stale covers
     } catch (err) {
       setFormErrors({ form: errorMessage(err) });
     } finally {
@@ -368,12 +430,15 @@ export default function AdminPlacesPage() {
         size: file.size,
       }));
       setPendingFiles((prev) => [...prev, ...entries]);
-      // A cover slot opened this picker: its first file becomes that cover,
-      // and the matching selection switches on automatically.
+      // A cover slot opened this picker: its first file becomes that cover
+      // (flagged on the entry itself so the upload loop never has to match
+      // File objects across state), and the selection switches on automatically.
       if (target === 'explore') {
+        entries[0].cover = 'explore';
         setPendingExploreCover(entries[0]);
       }
       if (target === 'featured') {
+        entries[0].cover = 'featured';
         setPendingFeaturedCover(entries[0]);
         setForm((prev) => ({ ...prev, showInFeatured: true }));
       }
@@ -406,16 +471,24 @@ export default function AdminPlacesPage() {
 
   // A photo file is about to disappear: clear any cover in the page sections
   // that pointed at it, or the public site would show a broken image.
-  const syncCoversAfterPhotoGone = async (removedPath) => {
+  // `removedPaths` takes one path or several (a full wipe passes them all).
+  const syncCoversAfterPhotoGone = async (removedPaths) => {
+    const paths = new Set(
+      (Array.isArray(removedPaths) ? removedPaths : [removedPaths]).filter(Boolean)
+    );
+    if (paths.size === 0) {
+      refreshContent();
+      return;
+    }
     try {
       const tasks = [];
-      if (removedPath && (pageContent.explore.explore_cover || '') === removedPath) {
+      if (paths.has(pageContent.explore.explore_cover || '')) {
         tasks.push(savePageContent('explore', { explore_cover: '' }));
       }
       let rows = parseFeaturedRows(pageContent.home.featured_place_ids, pageContent.home.featured_covers);
-      if (removedPath && rows.some((row) => row.id === editing?.place_id && row.cover === removedPath)) {
+      if (rows.some((row) => row.id === editing?.place_id && paths.has(row.cover))) {
         rows = rows.map((row) =>
-          row.id === editing?.place_id && row.cover === removedPath ? { ...row, cover: '' } : row
+          row.id === editing?.place_id && paths.has(row.cover) ? { ...row, cover: '' } : row
         );
         tasks.push(savePageContent('home', serializeFeaturedRows(rows)));
       }
@@ -436,7 +509,40 @@ export default function AdminPlacesPage() {
       const target = photos.find((p) => p.photo_id === photoId);
       const result = await removePlacePhoto(editing.place_id, photoId);
       applyGallery(result);
-      if (target?.photo_url) await syncCoversAfterPhotoGone(target.photo_url);
+      if (target?.photo_url) await syncCoversAfterPhotoGone([target.photo_url]);
+    } catch (err) {
+      setImageError(errorMessage(err));
+    } finally {
+      setImageBusy(false);
+    }
+  };
+
+  // ── Remove every photo of this place ─────────────────────────
+  // There is no bulk endpoint, so the rows and server files go one at a time
+  // (at most MAX_PHOTOS). Each response is applied as it lands so the card
+  // photo promotion stays in sync, then the page covers that pointed at any of
+  // the removed photos are cleared. Stopped at the first failure — the button
+  // can be pressed again for whatever is left.
+  const handleClearAllPhotos = async () => {
+    if (!editing) return;
+    setConfirmClear(false);
+    if (photos.length === 0 && pendingFiles.length === 0) return;
+
+    setImageBusy(true);
+    setImageError(null);
+    resetImageState(); // un-uploaded picks go too, and their cover designations
+
+    const removedPaths = [];
+    try {
+      for (const photo of [...photos]) {
+        const result = await removePlacePhoto(editing.place_id, photo.photo_id);
+        removedPaths.push(photo.photo_url);
+        applyGallery(result);
+      }
+      setCoverRecord(NO_COVER_RECORD);
+      await syncCoversAfterPhotoGone(removedPaths);
+      await load();
+      await refreshContent();
     } catch (err) {
       setImageError(errorMessage(err));
     } finally {
@@ -584,13 +690,23 @@ export default function AdminPlacesPage() {
       )
     : null;
 
-  // Explore cover slot: a newly chosen file, else this place's photo when it
-  // is the current Explore cover.
+  // This place's own covers as its last save recorded them — the first source
+  // consulted by both slots and the grid, so neither depends on page_content
+  // having caught up. Always empty for a place other than the one just saved.
+  const recorded =
+    coverRecord.placeId != null && Number(coverRecord.placeId) === Number(editing?.place_id)
+      ? coverRecord
+      : null;
+
+  // Explore cover slot: a newly chosen file, else this place's recorded cover,
+  // else this place's photo when it is the current Explore cover.
   let exploreSlotImg = '';
   let exploreSlotBadge = 'Explore cover';
   if (pendingExploreCover) {
     exploreSlotImg = pendingExploreCover.url;
     exploreSlotBadge = 'New cover';
+  } else if (recorded?.explore) {
+    exploreSlotImg = recorded.explore;
   } else if (
     currentExploreCover &&
     (photos.some((row) => row.photo_url === currentExploreCover) || currentExploreCover === editing?.image_url)
@@ -599,12 +715,16 @@ export default function AdminPlacesPage() {
   }
 
   // Featured cover slot (unlocked by the toggle): a newly chosen file, else
-  // the stored carousel cover, else the card photo fallback.
+  // this place's recorded cover, else the stored carousel cover, else the card
+  // photo fallback.
   let featuredSlotImg = '';
   let featuredSlotBadge = 'Featured cover';
   if (pendingFeaturedCover) {
     featuredSlotImg = pendingFeaturedCover.url;
     featuredSlotBadge = 'New cover';
+  } else if (recorded?.featured) {
+    featuredSlotImg = recorded.featured;
+    if (recorded.featured === editing?.image_url) featuredSlotBadge = 'Card photo';
   } else if (currentFeaturedRow?.cover) {
     featuredSlotImg = currentFeaturedRow.cover;
   } else if (editing?.image_url) {
@@ -614,16 +734,37 @@ export default function AdminPlacesPage() {
 
   // Cover-designated photos stay OUT of the "More photos" grid — that section
   // is only for extra photos of the location; the covers live in their slots.
+  // Two sources are unioned: the paths recorded by this place's own last save
+  // (authoritative — it does not wait for a page_content round-trip) and the
+  // live page_content values, which cover a banner this place owns that no save
+  // through this modal recorded yet.
   const savedCoverPaths = new Set();
+  const savedCoverIds = new Set();
+  if (recorded) {
+    if (recorded.explore) savedCoverPaths.add(recorded.explore);
+    if (recorded.featured) savedCoverPaths.add(recorded.featured);
+    if (recorded.exploreId != null) savedCoverIds.add(Number(recorded.exploreId));
+    if (recorded.featuredId != null) savedCoverIds.add(Number(recorded.featuredId));
+  }
   if (exploreSlotImg && !exploreSlotImg.startsWith('blob:')) savedCoverPaths.add(exploreSlotImg);
   if (!pendingFeaturedCover && currentFeaturedRow?.cover) savedCoverPaths.add(currentFeaturedRow.cover);
   const coverPendingUrls = new Set(
     [pendingExploreCover, pendingFeaturedCover].filter(Boolean).map((entry) => entry.url)
   );
-  const galleryPhotos = photos.filter((row) => !savedCoverPaths.has(row.photo_url));
+  // Matched on photo_id first — an id can never differ between the upload
+  // response and the gallery list — then on the path.
+  const galleryPhotos = photos.filter(
+    (row) => !savedCoverIds.has(Number(row.photo_id)) && !savedCoverPaths.has(row.photo_url)
+  );
   const galleryPending = pendingFiles
     .map((pending, idx) => ({ pending, idx }))
     .filter(({ pending }) => !coverPendingUrls.has(pending.url));
+  // Counts: everything the place holds vs. what the grid actually draws. The
+  // difference is the covers, which live in their slots above but still count
+  // against the 10-photo cap (placePhotoService enforces the total).
+  const galleryCount = photos.length + pendingFiles.length;
+  const moreCount = galleryPhotos.length + galleryPending.length;
+  const coverCount = galleryCount - moreCount;
   const dropPendingByUrl = (url) => {
     const idx = pendingFiles.findIndex((entry) => entry.url === url);
     if (idx >= 0) dropPending(idx);
@@ -741,7 +882,8 @@ export default function AdminPlacesPage() {
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            {/* Name and Category share the first row. */}
+            <div>
               <label className="mb-1.5 block text-sm font-semibold" htmlFor="f-name">Name *</label>
               <input id="f-name" className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               {formErrors.name && <p className="mt-1 text-xs font-medium text-red-600">{formErrors.name}</p>}
@@ -900,11 +1042,28 @@ export default function AdminPlacesPage() {
 
               {/* 2) More photos — the rest of the gallery */}
               <div className="mt-4 border-t border-brand/20 pt-3">
-                <div className="mb-2 flex items-baseline justify-between gap-2">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-brand">More photos</p>
-                  <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-bold text-brand">
-                    {photos.length + pendingFiles.length}/{MAX_PHOTOS}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-bold text-brand">
+                      {coverCount > 0 ? `${moreCount} more · ${galleryCount}/${MAX_PHOTOS}` : `${galleryCount}/${MAX_PHOTOS}`}
+                      {coverCount > 0 && (
+                        <span className="ml-1 font-medium text-brand/70">
+                          {coverCount === 1 ? '(1 as cover)' : `(${coverCount} as covers)`}
+                        </span>
+                      )}
+                    </span>
+                    {(photos.length > 0 || pendingFiles.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClear(true)}
+                        disabled={imageBusy || saving || photosLoading}
+                        className="rounded-full border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Remove all photos
+                      </button>
+                    )}
+                  </div>
                 </div>
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1059,6 +1218,21 @@ export default function AdminPlacesPage() {
           <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? 'Deleting…' : 'Delete'}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Remove-all-photos confirmation */}
+      <Modal open={confirmClear} title="Remove all photos?" onClose={() => setConfirmClear(false)}>
+        <p className="text-sm text-muted-foreground">
+          This deletes every photo of{' '}
+          <span className="font-semibold text-foreground">{editing?.name || 'this place'}</span>, including the card
+          photo and the Explore and Featured covers. This cannot be undone — you can upload replacements afterwards.
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setConfirmClear(false)}>Cancel</Button>
+          <Button variant="danger" onClick={handleClearAllPhotos} disabled={imageBusy}>
+            {imageBusy ? 'Removing…' : 'Remove all'}
           </Button>
         </div>
       </Modal>

@@ -982,4 +982,98 @@ The Opening hours field on the add/edit form was one free-text box (placeholder 
 
 ---
 
+## 2026-10-21 14:20 - Covers stay out of "More photos" after saving; "Remove all photos" added
+
+Two changes to the image area of the Attractive Places edit modal (the two cover slots on top, "More photos" underneath).
+
+### 1. An already-uploaded cover photo no longer shows in "More photos"
+
+The exclusion was already coded (`savedCoverPaths` → `galleryPhotos` / `galleryPending`), but both cover paths were read back out of `page_content` (`explore_cover`, `featured_covers`). That round-trip only resolved when a `savePageContent` request had actually been pushed and `refreshContent()` had landed — otherwise the set came back empty and the covers reappeared in the grid.
+
+- **The save now records its own cover paths.** `publishPlaceToggles` already computed the *effective* paths (`coverPaths.explore || place.image_url`) but discarded them; it now returns `{ explore, featured }` and `handleSave` stores them in `coverRecord`, keyed by place id. `openEdit` keeps the record for the same place and drops it for any other
+- **The stored explore path is only claimed when this place owns the banner.** `explore_cover` is one site-wide slot, so a path is recorded when this save wrote it, or when the place already owned the banner (`ownsCover`) — another place's cover is never claimed as this place's
+- **The two sources are unioned**, so exclusion can only get stronger: the recorded paths plus the live `page_content` values (which still cover a banner this place owns that no save through this modal recorded). Pending cover picks keep their existing `coverPendingUrls` filter
+- **The counter matches the tiles** (`AdminPlacesPage` More-photos header). It now reads `3 more · 5/10 (2 as covers)` when covers are hidden, or plain `5/10` when nothing is hidden — before, it counted every photo while drawing only the filtered ones, so it looked like photos had vanished. The **Add tile still uses the true total**, because `placePhotoService.js:88` caps the whole gallery at 10 including covers
+- **`refreshContent()` is awaited on the final save path**, so the table and a reopened modal never read stale content. The Featured slot's card-photo fallback is still shown in the grid, as agreed
+
+### 2. "Remove all photos" button
+
+- Red outline pill in the More-photos header, shown only when anything exists (saved or picked), disabled while `imageBusy` / `saving` / `photosLoading`
+- Asks first through the same `Modal` used for place deletion, warning that the card photo and both covers go too
+- On confirm: `resetImageState()` drops every un-uploaded pick (and its cover designation) → each saved photo is deleted **one at a time** through `removePlacePhoto`, applying each response with `applyGallery` so `editing`, `image_url` and the table row stay in sync as the service promotes the next primary (sequential rather than `Promise.all`, so the promotion cannot race) → `coverRecord` is cleared → `syncCoversAfterPhotoGone` clears `explore_cover` and this place's featured cover
+- **`syncCoversAfterPhotoGone` now takes an array** (one path or several) and clears both sections in a single pass; the single-photo delete path passes `[photo_url]`
+- No new endpoint: there is no bulk delete, so a wipe is at most 10 `DELETE` calls. The backend already allows it — `removePhoto` has no last-photo guard and `syncCardPhoto` writes `image_url: null` when the list empties (`placePhotoService.js:55-69`)
+- A failure stops the loop, surfaces `errorMessage(err)` in `imageError` and leaves the modal open (mirrors the upload-failure path); the button can be pressed again for whatever remains
+
+### 3. Saving no longer overwrites a dedicated Featured cover
+
+The cause of the Featured photo still landing in "More photos" after a save:
+
+- `publishPlaceToggles` computed the carousel cover as `coverPaths.featured || place.image_url`. With no new file picked through the slot, that fell back to the **card photo**, so `before !== after` and the stored `featured_covers` entry was rewritten to the card photo. The dedicated cover dropped out of `featured_covers`, `savedCoverPaths` no longer contained it, and the real cover photo fell straight back into the grid — while the carousel quietly swapped to the card photo
+- The Explore side was already protected by `currentCover !== explorePath`; the Featured side had no equivalent guard
+- **Fix**: an already-stored cover now wins — `coverPaths.featured || storedFeaturedCover || place.image_url`. The card photo is the fallback only for a place that has never had a dedicated cover, which is what the old code did for those places anyway. `storedFeaturedCover` is read from the parsed rows *before* they are mutated
+- Result: a plain edit (name, hours, description) leaves the carousel cover alone, keeps it out of "More photos" through both the recorded path and `featured_covers`, and `before === after` means no needless `savePageContent` either
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 14:55 - Cover photos identified by photo_id; the slots render from the save's own record
+
+Requirement restated: **a cover photo shows only in its upload slot, and every other photo shows only in "More photos".** Two weaknesses in how that was enforced were closed.
+
+- **The record now carries `photo_id` as well as the path.** `handleSave` captures `created.photo_id` next to `photo_url` for whichever file was picked through a cover slot, and the grid excludes on the **id first** (`savedCoverIds`), path second. An id cannot differ between the upload response and the gallery list, so a string mismatch can no longer let a cover through
+- **The id is carried across a plain edit.** If a save uploads no fresh cover and the recorded path is unchanged, the previous id is kept — so editing just the name or hours cannot lose the exclusion earned by the save before it. It is dropped as soon as the recorded path changes or the cover is switched off
+- **Both cover slots now consult the record first.** `recorded` (the record, only when it belongs to the place being edited) sits ahead of `page_content` in `exploreSlotImg` / `featuredSlotImg`, so the slot shows the cover the save actually stored even if `page_content` has not caught up — previously a stale read emptied the slot *and* released the photo into the grid. The Featured slot keeps its "Card photo" badge when the recorded cover is the card photo
+- **The Featured card-photo fallback is still not excluded** (unchanged, as agreed) — only a real cover designation hides a photo
+- `coverRecord` gained `exploreId` / `featuredId` and a shared `NO_COVER_RECORD` constant, used by `openAdd`, `openEdit` and the new Remove-all handler
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 15:20 - Explore cover detection keyed on the pending entry; opening-hours pickers load the stored data
+
+### 1. Explore cover: still landing in "More photos" with an empty cover slot
+
+`exploreCoverPath` was being matched with **File-object identity** (`pending.file === pendingExploreCover.file`) across two separate pieces of state. When that match missed, `coverPaths.explore` came back `''`, so `storedExplore` evaluated to `''` — which emptied the Explore slot (dashed "Add cover photo" button) *and* left the photo unmatched in the grid.
+
+- **The designation now rides on the pending entry itself**: `handleFilesChange` sets `entry.cover = 'explore' | 'featured'` on the file it hands to a cover slot, and the upload loop reads `pending.cover`. Nothing has to be matched across state, and the flag travels with the entry through `dropPending`
+- **Safety net**: after the upload loop, if an Explore pick existed but produced no path, `exploreCoverPath` falls back to `place.image_url` — an Explore upload always forces its file to be the card photo, so `image_url` *is* that cover. A chosen cover can no longer be recorded as empty
+- With a non-empty `storedExplore`, the slot renders the cover again (via `recorded`) and the photo leaves the grid
+
+### 2. The Opens / Closes pickers never showed the stored hours
+
+`openEdit` spread `...parseHoursRange(place.opening_hours)` into the form, but the util returns `{ from, to, note }` while the form fields are `hours_from` / `hours_to` / `hours_note`. The wrong keys were written, so **the time pickers and note box were always blank when editing** — previous data never appeared.
+
+- Now parsed into a local `hours` and mapped explicitly: `hours_from: hours.from`, `hours_to: hours.to`, `hours_note: hours.note`
+- Editing a place with `5:30 AM - 8:00 PM daily` now shows `05:30` / `20:00` / `daily`, and the preview reads back the same string
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 15:45 - Name and Category share the first row of the place form
+
+- **`AdminPlacesPage` add/edit form**: `Name` lost its `sm:col-span-2`, so it now sits half-width beside `Category` as the first row of the two-column grid. Opening hours, Description, the photo section, Maps and Travel tips keep their full width below
+- Validation, labels and the error lines under each field are unchanged
+
+### Repository changes carried in this commit
+
+- **`.gitignore`**: the `backend/uploads/` ignore block was removed, so the runtime image folder is now tracked
+- **`Logo.png`** (repository root) deleted
+- **`backend/uploads/`** added — 36 files, ~7.1 MB of uploaded place images
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
 _(Entries below are appended as further steps complete.)_

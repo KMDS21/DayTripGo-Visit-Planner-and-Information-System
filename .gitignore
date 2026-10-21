@@ -10,9 +10,6 @@ node_modules/
 frontend/dist/
 backend/dist/
 
-# Uploaded place images (runtime data — lives in the uploads folder, not git)
-backend/uploads/
-
 # IDE
 .vscode/
 .idea/
