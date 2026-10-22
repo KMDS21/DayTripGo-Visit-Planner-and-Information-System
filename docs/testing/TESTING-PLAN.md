@@ -11,8 +11,8 @@
 | 1 | Unit | 12 files / **116 tests** (backend 62 · frontend 54) | Green in <10 s, no network | ✅ **Done** — `npm run test:unit` both apps, ~9.5 s |
 | 2 | Integration | 5 files / **21 tests** — real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ✅ **Done** — `npm run test:integration`, ~29 s per run |
 | 3 | API | 3 files / **16 tests** — supertest over the real `app.js`, auth matrix | Green, auth matrix proven | ✅ **Done** — `npm run test:api`, ~25 s per run |
-| 4 | Smoke | Playwright: whole stack boots, 5 pages render | One command = app green/red | ⬜ Not started |
-| 5 | Load | autocannon, read-only endpoints | p99 < 500 ms, errors <1 % | ⬜ Not started |
+| 4 | Smoke | Playwright: whole stack boots, 7 tests over 5 pages + login | One command = app green/red | ✅ **Done** — `npm run test:smoke`, 7/7, ~20 s |
+| 5 | Load | autocannon, read-only endpoints | p99 < 500 ms, errors <1 % | ⏸ **Deferred** — spec'd below, build later (developer instruction) |
 
 ## Decisions (confirmed with developer)
 
@@ -31,8 +31,9 @@
 | ----- | --------| --------- |
 | `backend/` devDeps | `jest`, `supertest` | ✅ step 1 |
 | `frontend/` devDeps | `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` | ✅ step 1 |
-| repo (`tests/`) | `@playwright/test`, `autocannon` | ⬜ step 4/5 |
-| one-time | `npx playwright install chromium` | ⬜ step 4 |
+| repo (`tests/`) | `@playwright/test` | ✅ step 4 (root `package.json`, private) |
+| repo (`tests/`) | `autocannon` | ⬜ step 5 |
+| one-time | `npx playwright install chromium` | ✅ step 4 |
 
 **npm scripts**
 
@@ -66,14 +67,14 @@ frontend/
   tests/setup.js                 ✅ jest-dom matchers
     unit/                        ✅ 6 files (utils + errorMessage)
 tests/
-  smoke/                         ⬜ step 4 — Playwright specs + config
+  smoke/                         ✅ playwright.config.js (2 webServers) + smoke.spec.js (7 tests)
   load/                          ⬜ step 5 — autocannon script, thresholds, reports/
 docs/testing/
   TESTING-PLAN.md                ✅ this file
   01-unit-testing.md             ✅
   02-integration-testing.md      ✅
   03-api-testing.md              ✅
-  04-smoke-testing.md            ⬜
+  04-smoke-testing.md            ✅
   05-load-testing.md             ⬜
 ```
 
@@ -99,15 +100,26 @@ docs/testing/
   - Write contracts: `validatePlace`/`validatePlanItems` 400 envelopes, place create→update→publish-switch→delete over HTTP, `?scope=admin` JWT-gated, messages inbox flow, content PUT + public readback — writes IT-tagged, cleaned in `afterAll`
 - **Gate**: ✅ 16 tests, green twice consecutively (~25 s), auth matrix proven, units 62/62, build + lint green. **Doc**: `03-api-testing.md`.
 
-### Step 4 — Smoke
-- Install `@playwright/test` + Chromium; boot backend (:5000) + `vite build && vite preview` as Playwright `webServer`s.
-- Visit `/`, `/explore`, `/visit-plan`, `/contact`, `/admin` — assert landmarks, **fail on any `console.error`/`pageerror`**, plus `GET /api/health`.
-- **Gate**: one command turns the whole app green/red. **Doc**: `04-smoke-testing.md`.
+### Step 4 — Smoke ✅
+- `tests/smoke/` at the repo root (new private `package.json` holds `@playwright/test` + `dotenv`); `playwright.config.js` boots **two webServers**: backend (`npm start`, :5000) and frontend (`vite build && vite preview`, :4173 — preview inherits `server.proxy`, so `/api` is same-origin; verified empirically before trusting it).
+- 7 tests: health-through-proxy, home/explore/visit-plan/contact landmarks (h1s are admin-editable → *visible + non-empty* asserted, not frozen copy), `/admin` → login redirect, and a **real login → protected dashboard** flow. Every test fails on any `console.error`/`pageerror` (OSM tile hosts exempt).
+- **Gate**: ✅ `npm run test:smoke` → 7/7 green twice (~17–26 s); a genuine strict-mode selector failure proved the gate bites. **Doc**: `04-smoke-testing.md`.
 
-### Step 5 — Load
+### Step 5 — Load (deferred — spec kept for when it is built)
 - `tests/load/load.js` with autocannon — **read-only only**: `/api/health`, `/api/places`, `/api/content/home`; ramp 10→50 connections, ~30 s each; report JSON → `tests/load/reports/<timestamp>.json`.
 - Guardrails: bounded total runtime (≤60–90 s), no writes — the DB is hosted Supabase.
 - **Gate**: p99 < 500 ms, error rate <1 %. **Doc**: `05-load-testing.md`.
+
+## Deferred — to build later (developer instruction, 2026-10-22)
+
+| # | Item | Where / notes |
+| - | ---- | ------------- |
+| 1 | **Step 5 — load suite** | Fully spec'd above: root `npm i -D autocannon`, `tests/load/load.js` + `tests/load/reports/`, read-only endpoints only, ramp 10→50 conns, ≤90 s total, thresholds p99 < 500 ms / errors < 1 %; the root `test:load` script already points at the not-yet-existing file |
+| 2 | **Backend `npm test` chain** | `"test"` still maps to `test:unit` only; extend to run unit → integration → api in sequence when the load round lands |
+| 3 | **`markRead` on unknown id → 500** | Real-DB behaviour observed in step 2 (`.single()` PGRST116 bypasses the service's 404 branch); fix in `messageService`/`messageModel`, then update `02-integration-testing.md` which documents it as-is |
+| 4 | **No 403 in the API** | `requireAuth` answers 401 for every credential failure (step 3); decide whether any route needs a genuine 403 |
+| 5 | **Unmatched `/api/*` routes → HTML 404** | No JSON catch-all exists; add one if API clients must always receive `{ success, message }` |
+| 6 | **Dead dependency** | `@fontsource-variable/playfair-display` installed but unimported since the DM Sans round |
 
 ## Round mechanics (per step)
 
@@ -133,6 +145,6 @@ docs/testing/
 - [x] Step 1 — unit suites green (116 tests) + `01-unit-testing.md`
 - [x] Step 2 — integration green twice (21 tests) + `02-integration-testing.md`
 - [x] Step 3 — API contracts green (16 tests) + `03-api-testing.md`
-- [ ] Step 4 — smoke green + `04-smoke-testing.md`
-- [ ] Step 5 — load report under thresholds + `05-load-testing.md`
+- [x] Step 4 — smoke green (7/7) + `04-smoke-testing.md`
+- [ ] Step 5 — load report under thresholds + `05-load-testing.md` — **deferred, see "Deferred — to build later"**
 - [ ] 5 integration-log entries, 5 commits on `testing`, pushed on instruction

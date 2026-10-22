@@ -1538,3 +1538,61 @@ Step 3 of the five-layer rollout, committed on the **`testing`** branch as one s
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:51 - Test-suite rollout step 4 of 5: whole-stack Playwright smoke suite, 7/7 green
+
+Step 4 of the five-layer rollout, on the **`testing`** branch. The smoke suite boots the **deployed-shape stack** — Express API + the *production* frontend bundle behind a same-origin proxy — in headless Chromium and turns the whole app green/red with one command.
+
+### Infrastructure — `tests/smoke/` at the repo root
+
+- **New repo-root `package.json`** (private): holds `@playwright/test` + `dotenv` (for reading `backend/.env`'s admin credentials with the same precedence as `authService`); scripts `test:smoke` (and `test:load`, wired in step 5)
+- **`playwright.config.js`** runs two `webServer`s: backend `npm start` (:5000) and frontend `npm run build && vite preview` (:4173), both with `reuseExistingServer` for fast local iteration
+- **Proxy discovery**: axios uses a relative `/api` base, so the built app needs `/api` forwarded on its own origin. `vite preview` **inherits `server.proxy`** — verified empirically with a probe request (`http://localhost:4199/api/health` through a manual preview) before trusting it; no config change was needed
+- One-time browser setup done: `npx playwright install chromium` (Chromium 156 + headless shell + ffmpeg, ~317 MB); `test-results/` + `playwright-report/` git-ignored
+
+### The suite — `tests/smoke/smoke.spec.js` (7 tests, sequential)
+
+- **API health through the frontend origin** — proves the proxy chain end-to-end without a browser quirk masking it
+- **Home `/`** — `DayTripGO` title, visible non-empty hero `h1`, footer shell
+- **Explore `/explore`** — waits for a **200 from `/api/places`** (grid data actually arrives) + heading
+- **Visit plan `/visit-plan`** — planner shell renders
+- **Contact `/contact`** — heading + name/email enquiry inputs
+- **`/admin`** — redirects to `/admin/login` with both credential fields
+- **Login → dashboard** — real credentials through the proxy, `ProtectedRoute` admits, `Dashboard` heading + the sidebar's *Attractive Places* link
+- **Every test fails on any `console.error` or uncaught page error**; only OpenStreetMap tile hosts are exempt (an OSM rate-limit is not an application failure)
+- Headings are admin-editable content, so assertions check *landmark shape* (visible, non-empty) instead of frozen copy an editor could legitimately change
+
+### Verification
+
+- `npm run test:smoke`: **7/7 green twice** (~17 s, ~26 s with the rebuild) — one command, whole app
+- The gate earned its keep on the first run: **red** on a strict-mode selector clash (the dashboard quick-link card and the sidebar link share the name "Attractive Places") — fixed by scoping to `#admin-sidebar`; failure screenshot attached by Playwright as designed
+- Earlier layers unaffected: backend unit 62 · integration 21 · API 16; `npm run lint` exit 0
+
+### Branch note (parallel work)
+
+- The developer ran a **design round on `updates` concurrently** — `739f1d6` "show 5 places in line on higher resolution (≥1200px) and 4 cards full-width on lower screens" (PlaceCard/PlaceGrid/index.css), **committed and pushed by the developer**; it also carried this round's `.gitignore` addition, which is re-applied here so `testing` stays self-contained. The two branches have fully disjoint files, so merging later stays trivial
+
+### Next
+
+- **Step 5 — load**: autocannon against the read-only endpoints (`/api/health`, `/api/places`, `/api/content/home`), ramp 10→50 connections, thresholds p99 < 500 ms and error rate < 1 %
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:55 - Step 5 deferred to a later round; deferred backlog recorded in the plan
+
+Developer instruction: *"add other things to plan will build after later and commit and push"* — the load round is **not started now**; its full spec stays in `TESTING-PLAN.md` (status board shows ⏸ Deferred) together with five smaller follow-ups gathered from the four completed rounds:
+
+1. **Step 5 — load suite** — autocannon, read-only endpoints, p99 < 500 ms / < 1 % errors, ≤90 s total (root `test:load` script already wired)
+2. **Backend `npm test` chain** — still unit-only; extend to unit → integration → api
+3. **`markRead` unknown-id → 500** — the PGRST116 quirk documented in `02-integration-testing.md`; fix the service, update the doc
+4. **No 403 path in the API** — decide whether any route needs a genuine 403
+5. **Unmatched `/api/*` → HTML 404** — add a JSON catch-all if clients must always get `{ success, message }`
+6. **Dead dependency** — `@fontsource-variable/playfair-display` unimported since the DM Sans round
+
+This entry and the step-4 entry ride the same single commit (tests + plan + log), then `testing` is pushed to origin per instruction.
+
+---
+
+_(Entries below are appended as further steps complete.)_
