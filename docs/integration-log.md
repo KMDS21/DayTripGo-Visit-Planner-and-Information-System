@@ -1370,6 +1370,59 @@ Developer's own working-tree edits on `HomePage.jsx`, committed here with this e
 
 _(Entries below are appended as further steps complete.)_
 
+## 2026-10-22 15:48 - Test-suite rollout step 1 of 5: unit tests for backend (Jest, 62) and frontend (Vitest, 54)
+
+Developer instruction: *"write unit, intergration, api, smoke, load testing seperately need to test step by step"* — a five-step rollout (unit → integration → API → smoke → load), each step its own round with a dedicated doc under `docs/testing/`. Decisions confirmed before building: real Supabase fixtures for steps 2–3, Playwright for smoke, autocannon for load, one commit per step. The full plan lives in the developer's plan file; this entry documents step 1 as built.
+
+### Starting point
+
+- The repository had **zero tests**: no `*.test.*`/`*.spec.*` anywhere, backend `npm test` was the stock `echo "Error: no test specified" && exit 1`, and the frontend had no test script at all
+
+### Tooling installed
+
+- **backend** devDeps: `jest`, `supertest` (supertest lands its first use in step 3, installed now so the API round needs no extra install)
+- **frontend** devDeps: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
+- Scripts: each package's `npm test` now maps to `test:unit` (`jest tests/unit` / `vitest run`); steps 2–3 will extend the backend chain
+
+### Backend suite — `backend/tests/unit/` (6 suites, 62 tests)
+
+- **`passwordUtils`**: bcrypt prefix, per-hash salt uniqueness, accept/reject compare (NFR-5)
+- **`tokenUtils`**: sign→verify round-trip; tampered, foreign-secret and back-dated expired JWTs rejected; a clear `JWT_SECRET is not configured.` throw when the env var is absent (asserted through `jest.isolateModules` so the module re-reads the env)
+- **`googleMaps`**: accepted/rejected link forms, all three coordinate patterns (`@lat,lng`, `!3d…!4d…`, `?q=`), out-of-range rejection, and short-link resolution against a **mocked `global.fetch`** — direct URLs never fetch, offline → `null`, and a second call for the same short link is proven to be cache-served (`fetch` called once)
+- **`uploadConfig`**: mime→extension rules, UUID filenames, magic-byte sniffing (JPEG/PNG/WEBP/AVIF accepted, short buffers and `%PDF` rejected), `used + free = 500 MB quota` identity, and `removeStoredImage` deleting only paths under `/uploads/places/` (creates then removes its own temp file — self-cleaning)
+- **`validate` middleware**: the FR-19 400-vs-`next()` contract for places and plan items — missing fields listed together in one message, whitespace-only counts as missing, coordinate ranges, Maps-link validation — driven with hand-rolled `req`/`res`/`next` doubles, no server
+- **`messageService`**: model auto-mocked (`jest.mock`) — validation 400s never reach the model, field trimming (120/5000 column limits), defaults (`General enquiry`, `status: 'new'`), missing table → **503 with the `002_contact_content.sql` migration hint**, unexpected failure → 500, 404s on unknown ids
+
+### Frontend suite — `frontend/tests/unit/` (6 files, 54 tests)
+
+- **`formatHours`**: `to12h` boundary table (midnight = 12 AM, noon = 12 PM, 11:59 PM), en-dash joining, dash unification + whitespace collapse (FR-5)
+- **`hoursRange`**: stored string ↔ three admin form fields — dotted meridiems (`a.m.`/`p.m.`), `9 AM – 5 PM` without minutes, noon/midnight conversion, a time range in the *middle* of a note deliberately kept whole, and a **compose→parse round-trip** proving no data loss through the place form
+- **`googleMaps` (frontend mirror)**: the embed-src ladder — place coordinates → parsed from the link → raw link as query → `null` — plus zoom passthrough and non-finite coordinate fallback
+- **`placeImage`**: stored URL wins; otherwise an SVG data-URI placeholder; names are XML-escaped so `<T&F>` cannot inject markup into the generated SVG; per-category palettes with fallback (FR-1/FR-7)
+- **`featuredConfig`**: CSV/cover-pair parsing, junk-id filtering (`0`, `-2`, `abc`), serialisation, and **parse→serialize→parse stability** for the admin Featured escapes editor
+- **`api.errorMessage`**: server message → axios message → friendly default ladder (NFR-9)
+
+### Test infrastructure (the traps these tests route around)
+
+- **`backend/tests/setup.js`** as Jest `setupFiles` injects dummy `SUPABASE_URL`/keys/`JWT_SECRET` **before any module loads** — `src/config/db.js` calls `process.exit(1)` on missing env, which would kill the worker before `jest.mock` could apply
+- The failed-fetch case in `googleMaps` runs on **fake timers** so the resolver's 4s abort timer is flushed inside the test; this removed Jest's *"worker process failed to exit gracefully"* warning (verified by re-run)
+- **`frontend/vitest.config.js`** sets `pool: 'vmThreads'` after Vitest measured 6 separate jsdom environments at 16.9s — one environment per worker brought the same 54 tests to **6.3s**; `tests/setup.js` registers the `jest-dom` matchers
+
+### Verification
+
+- Backend: **6 suites / 62 tests green, 3.2s, no open-handle warning** (`npm run test:unit`, exit 0)
+- Frontend: **6 files / 54 tests green, 6.3s** (`npm run test:unit`, exit 0)
+- Combined **116 tests ≈ 9.5s** — inside the <10s gate so the pair can run before every commit
+- Committed as one single commit (tests + configs + scripts + this entry) per the convention
+
+### Next
+
+- **Step 2 — integration**: real Supabase round-trips with `IT-<timestamp>` fixtures and `afterAll` cleanup, doc `docs/testing/02-integration-testing.md`
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
 ## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
 
 Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.
