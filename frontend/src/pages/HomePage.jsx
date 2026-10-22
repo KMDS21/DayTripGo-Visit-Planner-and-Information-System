@@ -51,16 +51,14 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-14 pb-8 min-[1281px]:space-y-6">
+    <div className="space-y-20 pb-16 min-[1281px]:space-y-24">
       {/* ── Hero ─────────────────────────────────────────────────────────
-          Cinematic dark overlay with interactive location card carousel */}
+          Cinematic cover (video or image) with a centred headline, subtitle
+          and dual call-to-action. */}
       {/* Hero — ≤1280px: fills the visible screen (full-screen cover).
           ≥1281px: height is CAPPED via max-h so the three "Why DayTripGO"
-          cards are guaranteed to be visible in the initial viewport. The
-          26rem deduction accounts for header (~4rem) + section gap + card
-          row (~12rem) + breathing room, working reliably regardless of
-          display DPI / Windows scaling. */}
-      <section className="relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[calc(100svh-4rem)] min-[1281px]:min-h-[35svh] min-[1281px]:max-h-[calc(100svh-40rem)] min-[1281px]:py-6">
+          cards are guaranteed to be visible in the initial viewport. */}
+      <section className="relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-16 text-white sm:px-6 md:min-h-[calc(100svh-4rem)] min-[1281px]:min-h-[38svh] min-[1281px]:max-h-[calc(100svh-40rem)] min-[1281px]:py-10">
         {/* Cover video or image */}
         {(() => {
           const cover = get('hero_cover');
@@ -90,30 +88,33 @@ export default function HomePage() {
           );
         })()}
 
-        {/* Dark cinematic overlay */}
+        {/* Dark cinematic overlay — keeps the white text legible over any
+            photo or video frame (WCAG contrast). */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/55 to-slate-900/85"
+          className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/55 to-slate-900/90"
         />
 
-        {/* Subtle decorative blurs */}
-        <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand/15 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
-
         {/* Centered Hero content */}
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
-          <h1 className="hero-in font-heading text-[1.75rem] font-bold leading-tight tracking-tight sm:whitespace-nowrap sm:text-2xl md:text-[1.85rem] lg:text-[2.35rem] xl:text-[3.25rem]">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
+          {/* Eyebrow — sets the scene before the headline */}
+          <p className="hero-in text-xs font-semibold uppercase tracking-[0.25em] text-white/75 sm:text-sm">
+            Wadduwa · Sri Lanka
+          </p>
+
+          <h1 className="hero-in hero-in-2 mx-auto mt-4 max-w-[20ch] font-heading text-[2.1rem] font-bold leading-[1.06] tracking-tight sm:text-5xl md:text-[3.4rem] lg:text-[3.9rem]">
             {get('hero_title')}
           </h1>
-          <p className="hero-in hero-in-2 mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/90 sm:mt-5 sm:text-base md:text-lg">
+
+          <p className="hero-in hero-in-3 mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/90 sm:mt-6 sm:text-lg">
             {get('hero_subtitle')}
           </p>
 
-          {/* Centered Dual CTA buttons — larger touch targets on mobile */}
-          <div className="hero-in hero-in-3 mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-8 sm:gap-3">
+          {/* Dual CTA buttons — one solid, one ghost; large touch targets */}
+          <div className="hero-in hero-in-4 mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 sm:gap-4">
             <Link
               to="/explore"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-7 sm:py-3 sm:text-sm"
+              className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-8 sm:text-base"
             >
               <Camera className="h-4 w-4" />
               Explore places
@@ -121,7 +122,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/visit-plan"
-              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/20 sm:px-7 sm:py-3 sm:text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/60 hover:bg-white/20 sm:px-8 sm:text-base"
             >
               <MapPin className="h-4 w-4" />
               Build your plan
@@ -144,11 +145,15 @@ export default function HomePage() {
 
       {/* Why DayTripGO — the three quick reasons. Visible on ALL screen sizes.
           Mobile: single-column stack for easy vertical scanning.
-          Tablet (sm–xl): side-by-side 3-column grid.
-          ≥1281px: the hero is shorter so these cards appear in the initial
-          viewport without scrolling. */}
+          Tablet and up: side-by-side 3-column grid. */}
       <section className="w-full">
-        <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Why DayTripGO</p>
+          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            Plan the day, not the paperwork
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
           {[
             {
               icon: Clock,
@@ -170,15 +175,15 @@ export default function HomePage() {
             return (
               <div
                 key={point.title}
-                className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:flex-col sm:items-center sm:gap-0 sm:p-6 sm:text-center"
+                className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg sm:flex-col sm:items-center sm:gap-0 sm:p-8 sm:text-center"
               >
                 {/* Icon — inline on mobile, centred block on sm+ */}
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand sm:mx-auto sm:mb-3">
-                  <Icon className="h-5 w-5" />
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-white sm:mx-auto sm:mb-4">
+                  <Icon className="h-6 w-6" />
                 </span>
                 <div>
-                  <h3 className="font-heading text-base font-bold">{point.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">{point.text}</p>
+                  <h3 className="font-heading text-lg font-bold tracking-tight">{point.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{point.text}</p>
                 </div>
               </div>
             );
@@ -188,9 +193,10 @@ export default function HomePage() {
 
       {/* Featured carousel (Aceternity Apple Cards) */}
       <section className="w-full">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="mb-2 font-heading text-2xl font-bold sm:text-3xl">Featured escapes</h2>
-          <p className="mb-2 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
+        <div className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Featured</p>
+          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">Featured escapes</h2>
+          <p className="mt-3 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
         </div>
         {/* Admin-chosen selection (see the Home page content editor); empty = default order */}
         <FeaturedCarousel
@@ -201,17 +207,15 @@ export default function HomePage() {
       </section>
 
       {/* How it works — tinted band */}
-      <section className="relative w-full overflow-hidden rounded-[2rem] bg-brand-light/50 px-6 py-10 sm:px-10">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand/10" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand/10" />
-
+      <section className="relative w-full overflow-hidden rounded-[2rem] bg-brand-light/50 px-6 py-12 sm:px-10 sm:py-16">
         <div className="relative mx-auto max-w-2xl text-center">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">{get('how_title')}</h2>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">How it works</p>
+          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{get('how_title')}</h2>
+          <p className="mt-3 leading-relaxed text-muted-foreground">
             {get('how_body')}
           </p>
         </div>
-        <div className="relative mt-6 grid gap-5 sm:grid-cols-3">
+        <div className="relative mt-10 grid gap-5 sm:grid-cols-3">
           {[
             {
               title: 'Browse verified places',
@@ -226,12 +230,12 @@ export default function HomePage() {
               text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place, with no sign-up and no payment.',
             },
           ].map((step, i) => (
-            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
-              <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
+            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md sm:p-8">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
                 {i + 1}
               </span>
-              <h3 className="mt-4 font-heading text-lg font-bold">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+              <h3 className="mt-4 font-heading text-lg font-bold tracking-tight">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
             </div>
           ))}
         </div>
@@ -240,17 +244,18 @@ export default function HomePage() {
       {/* All places — the same cards as the Explore page, showing only the
           places ticked "Show on home" in the Attractive Places table. */}
       <section id="places" className="w-full space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
-            <h2 className="font-heading text-2xl font-bold sm:text-3xl">All places</h2>
-            <p className="mt-1.5 leading-relaxed text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Destinations</p>
+            <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">All places</h2>
+            <p className="mt-3 leading-relaxed text-muted-foreground">
               Our selected places within 25 km of Wadduwa — filter by category and add
               your favourites straight to your day plan.
             </p>
           </div>
           <Link
             to="/explore"
-            className="group inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+            className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Explore all places
             <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
