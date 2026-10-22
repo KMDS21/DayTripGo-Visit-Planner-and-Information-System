@@ -1286,3 +1286,43 @@ Seven rounds of polish on the public pages, all hanging off one idea: what a vis
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
+
+Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.
+
+### Titles move to DM Sans (`f2d83b9`)
+
+- **Developer request**: the heading font must be "best more visible clearly user font" - Playfair Display's thin serifs were losing legibility at body-adjacent sizes, so headings switched to **DM Sans**, the same family walkerstours.com uses
+- **`index.css`**: the Playfair import out, `@fontsource-variable/dm-sans` in, `--font-heading: 'DM Sans Variable', 'Figtree Variable', sans-serif`; added `-webkit-font-smoothing: antialiased`, `font-optical-sizing: auto` and `text-wrap: balance` on `h1`–`h6` so long admin-editable headings break evenly instead of orphaning a word
+- Body copy stays **Figtree** - the contrast between a geometric display sans and a humanist text sans carries the hierarchy now that the serif is gone
+- `@fontsource-variable/playfair-display` is still in `package.json` but nothing imports it (dead dep, left for a later cleanup round)
+- Committed first on its own (developer asked for the font change as its own commit) before the layout work
+
+### Home page scale-up and de-clutter (`7adfe50` + this entry)
+
+- **`7adfe50`**: section headings scaled up (text-3xl/sm:text-4xl baseline), eyebrow tags added above each section, leftover decorative blur circles removed, the hero `whitespace-nowrap` clipping bug fixed, CTAs enlarged, place cards gained a hover lift
+- **Section rhythm**: the wrapper went `space-y-14 pb-8` → `space-y-20 pb-16 min-[1281px]:space-y-24`, then `pb-16` → `pb-2` in this entry - the developer's "too messy" note was vertical crowding, and the fix is fewer, larger blocks with real air between them
+- **All four eyebrow tags removed** (developer: "Remove the redundant tags") - `Why DayTripGO`, `Featured`, `How it works` and `Destinations` are gone; each section now leads with its one big heading, since the heading already said what the tag repeated
+- **Hero title forced onto one line**: the `Wadduwa · Sri Lanka` eyebrow tag dropped (developer: "wadduwa sri lanka is tag remove in page hero"), the `max-w-[20ch]` cap removed and the hero container widened `max-w-4xl` → `max-w-6xl`. The `<h1>` carries `whitespace-nowrap` with a `clamp(0.55rem, 2.5vw, 0.85rem)` base size stepping up through `sm:text-2xl … min-[1600px]:text-[4.75rem]`, so *"One perfect day around Wadduwa"* reads as a single line at every width without overflowing
+- Hero internals tightened to match the smaller title block: subtitle `mt-5` → `mt-2.5` and `text-[11px]` at the smallest width, CTA row `mt-8` → `mt-6` with `px-5 py-2 text-xs` pills growing to `sm:px-8 sm:py-3.5 sm:text-base`
+- **Footer** (`Footer.jsx`): `mt-16` → `mt-6 sm:mt-8` so the home page doesn't throw away a full screen of gap above it
+
+### Road routing on the Visit Plan map (`356b507`)
+
+- **Developer request**: real directions between the start point and the planned stops instead of straight lines
+- **Routing engine**: **OSRM** (free, no API key) + OSM/Leaflet - chosen over the Google Maps JS API so the feature costs nothing and needs no billing account; the Google link survives only as a turn-by-turn *export* (`RouteSummary` builds the `dir=` URL), which needs no key either
+- **`PlanRouteMap.jsx`** (+261): plots the actual driving geometry between the starting point and each ordered stop, a numbered DayTripGO pin per stop, a distinct blue start pin, and live total distance/time while routes resolve
+- **`UserLocationInput.jsx`** (new): one-click browser geolocation or Nominatim address search, resolved to `{ lat, lng, label }` and passed up through `onLocationChange`
+- **`RouteSummary.jsx`** (new): total driving distance and duration in km / min, formatted from the OSRM legs
+- **`VisitPlanPage.jsx`**: start-location input + summary above the reorderable list and the sticky map column
+- Deviations from the earlier plan: `limitBelowXl` stays on the home `PlaceGrid` (only `HomePage` needs the four-card cap), and home category filtering remains local component state so `FeaturedCarousel` keeps reading the global `places` untouched (NFR-3)
+
+### Verification
+
+- `npm run build` green before every commit in this run (`✓ built in 7.40s`, `✓ built in 5.30s`), `npm run lint` exit 0 with warnings only (pre-existing, e.g. `set-state-in-effect` in `PlanRouteMap:129`)
+- Work happened on the **`updates`** branch (created from `admin-panel-second-edition`); recent history: `00af96e` → `f2d83b9` → `7adfe50` → `356b507`
+
+---
+
+_(Entries below are appended as further steps complete.)_

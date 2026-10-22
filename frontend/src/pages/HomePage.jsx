@@ -51,7 +51,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-20 pb-16 min-[1281px]:space-y-24">
+    <div className="space-y-20 pb-2 min-[1281px]:space-y-24">
       {/* ── Hero ─────────────────────────────────────────────────────────
           Cinematic cover (video or image) with a centred headline, subtitle
           and dual call-to-action. */}
@@ -96,35 +96,30 @@ export default function HomePage() {
         />
 
         {/* Centered Hero content */}
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
-          {/* Eyebrow — sets the scene before the headline */}
-          <p className="hero-in text-xs font-semibold uppercase tracking-[0.25em] text-white/75 sm:text-sm">
-            Wadduwa · Sri Lanka
-          </p>
-
-          <h1 className="hero-in hero-in-2 mx-auto mt-4 max-w-[20ch] font-heading text-[2.1rem] font-bold leading-[1.06] tracking-tight sm:text-5xl md:text-[3.4rem] lg:text-[3.9rem]">
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
+          <h1 className="hero-in mx-auto whitespace-nowrap font-heading text-[clamp(0.55rem,2.5vw,0.85rem)] font-bold leading-tight tracking-tight sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl min-[1440px]:text-[4.25rem] min-[1600px]:text-[4.75rem]">
             {get('hero_title')}
           </h1>
 
-          <p className="hero-in hero-in-3 mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/90 sm:mt-6 sm:text-lg">
+          <p className="hero-in hero-in-2 mx-auto mt-2.5 max-w-2xl text-[11px] leading-relaxed text-white/90 sm:mt-5 sm:text-base lg:text-lg">
             {get('hero_subtitle')}
           </p>
 
           {/* Dual CTA buttons — one solid, one ghost; large touch targets */}
-          <div className="hero-in hero-in-4 mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 sm:gap-4">
+          <div className="hero-in hero-in-4 mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-10 sm:gap-4">
             <Link
               to="/explore"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-8 sm:text-base"
+              className="group inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-xs font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:gap-2 sm:px-8 sm:py-3.5 sm:text-base"
             >
-              <Camera className="h-4 w-4" />
+              <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Explore places
               <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
             <Link
               to="/visit-plan"
-              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/60 hover:bg-white/20 sm:px-8 sm:text-base"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/10 px-5 py-2 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/60 hover:bg-white/20 sm:gap-2 sm:px-8 sm:py-3.5 sm:text-base"
             >
-              <MapPin className="h-4 w-4" />
+              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Build your plan
             </Link>
           </div>
@@ -148,8 +143,7 @@ export default function HomePage() {
           Tablet and up: side-by-side 3-column grid. */}
       <section className="w-full">
         <div className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Why DayTripGO</p>
-          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
             Plan the day, not the paperwork
           </h2>
         </div>
@@ -194,8 +188,7 @@ export default function HomePage() {
       {/* Featured carousel (Aceternity Apple Cards) */}
       <section className="w-full">
         <div className="mx-auto mb-8 max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Featured</p>
-          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">Featured escapes</h2>
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Featured escapes</h2>
           <p className="mt-3 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
         </div>
         {/* Admin-chosen selection (see the Home page content editor); empty = default order */}
@@ -206,15 +199,35 @@ export default function HomePage() {
         />
       </section>
 
-      {/* How it works — tinted band */}
-      <section className="relative w-full overflow-hidden rounded-[2rem] bg-brand-light/50 px-6 py-12 sm:px-10 sm:py-16">
-        <div className="relative mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">How it works</p>
-          <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{get('how_title')}</h2>
-          <p className="mt-3 leading-relaxed text-muted-foreground">
+      {/* How it works — scenic photo backdrop with dark gradient for razor-sharp foreground clarity */}
+      <section className="relative w-full overflow-hidden rounded-[2.5rem] bg-slate-900 px-6 py-14 sm:px-10 sm:py-20 text-white shadow-xl">
+        {/* Background photo */}
+        <img
+          src="/BG%20-%201.jpg"
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
+        {/* Cinematic gradient overlay ensures all front details and text are clearly legible */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/70 to-slate-950/90"
+        />
+
+        {/* Section title & subtitle */}
+        <div className="relative mx-auto max-w-2xl text-center [text-shadow:0_2px_16px_rgba(0,0,0,0.65)]">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {get('how_title')}
+          </h2>
+          <p className="mt-3 text-base leading-relaxed text-white/90 sm:text-lg">
             {get('how_body')}
           </p>
         </div>
+
+        {/* 3 Step cards — frosted glass styling with high contrast readability */}
         <div className="relative mt-10 grid gap-5 sm:grid-cols-3">
           {[
             {
@@ -230,12 +243,19 @@ export default function HomePage() {
               text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place, with no sign-up and no payment.',
             },
           ].map((step, i) => (
-            <div key={step.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md sm:p-8">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white">
+            <div
+              key={step.title}
+              className="group rounded-2xl border border-white/20 bg-white/95 p-6 text-center shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-2xl sm:p-8"
+            >
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white shadow-md transition-transform duration-300 group-hover:scale-110">
                 {i + 1}
               </span>
-              <h3 className="mt-4 font-heading text-lg font-bold tracking-tight">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+              <h3 className="mt-4 font-heading text-lg font-bold tracking-tight text-slate-900">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {step.text}
+              </p>
             </div>
           ))}
         </div>
@@ -246,8 +266,7 @@ export default function HomePage() {
       <section id="places" className="w-full space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Destinations</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">All places</h2>
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">All places</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Our selected places within 25 km of Wadduwa — filter by category and add
               your favourites straight to your day plan.

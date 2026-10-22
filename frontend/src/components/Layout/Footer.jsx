@@ -16,7 +16,7 @@ const categories = ['Religious', 'Nature', 'Heritage', 'Cultural'];
 
 export default function Footer() {
   return (
-    <footer className="relative mt-16 overflow-hidden rounded-t-[2.5rem] bg-slate-900 text-white">
+    <footer className="relative mt-6 sm:mt-8 overflow-hidden rounded-t-[2.5rem] bg-slate-900 text-white">
       {/* Photo layer first, then a dark wash over it — the slate-900 above
           stays on the footer itself, so a missing/slow foter.jpg still leaves
           a solid dark footer. */}
