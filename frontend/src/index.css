@@ -190,13 +190,17 @@
 }
 
 /* ── Home "All places" card limit ─────────────────────────────────────────
-   Below 1281px only the first four cards are shown, so the full-screen hero
-   isn't followed by an endless list on a phone. The cards are hidden with CSS
-   rather than sliced from the data, so widening the window brings the rest
-   straight back with no refetch or re-render. */
-@media (max-width: 1280px) {
+   Below 1200px (tablets / mobile / low screen size) only the first 4 cards are shown.
+   From 1200px up (higher resolution / desktop) exactly 5 cards are shown in a single line. */
+@media (max-width: 1199px) {
   .grid-cards-4 > :nth-child(n + 5) {
-    display: none;
+    display: none !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid-cards-4 > :nth-child(n + 6) {
+    display: none !important;
   }
 }
 

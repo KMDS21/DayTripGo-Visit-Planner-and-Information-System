@@ -16,11 +16,11 @@ export default function PlaceGrid({ places, categories, hasPlace, onAdd, onOpen,
     );
   }
 
-  // Full-width grid (no max-width cap) so cards use the whole screen on
-  // large displays; up to 5 columns at 2xl.
+  // Full-width grid so cards use the whole width: 4 cards with full width
+  // on lower screen sizes (<1200px), and 5 places in a line on higher display (≥1200px / xl).
   return (
     <div
-      className={`grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5${
+      className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 min-[1200px]:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-5${
         limitBelowXl ? ' grid-cards-4' : ''
       }`}
     >

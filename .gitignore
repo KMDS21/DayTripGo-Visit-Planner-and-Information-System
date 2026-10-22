@@ -27,3 +27,7 @@ npm-debug.log*
 
 # Coverage
 coverage/
+
+# Playwright (smoke suite artifacts)
+test-results/
+playwright-report/

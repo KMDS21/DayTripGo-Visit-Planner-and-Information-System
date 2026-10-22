@@ -26,7 +26,7 @@ export default function PlaceCard({ place, categoryName, inPlan, onAdd, onOpen }
   );
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-lg">
+    <article className="group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-lg">
       {onOpen ? (
         <button
           type="button"
