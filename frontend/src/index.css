@@ -145,3 +145,55 @@
   /* Respect the iOS home-indicator area for fixed bottom bars. */
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* ── Page hero entrance ───────────────────────────────────────────────────
+   Hero text fades up and un-blurs once when the page mounts, staggered from
+   title → subtitle → actions. `both` holds the from-state through the delay
+   and the to-state afterwards, so a browser that never ran the animation
+   would still show the text (nothing is hard-coded to opacity: 0). */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+.hero-in {
+  animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Stagger — declared after .hero-in so these longhand delays take effect. */
+.hero-in-2 {
+  animation-delay: 0.12s;
+}
+.hero-in-3 {
+  animation-delay: 0.26s;
+}
+.hero-in-4 {
+  animation-delay: 0.4s;
+}
+
+/* ── Home "All places" card limit ─────────────────────────────────────────
+   Below 1281px only the first four cards are shown, so the full-screen hero
+   isn't followed by an endless list on a phone. The cards are hidden with CSS
+   rather than sliced from the data, so widening the window brings the rest
+   straight back with no refetch or re-render. */
+@media (max-width: 1280px) {
+  .grid-cards-4 > :nth-child(n + 5) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in,
+  .hero-in-2,
+  .hero-in-3,
+  .hero-in-4 {
+    animation: none;
+  }
+}

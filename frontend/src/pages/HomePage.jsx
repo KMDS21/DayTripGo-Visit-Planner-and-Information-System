@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Compass, Camera } from 'lucide-react';
+import { MapPin, Clock, Compass, Camera, ChevronDown } from 'lucide-react';
 import { usePlaces } from '../hooks/usePlaces';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
@@ -21,8 +21,6 @@ export default function HomePage() {
     hero_title: 'One perfect day around Wadduwa',
     hero_subtitle:
       'Discover verified places of interest within 25 km of Wadduwa, Sri Lanka, such as temples, gardens, waterfalls and beaches, and build a simple one-day visit plan.',
-    why_title: 'Why DayTripGO',
-    why_body: 'Travel blogs list everything; we list what is worth your day, and tell you when to go.',
     how_title: 'How DayTripGO works',
     how_body: 'Three steps from landing on this page to standing in front of something worth the trip.',
   });
@@ -53,10 +51,16 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-14 pb-8">
+    <div className="space-y-14 pb-8 min-[1281px]:space-y-6">
       {/* ── Hero ─────────────────────────────────────────────────────────
           Cinematic dark overlay with interactive location card carousel */}
-      <section className="relative flex min-h-[70svh] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[75svh]">
+      {/* Hero — ≤1280px: fills the visible screen (full-screen cover).
+          ≥1281px: height is CAPPED via max-h so the three "Why DayTripGO"
+          cards are guaranteed to be visible in the initial viewport. The
+          26rem deduction accounts for header (~4rem) + section gap + card
+          row (~12rem) + breathing room, working reliably regardless of
+          display DPI / Windows scaling. */}
+      <section className="relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[calc(100svh-4rem)] min-[1281px]:min-h-[35svh] min-[1281px]:max-h-[calc(100svh-40rem)] min-[1281px]:py-6">
         {/* Cover video or image */}
         {(() => {
           const cover = get('hero_cover');
@@ -98,43 +102,53 @@ export default function HomePage() {
 
         {/* Centered Hero content */}
         <div className="relative z-10 mx-auto w-full max-w-5xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
-          <h1 className="font-heading font-bold leading-tight tracking-tight whitespace-nowrap text-[clamp(0.85rem,3.4vw,1.15rem)] sm:text-2xl md:text-[1.85rem] lg:text-[2.35rem] xl:text-[3.25rem]">
+          <h1 className="hero-in font-heading text-[1.75rem] font-bold leading-tight tracking-tight sm:whitespace-nowrap sm:text-2xl md:text-[1.85rem] lg:text-[2.35rem] xl:text-[3.25rem]">
             {get('hero_title')}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-white/90 sm:mt-5 sm:text-base md:text-lg">
+          <p className="hero-in hero-in-2 mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-white/90 sm:mt-5 sm:text-base md:text-lg">
             {get('hero_subtitle')}
           </p>
 
-          {/* Centered Dual CTA buttons */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-8 sm:gap-3">
+          {/* Centered Dual CTA buttons — larger touch targets on mobile */}
+          <div className="hero-in hero-in-3 mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-8 sm:gap-3">
             <Link
               to="/explore"
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-7 sm:py-3 sm:text-sm"
+              className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-7 sm:py-3 sm:text-sm"
             >
-              <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Camera className="h-4 w-4" />
               Explore places
               <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
             <Link
               to="/visit-plan"
-              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/20 sm:px-7 sm:py-3 sm:text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/20 sm:px-7 sm:py-3 sm:text-sm"
             >
-              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <MapPin className="h-4 w-4" />
               Build your plan
             </Link>
           </div>
         </div>
+
+        {/* Scroll-down hint — only on screens ≤1280px where the hero is
+            full-screen; nudges the visitor to scroll past the cover. */}
+        <div
+          aria-hidden="true"
+          className="hero-in hero-in-4 absolute inset-x-0 bottom-6 z-10 flex justify-center min-[1281px]:hidden"
+        >
+          <span className="flex flex-col items-center gap-1 text-white/60">
+            <span className="text-[11px] font-medium uppercase tracking-widest">Scroll</span>
+            <ChevronDown className="h-5 w-5 animate-bounce" />
+          </span>
+        </div>
       </section>
 
-      {/* Why DayTripGO — clear idea of the service, right under the hero */}
+      {/* Why DayTripGO — the three quick reasons. Visible on ALL screen sizes.
+          Mobile: single-column stack for easy vertical scanning.
+          Tablet (sm–xl): side-by-side 3-column grid.
+          ≥1281px: the hero is shorter so these cards appear in the initial
+          viewport without scrolling. */}
       <section className="w-full">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">{get('why_title')}</h2>
-          <p className="mt-2 text-muted-foreground">
-            {get('why_body')}
-          </p>
-        </div>
-        <div className="mt-6 grid gap-5 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
           {[
             {
               icon: Clock,
@@ -154,12 +168,18 @@ export default function HomePage() {
           ].map((point) => {
             const Icon = point.icon;
             return (
-              <div key={point.title} className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md">
-                <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
+              <div
+                key={point.title}
+                className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:flex-col sm:items-center sm:gap-0 sm:p-6 sm:text-center"
+              >
+                {/* Icon — inline on mobile, centred block on sm+ */}
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand sm:mx-auto sm:mb-3">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h3 className="font-heading text-base font-bold">{point.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{point.text}</p>
+                <div>
+                  <h3 className="font-heading text-base font-bold">{point.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">{point.text}</p>
+                </div>
               </div>
             );
           })}
@@ -248,6 +268,7 @@ export default function HomePage() {
             hasPlace={hasPlace}
             onAdd={handleAdd}
             onOpen={openOnExplore}
+            limitBelowXl
           />
         )}
       </section>

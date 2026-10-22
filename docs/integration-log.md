@@ -1228,4 +1228,61 @@ The four bundled covers stopped being hard-coded: each page reads a `hero_cover`
 
 ---
 
+## 2026-10-22 11:41 - Hero load animation, 1280px viewport rules, footer spacing, bundled Explore cover
+
+Seven rounds of polish on the public pages, all hanging off one idea: what a visitor sees on landing is set by whether the screen clears 1280px.
+
+### Hero text animates on load
+
+- **`index.css`**: new `hero-rise` keyframe — fades up 22px while an 8px blur clears, 0.8s on a decelerating curve — with a `.hero-in` base class and `.hero-in-2` / `-3` / `-4` delay modifiers (120 / 260 / 400 ms) declared after it so the longhand delays win
+- Applied to **Home** (title, subtitle, both CTAs), **My plan**, **Explore** and **Contact** (title, subtitle), so the title lands first and the actions last
+- `prefers-reduced-motion: reduce` switches the animation off entirely, and nothing is hard-coded to `opacity: 0` — `animation-fill-mode: both` holds the from-state during the delay, so a browser that never runs the animation still shows the text
+- Deliberately **pure CSS**: `framer-motion` is installed but imported nowhere, and this cost no bundle weight (the JS chunk is unchanged at 769 kB)
+
+### Home hero heights — 1280px is the hinge
+
+- **≤ 1280px**: `min-h-[calc(100svh-4.5rem)]`, relaxing to `calc(100svh-4rem)` from `md` — the hero fills the visible screen below the sticky header, matching the My plan hero (the two values round the header's measured ~69px / ~61px and deliberately undershoot, so a resizing phone URL bar can never push it past the fold)
+- **≥ 1281px**: `min-h-[calc(100svh-21rem)]` — the hero gives back exactly what the rest of the first screen needs (header 64px + the `space-y-14` section gap 56px + the three-card row ≈ 200px), so the cover and all three cards land together above the fold. It scales with the monitor rather than staying a stub: ~430px of hero at 1366×768, ~750px at 1920×1080
+- Tailwind's `xl` is `min-width: 1280px`, so an `xl:` override would have hit 1280 itself; the rule uses **`min-[1281px]:`** instead, and 1280 is treated as "below"
+- Verified in the built CSS, where v4 emits range syntax: `@media (width>=1281px){.min-\[1281px\]\:min-h-\[calc\(100svh-21rem\)\]{min-height:calc(100svh - 21rem)}}`
+
+### The three "Why DayTripGO" cards are higher-screens-only
+
+- The section became `hidden min-[1281px]:block`, so a phone or small laptop gets the full-screen hero and nothing after it in that slot
+- Accepted trade-off: `display: none` also removes the three cards from screen readers and crawlers below 1281px
+
+### All places: four cards up to 1280px
+
+- **`PlaceGrid`** gained an optional `limitBelowXl` prop that adds a `.grid-cards-4` class; **HomePage passes it, Explore does not**, so Explore still lists everything
+- The limit is CSS only — `@media (max-width:1280px){ .grid-cards-4 > :nth-child(n+5){ display:none } }` — nothing is sliced out of the data, so widening the window brings the rest back with no refetch or re-render, and the fourth card is never half-clipped at a breakpoint
+- `PlaceCard` renders a single `<article>`, which is what makes `nth-child` dependable here
+
+### Footer — column spacing
+
+- The grid picked up `lg:gap-x-10` and the brand block `lg:mr-16`, so there is a visible gap between the brand column and Quick links while the three link columns keep the uniform grid gap and stay evenly spaced
+
+### Explore cover is the bundled file, full stop
+
+- **`ExplorePage.jsx`** drops the whole `hero_cover || explore_cover` chain and the `onError` fallback — it renders `/explore page page cover.jpg` directly. The stale `explore_cover` in the database (a place photo, still set from before) is what kept covering the bundled image
+- **`AdminContentPage.jsx`** hides the Hero-cover picker on the Explore page, so Content settings no longer offers a control the banner ignores; title and subtitle stay editable there
+- `explore_cover` is still written and cleared by `AdminPlacesPage` for the photo-exclusion logic — nothing on Explore reads it any more
+
+### Home page copy
+
+- The "Why DayTripGO" heading came out, then the pitch line *"Travel blogs list everything…"* with it: the section is now just the three cards, with the `mt-6` above the grid dropped so they sit on the normal section rhythm
+- Both `why_title` and `why_body` defaults are gone from `usePageContent('home', …)` — zero references left. Nothing to change in the database either: `GET /api/content/home` only ever carried the `featured_*` and `home_place_ids` keys
+
+### Other repository changes carried in this commit
+
+- **`daytripgo-ui-ux-design-guide.md`** — a new 230-line design guide (principles, font and colour tokens, page-by-page patterns, inspired by walkerstours.com but not copied). Its own note flags the brand font as an unresolved item: everything hangs off the single `--font-sans` token so a known font is a one-token change
+- Uploads churn while exercising the cover editor: `d00ca480…` removed, `130a0d26…` and `35e5f34c…` added
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green throughout
+- Built CSS checked for `.grid-cards-4` and both `@media (width>=1281px)` rules (hero height and the card section's `display: block`)
+- Dev server on `:5173` confirmed serving the updated `HomePage.jsx` and `PlaceGrid.jsx` modules
+
+---
+
 _(Entries below are appended as further steps complete.)_

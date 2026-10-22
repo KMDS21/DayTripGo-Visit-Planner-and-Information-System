@@ -227,7 +227,11 @@ export default function AdminContentPage() {
           {/* Single Box: Cover + Title + Description (+ Company details for contact) + Save button */}
           <div className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
             
-            {/* ── Page Hero Cover Section ──────────────────────────────── */}
+            {/* ── Page Hero Cover Section ────────────────────────────────
+                Hidden on the Explore page: that banner always renders the
+                bundled `explore page page cover.jpg`, so a picker here would
+                offer a control the site no longer reads. */}
+            {page !== 'explore' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold">Hero cover</label>
@@ -354,6 +358,7 @@ export default function AdminContentPage() {
                 </div>
               )}
             </div>
+            )}
 
             <hr className="border-border" />
 

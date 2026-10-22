@@ -33,9 +33,11 @@ export default function Footer() {
         className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/60 to-slate-900/85"
       />
 
-      <div className="relative grid gap-10 px-6 py-14 sm:px-10 lg:grid-cols-4 lg:px-14">
-        {/* Brand — company logo on a light chip so it stays readable on the gradient */}
-        <div>
+      <div className="relative grid gap-10 px-6 py-14 sm:px-10 lg:grid-cols-4 lg:gap-x-10 lg:px-14">
+        {/* Brand — company logo on a light chip so it stays readable on the gradient.
+            Extra right margin at lg+ separates the brand block from Quick links; the
+            three link columns keep the grid's uniform gap, so they stay evenly spaced. */}
+        <div className="lg:mr-16">
           <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto rounded-xl bg-white px-3 py-2" />
           <p className="mt-3 text-sm leading-relaxed text-white/90">
             One perfect day around Wadduwa, with verified places of interest within 25 km,
