@@ -9,7 +9,7 @@
 | Step | Layer | Suite | Gate | Status |
 | ---- | ----- | ----- | ---- | ------ |
 | 1 | Unit | 12 files / **116 tests** (backend 62 · frontend 54) | Green in <10 s, no network | ✅ **Done** — `npm run test:unit` both apps, ~9.5 s |
-| 2 | Integration | Real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ⬜ Not started |
+| 2 | Integration | 5 files / **21 tests** — real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ✅ **Done** — `npm run test:integration`, ~29 s per run |
 | 3 | API | supertest contracts over all 8 route groups | Green, auth matrix proven | ⬜ Not started |
 | 4 | Smoke | Playwright: whole stack boots, 5 pages render | One command = app green/red | ⬜ Not started |
 | 5 | Load | autocannon, read-only endpoints | p99 < 500 ms, errors <1 % | ⬜ Not started |
@@ -40,7 +40,7 @@
 // backend/package.json
 "test":         "npm run test:unit",              // steps 2–3 extend this chain
 "test:unit":    "jest tests/unit",
-"test:integration": "jest tests/integration",      // added in step 2
+"test:integration": "jest tests/integration --runInBand",  // added in step 2
 "test:api":     "jest tests/api"                  // added in step 3
 
 // frontend/package.json
@@ -57,9 +57,9 @@
 ```
 backend/
   jest.config.js                 ✅ node env, tests/**\/*.test.js, 15s timeout
-  tests/setup.js                 ✅ dummy SUPABASE_URL/keys/JWT_SECRET before any require
+  tests/setup.js                 ✅ loads backend/.env first, then dummy fallbacks (step 2)
     unit/                        ✅ 6 suites (utils, middleware, mocked service)
-    integration/                 ⬜ step 2
+    integration/                 ✅ 5 files (places, categories, content, messages, visit plans)
     api/                         ⬜ step 3
 frontend/
   vitest.config.js               ✅ jsdom + pool vmThreads (16.9s → 6.3s)
@@ -71,7 +71,7 @@ tests/
 docs/testing/
   TESTING-PLAN.md                ✅ this file
   01-unit-testing.md             ✅
-  02-integration-testing.md      ⬜
+  02-integration-testing.md      ✅
   03-api-testing.md              ⬜
   04-smoke-testing.md            ⬜
   05-load-testing.md             ⬜
@@ -85,10 +85,12 @@ docs/testing/
 - **Infra traps solved**: `config/db.js` `process.exit(1)` defeated by `tests/setup.js` env guard; resolver's 4s abort timer flushed with fake timers (no worker-leak warning); jsdom-per-worker pooling for speed.
 - **Gate**: ✅ 116 tests, ~9.5 s combined, build + lint green.
 
-### Step 2 — Integration (next)
-- `backend/tests/integration/`: place create→read→update→delete→verify-gone, categories list, content upsert on `page_key='test-*'`, message submit→list→mark-read→delete, visit-plan service CRUD (FR-10…FR-13) — all through services → models → **real Supabase**.
-- Every fixture tagged `IT-<timestamp>`; `afterAll` deletes them; `testTimeout 15000` already set.
-- **Gate**: green twice consecutively (proves cleanup idempotence). **Doc**: `02-integration-testing.md`.
+### Step 2 — Integration ✅
+- `backend/tests/integration/`: place CRUD round-trip (create→read→update→list→publish-switch→delete→404), categories list, content upsert/read, message submit→list→mark-read→delete, visit-plan create→replace-items→sorted-read→clear (FR-10…FR-13) — all through services → models → **real Supabase**.
+- Fixtures tagged `IT-<timestamp>`; `afterAll` + defensive tag-based deletes; `--runInBand`; Maps links carry inline coordinates so no test does a network hop.
+- **Adaptations from the original sketch**: the content service only allows the four real page keys, so fixtures ride as IT-tagged *section keys* on `contact` instead of `page_key='test-*'`; `markRead` on an unknown id is asserted as the real **500** (`.single()` PGRST116), not the hoped-for 404.
+- **Infra trap solved**: `tests/setup.js` now loads `backend/.env` **before** the dummy fallbacks — dotenv never overrides set variables, so the step-1 dummies would have shadowed the real credentials and pointed the suite at a fake URL.
+- **Gate**: ✅ 21 tests, green twice consecutively (~29 s), units still 62/62, build + lint green. **Doc**: `02-integration-testing.md`.
 
 ### Step 3 — API
 - `backend/tests/api/` (supertest vs `app.js` — it exports the app without listening):
@@ -129,7 +131,7 @@ docs/testing/
 ## Definition of done
 
 - [x] Step 1 — unit suites green (116 tests) + `01-unit-testing.md`
-- [ ] Step 2 — integration green twice + `02-integration-testing.md`
+- [x] Step 2 — integration green twice (21 tests) + `02-integration-testing.md`
 - [ ] Step 3 — API contracts green + `03-api-testing.md`
 - [ ] Step 4 — smoke green + `04-smoke-testing.md`
 - [ ] Step 5 — load report under thresholds + `05-load-testing.md`

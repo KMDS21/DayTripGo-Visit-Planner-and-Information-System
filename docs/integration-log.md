@@ -1462,3 +1462,48 @@ Four rounds since the last entry, bundled into one log entry per the single-comm
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:20 - Test-suite rollout step 2 of 5: integration tests against real Supabase (21 tests, IT-tagged fixtures)
+
+Step 2 of the five-layer rollout (unit → integration → API → smoke → load), committed on the **`testing`** branch as one single commit per the convention. The suite drives every flow **service → model → real Supabase** — the actual hosted schema, not mocks — and every row it creates is tagged and deleted again.
+
+### Starting point
+
+- Step 1 left a trap in `backend/tests/setup.js`: its dummy `SUPABASE_URL`/keys sat in `process.env` before anything loaded, and **dotenv never overrides variables that are already set** — so `config/db.js` would have built a client pointed at the fake `localhost:54321` and the whole "real Supabase" decision would have silently degraded to a mock-free local failure
+- **Fix**: `setup.js` now calls `require('dotenv').config({ path: backend/.env })` **first**; the dummies remain as fallbacks for environments without an `.env`. Unit suites are unaffected (they mock the data layer and read `JWT_SECRET` dynamically)
+
+### Backend suite — `backend/tests/integration/` (5 files, 21 tests, `--runInBand`)
+
+- **`places.integration.test.js`**: full CRUD round-trip — create (coordinates **derived from the Maps link**, migrations 003), update persists + untouched fields survive, public list includes the published fixture, category filter returns exactly it, **publish switch** hides it from the public list while `includeUnpublished` still shows it, delete → read is 404 and it vanishes from every list (FR-1…FR-9)
+- **`categories.integration.test.js`**: record shape, the four seeded categories present, tagged fixture visible
+- **`content.integration.test.js`**: sections upsert on `(page_key, section_key)` and read back as a map, re-upsert overwrites only its own key, unknown page → 404, malformed payloads → 400 **with a DB probe proving nothing was written**
+- **`messages.integration.test.js`**: validation 400s never insert; submit → admin list → mark-read → delete round-trip; delete/mark-read on unknown ids fail loudly (FR-8)
+- **`visitPlans.integration.test.js`**: create plan → replace items (fed **deliberately out of order**, returned sorted by `visit_order`) with place details + derived coordinates → second replace swaps the whole set → empty list clears and a `visit_plan_items` probe proves **no orphan rows** (FK cascade); unknown plan → 404 (FR-10…FR-13, NFR-7)
+
+### Fixture & cleanup policy
+
+- Per-file tag **`IT-<timestamp>-<random>`** on place/category names, plan `session_id`, message email (`it-…@example.com`) and content section keys (`it_<ts>_intro`)
+- `afterAll` deletes each file's rows **plus defensive tag-based deletes**, so a half-failed test still leaves the database clean — the green-twice gate then proves that claim
+- Maps links in fixtures are full URLs with inline coordinates (`…/@6.0234,80.0560,15z`) — parsed locally, zero network hops
+- `--runInBand`: five suites sequential — gentler on hosted Supabase, deterministic to reason about
+
+### Deviations from the plan sketch (both honest)
+
+- **`page_key='test-*'` is impossible through the service** — `contentService.assertPage` only allows the four real page keys. Fixtures therefore ride as IT-tagged *section keys* on the real `contact` page (the site ignores unknown sections); cleanup deletes exactly those rows
+- **`markRead` on an unknown id surfaces 500, not 404**: `messageModel.markRead` uses `.single()`, which errors with `PGRST116` on zero rows, so the service's `if (!data) → 404` branch never fires on the real DB. The test asserts the real behaviour and `02-integration-testing.md` records the quirk
+
+### Verification
+
+- `npm run test:integration`: **5 suites / 21 tests green, ~29 s**, run **twice consecutively** (second run proves cleanup idempotence) — exit 0 both times
+- Backend units unaffected by the setup change: **62/62 green** (~3.4 s)
+- One debugging round during the first run: two `expectOk(...)` call sites destructured `{ data }` from its return value (it *returns* data) — fixed, then the suite went green and stayed green
+- `npm run build` and `npm run lint` remain green
+- New script: `test:integration` = `jest tests/integration --runInBand`; doc `docs/testing/02-integration-testing.md`; plan status board updated
+
+### Next
+
+- **Step 3 — API**: supertest contracts over `app.js` — health/read shapes, the 401/403/200 auth matrix, validation 400s and the central error-handler envelope
+
+---
+
+_(Entries below are appended as further steps complete.)_
