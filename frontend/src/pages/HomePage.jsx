@@ -211,14 +211,15 @@ export default function HomePage() {
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        {/* Cinematic gradient overlay ensures all front details and text are clearly legible */}
+        {/* Cinematic gradient overlay — lighter to let the scenic backdrop shine through */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/70 to-slate-950/90"
+          className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-900/35 to-slate-950/55"
         />
 
-        {/* Section title & subtitle */}
-        <div className="relative mx-auto max-w-2xl text-center [text-shadow:0_2px_16px_rgba(0,0,0,0.65)]">
+        {/* Section title & subtitle — subtitle gets the wider measure so the
+            tagline reads as one line instead of breaking early */}
+        <div className="relative mx-auto max-w-3xl text-center [text-shadow:0_2px_16px_rgba(0,0,0,0.65)]">
           <h2 className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {get('how_title')}
           </h2>
@@ -227,8 +228,9 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* 3 Step cards — frosted glass styling with high contrast readability */}
-        <div className="relative mt-10 grid gap-5 sm:grid-cols-3">
+        {/* 3 Step cards — always ONE row of glass panes (grid-cols-3 at every
+            width; type and padding scale down instead of stacking). */}
+        <div className="relative mt-10 grid grid-cols-3 gap-2.5 sm:gap-5">
           {[
             {
               title: 'Browse verified places',
@@ -239,21 +241,29 @@ export default function HomePage() {
               text: 'Narrow the list by category, see opening hours up front, and pick what fits into a single day.',
             },
             {
-              title: 'Build your one-day plan',
-              text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place, with no sign-up and no payment.',
+              title: 'Build your one day plan',
+              text: 'Add favourites to your plan, reorder them, and keep the whole itinerary in one place, with no sign up and no payment.',
             },
-          ].map((step, i) => (
+          ].map((step) => (
             <div
               key={step.title}
-              className="group rounded-2xl border border-white/20 bg-white/95 p-6 text-center shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-2xl sm:p-8"
+              className="group relative flex flex-col justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-white/25 via-white/12 to-white/8 p-3 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.55)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-500 hover:-translate-y-1.5 hover:bg-white/25 hover:shadow-[0_16px_44px_0_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.75)] sm:p-8"
             >
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-brand font-heading text-lg font-bold text-white shadow-md transition-transform duration-300 group-hover:scale-110">
-                {i + 1}
-              </span>
-              <h3 className="mt-4 font-heading text-lg font-bold tracking-tight text-slate-900">
+              {/* Top glare — the pane catching the sky above it */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-x-10 -top-10 h-24 bg-gradient-to-b from-white/45 via-white/10 to-transparent blur-sm"
+              />
+              {/* Diagonal sheen — light streaking across the glass, slides up on hover */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -left-1/4 top-0 h-full w-1/3 -rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent blur-md transition-transform duration-700 group-hover:translate-y-1/4"
+              />
+
+              <h3 className="relative font-heading text-[13px] font-bold leading-tight tracking-tight text-white sm:text-lg md:text-xl [text-shadow:0_1px_10px_rgba(0,0,0,0.45)]">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="relative mt-1.5 text-[10px] leading-snug text-white/90 sm:mt-2.5 sm:text-sm sm:leading-relaxed">
                 {step.text}
               </p>
             </div>
@@ -268,8 +278,7 @@ export default function HomePage() {
           <div className="max-w-2xl">
             <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">All places</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
-              Our selected places within 25 km of Wadduwa — filter by category and add
-              your favourites straight to your day plan.
+              Our selected places within 25 km of Wadduwa filter by category and add your favourites straight to your day plan.
             </p>
           </div>
           <Link

@@ -1287,6 +1287,54 @@ Seven rounds of polish on the public pages, all hanging off one idea: what a vis
 
 _(Entries below are appended as further steps complete.)_
 
+## 2026-10-22 13:52 - "How DayTripGO works" rebuilt as borderless glass panes in a single row; wider tagline; copy de-hyphenated
+
+Developer asks this round, verbatim: *"analyis and add more glass effect to box in How DayTripGO works"*, *"in line"*, *"add more width to it"*, *"remove box border"*.
+
+### Analysis — why the first pass didn't read as glass
+
+- The cards were `bg-white/10 + border-white/20 + backdrop-blur-xl` with a single top glare: blur alone gives a *tinted panel*, not glass
+- Glassmorphism needs four cues together — **refraction** (strong blur), **colour pickup** (saturation, so the photo behind tints through), a **gradient pane body** (light falling across the sheet, not a flat fill) and **specular highlights** (lit edges/streaks)
+
+### The panes today (`HomePage.jsx`, "How it works" step cards)
+
+- **Pane body**: `bg-gradient-to-b from-white/25 via-white/12 to-white/8` replaces the flat `bg-white/10`
+- **Refraction + colour**: `backdrop-blur-2xl` (64px) upgraded from `blur-xl`, plus `backdrop-saturate-150` — the classic glassmorphism saturation boost
+- **Highlights**: top glare strengthened (`from-white/45 via-white/10`), a new diagonal sheen layer (`-rotate-12`, `via-white/20`, `blur-md`) that slides across on hover, and an `inset 0 1px 0 rgba(255,255,255,0.55)` top-edge light in the shadow stack
+- **Hover**: pane turns `bg-white/25`, drops a deeper shadow; transition `duration-300` → `duration-500` to match walkerstours.com's `transition: all 0.5s`
+
+### "in line" — one row at every width
+
+- Grid went `sm:grid-cols-3` → **`grid-cols-3`**: the three steps are always side by side, never stacked
+- Type and padding scale down instead of the layout collapsing: card `p-3 sm:p-8`, gap `gap-2.5 sm:gap-5`, title `text-[13px] → sm:text-lg → md:text-xl`, body `text-[10px] → sm:text-sm`
+- Accepted trade-off: body copy is 10px on a ~390px phone (mirrors the hero's clamped title approach); widening the window restores `sm` sizes
+
+### "add more width to it" — the tagline measure
+
+- The title/subtitle wrapper went `max-w-2xl` → **`max-w-3xl`** (672px → 768px), so *"Three steps from landing on this page to standing in front of something worth the trip."* (~730px at `sm:text-lg`) reads as one line from `sm` up instead of breaking early
+
+### "remove box border"
+
+- Dropped `border border-white/35` and `hover:border-white/35`/`60` from the cards, **and** the inset `ring-1 ring-inset ring-white/30` overlay that drew the same outline — a leftover ring would have kept a visible edge
+- The panes now separate from the photo by light (gradient + glare + shadow) rather than by a line
+- Deliberately kept: the ghost hero CTA's `border-white/40` — that is a button outline, not a box
+
+### Photo backdrop + copy (developer's own working-tree edits, carried in this commit)
+
+- The section's backdrop is now the bundled **`BG - 1.jpg`** (added to the repo in `56ef091`), with the cinematic overlay lightened `from-slate-950/85 via-slate-900/70 to-slate-950/90` → **`from-slate-950/50 via-slate-900/35 to-slate-950/55`** so the scenery shows through the glass
+- Step 3 badge pill removed (`i + 1` number circle) — no numeric affordance on the borderless panes
+- De-hyphenated copy: step 3 title *"Build your one-day plan"* → *"Build your one day plan"*, body *"no sign-up"* → *"no sign up"*, footer blurb *"one-day"* → *"one day"*, and the em dash dropped from the "All places" subtitle
+- Number badges gone also means the `.map((step, i) => …)` index is unused — signature simplified to `(step)`
+
+### Verification & publish
+
+- `npm run build` green (7.80s) and `npm run lint` exit 0 (pre-existing warnings only) against these exact changes; built CSS checked for `backdrop-saturate` / `backdrop-blur` / `grid-cols-3` utilities
+- Round committed as one single commit (log + code) per the convention, then **pushed to origin with `git push -u origin updates`** — first publish of the `updates` branch (it existed locally only until now)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
 ## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
 
 Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.
