@@ -1335,6 +1335,41 @@ Developer asks this round, verbatim: *"analyis and add more glass effect to box 
 
 _(Entries below are appended as further steps complete.)_
 
+## 2026-10-22 14:45 - Hero made readable on phones and vivid on desktop; page rhythm becomes responsive
+
+Developer's own working-tree edits on `HomePage.jsx`, committed here with this entry — a two-sided hero pass: **small screens get real type and real touch targets, large screens get a brighter cover.**
+
+### Title — legible on mobile, still one line from `sm` up
+
+- Was `whitespace-nowrap` with `clamp(0.55rem, 2.5vw, 0.85rem)` — a maximum of **13.6px**, held on one line by shrinking to nothing. Now split by breakpoint:
+  - **< 640px**: `max-w-[15ch]` + `clamp(2rem, 9vw, 2.65rem)` (32–42px) and `leading-[1.06]` — the title wraps over two lines at a readable size instead of being a 13px ribbon
+  - **≥ 640px**: `sm:max-w-none sm:whitespace-nowrap` and the original ladder `sm:text-2xl → md:text-4xl → lg:text-5xl → xl:text-6xl → min-[1440px]:4.25rem → min-[1600px]:4.75rem` — *"One perfect day around Wadduwa"* back to a single line on the desktop the request came from
+- Text shadow strengthened `0_2px_24px …0.65` → `…0.75` to hold contrast over the brighter overlay below
+
+### Cover shows through, text stays legible
+
+- Hero overlay lightened `from-slate-900/75 via-slate-900/55 to-slate-900/90` → **`from-slate-950/40 via-slate-900/20 to-slate-950/65`** — the video/photo now reads vibrantly, with the stronger text-shadow (and the taller bottom stop) carrying WCAG contrast instead of a heavy scrim
+
+### Touch targets and small-screen polish
+
+- **CTAs**: `min-h-[44px]` on both pills (WCAG 2.5.5 target size), `px-6 py-2.5 gap-2`, icons back to `h-4 w-4`; the ghost button's edge strengthened `border-white/40 bg-white/10` → `border-white/50 bg-white/15` (`hover:70/25`) so it doesn't disappear against the brighter video
+- **Subtitle**: `text-[11px]` → `text-xs` and `white/90` → `white/95`, `mt-2.5` → `mt-3`
+- **Scroll cue**: `bottom-4 sm:bottom-6`, label `10px → sm:11px`, chevron `h-4 → sm:h-5`, opacity `60` → `70`
+- **Hero padding**: `py-16` → `py-12` below `sm`, matching the tighter mobile stack
+
+### Page rhythm now scales
+
+- Section gap `space-y-20 … min-[1281px]:space-y-24` → **`space-y-12 sm:space-y-16 lg:space-y-20 min-[1281px]:space-y-24`** — the desktop air stays, phones get 48px instead of 80px between sections
+
+### Verification
+
+- `npm run build` green (5.66s) and `npm run lint` exit 0 (pre-existing warnings only) against these exact edits
+- Committed as one single commit (log + code) per the convention
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
 ## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
 
 Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.

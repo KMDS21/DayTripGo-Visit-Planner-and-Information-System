@@ -51,14 +51,14 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-20 pb-2 min-[1281px]:space-y-24">
+    <div className="space-y-12 sm:space-y-16 lg:space-y-20 min-[1281px]:space-y-24 pb-2">
       {/* ── Hero ─────────────────────────────────────────────────────────
           Cinematic cover (video or image) with a centred headline, subtitle
           and dual call-to-action. */}
       {/* Hero — ≤1280px: fills the visible screen (full-screen cover).
           ≥1281px: height is CAPPED via max-h so the three "Why DayTripGO"
           cards are guaranteed to be visible in the initial viewport. */}
-      <section className="relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-16 text-white sm:px-6 md:min-h-[calc(100svh-4rem)] min-[1281px]:min-h-[38svh] min-[1281px]:max-h-[calc(100svh-40rem)] min-[1281px]:py-10">
+      <section className="relative flex min-h-[calc(100svh-4.5rem)] items-center overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 md:min-h-[calc(100svh-4rem)] min-[1281px]:min-h-[38svh] min-[1281px]:max-h-[calc(100svh-40rem)] min-[1281px]:py-10">
         {/* Cover video or image */}
         {(() => {
           const cover = get('hero_cover');
@@ -88,38 +88,37 @@ export default function HomePage() {
           );
         })()}
 
-        {/* Dark cinematic overlay — keeps the white text legible over any
-            photo or video frame (WCAG contrast). */}
+        {/* Lighter cinematic overlay — lets the cover video/photo show vibrantly while keeping text legible */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/55 to-slate-900/90"
+          className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-900/20 to-slate-950/65"
         />
 
         {/* Centered Hero content */}
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.65)]">
-          <h1 className="hero-in mx-auto whitespace-nowrap font-heading text-[clamp(0.55rem,2.5vw,0.85rem)] font-bold leading-tight tracking-tight sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl min-[1440px]:text-[4.25rem] min-[1600px]:text-[4.75rem]">
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-3 text-center [text-shadow:0_2px_24px_rgba(0,0,0,0.75)]">
+          <h1 className="hero-in mx-auto max-w-[15ch] font-heading text-[clamp(2rem,9vw,2.65rem)] font-bold leading-[1.06] tracking-tight sm:max-w-none sm:whitespace-nowrap sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl min-[1440px]:text-[4.25rem] min-[1600px]:text-[4.75rem]">
             {get('hero_title')}
           </h1>
 
-          <p className="hero-in hero-in-2 mx-auto mt-2.5 max-w-2xl text-[11px] leading-relaxed text-white/90 sm:mt-5 sm:text-base lg:text-lg">
+          <p className="hero-in hero-in-2 mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-white/95 sm:mt-5 sm:text-base lg:text-lg">
             {get('hero_subtitle')}
           </p>
 
-          {/* Dual CTA buttons — one solid, one ghost; large touch targets */}
-          <div className="hero-in hero-in-4 mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-10 sm:gap-4">
+          {/* Dual CTA buttons — reliable touch targets on mobile (44px min height) */}
+          <div className="hero-in hero-in-4 mt-7 flex flex-wrap items-center justify-center gap-3 sm:mt-10 sm:gap-4">
             <Link
               to="/explore"
-              className="group inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-xs font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:gap-2 sm:px-8 sm:py-3.5 sm:text-base"
+              className="group inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-6 py-2.5 text-xs font-bold text-slate-900 shadow-lg transition-all duration-300 hover:bg-brand hover:text-white hover:shadow-brand/30 sm:px-8 sm:py-3.5 sm:text-base"
             >
-              <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Camera className="h-4 w-4" />
               Explore places
               <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
             <Link
               to="/visit-plan"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/10 px-5 py-2 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/60 hover:bg-white/20 sm:gap-2 sm:px-8 sm:py-3.5 sm:text-base"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/50 bg-white/15 px-6 py-2.5 text-xs font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/70 hover:bg-white/25 sm:px-8 sm:py-3.5 sm:text-base"
             >
-              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <MapPin className="h-4 w-4" />
               Build your plan
             </Link>
           </div>
@@ -129,11 +128,11 @@ export default function HomePage() {
             full-screen; nudges the visitor to scroll past the cover. */}
         <div
           aria-hidden="true"
-          className="hero-in hero-in-4 absolute inset-x-0 bottom-6 z-10 flex justify-center min-[1281px]:hidden"
+          className="hero-in hero-in-4 absolute inset-x-0 bottom-4 z-10 flex justify-center sm:bottom-6 min-[1281px]:hidden"
         >
-          <span className="flex flex-col items-center gap-1 text-white/60">
-            <span className="text-[11px] font-medium uppercase tracking-widest">Scroll</span>
-            <ChevronDown className="h-5 w-5 animate-bounce" />
+          <span className="flex flex-col items-center gap-1 text-white/70">
+            <span className="text-[10px] font-medium uppercase tracking-widest sm:text-[11px]">Scroll</span>
+            <ChevronDown className="h-4 w-4 animate-bounce sm:h-5 sm:w-5" />
           </span>
         </div>
       </section>
