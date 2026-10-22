@@ -21,8 +21,6 @@ export default function ExplorePage() {
     hero_subtitle:
       'Every verified spot within 25 km of Wadduwa in one place. Filter by category, check opening times, and add your favourites straight to the day plan.',
   });
-  // Fallback or admin-chosen cover photo
-  const cover = get('hero_cover') || get('explore_cover');
   const { places, categories, activeCategory, loading, error, selectCategory, refresh } = usePlaces();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
@@ -49,22 +47,16 @@ export default function ExplorePage() {
 
   return (
     <div className="space-y-8 pb-8">
-      {/* Hero — the bundled Explore page cover under a light green wash so the
-          photo stays visible; the admin-chosen cover from the content editor is
-          only used if that file ever fails to load, so the banner is never bare. */}
+      {/* Hero — always the bundled Explore cover (`explore page page cover.jpg`)
+          under the dark overlay the public heroes share. No page_content cover
+          override reads from here any more. */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
         <img
-          src={cover || '/explore%20page%20page%20cover.jpg'}
+          src="/explore%20page%20page%20cover.jpg"
           alt=""
           aria-hidden="true"
           loading="lazy"
           decoding="async"
-          onError={(event) => {
-            const el = event.currentTarget;
-            if (!cover || el.dataset.fallback === '1') return; // never loop
-            el.dataset.fallback = '1';
-            el.src = cover;
-          }}
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div
@@ -72,8 +64,8 @@ export default function ExplorePage() {
           className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/45 to-slate-900/75"
         />
         <div className="relative mx-auto max-w-3xl text-center [text-shadow:0_1px_16px_rgba(0,0,0,0.45)]">
-          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
+          <h1 className="hero-in font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
+          <p className="hero-in hero-in-2 mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             {get('hero_subtitle')}
           </p>
         </div>

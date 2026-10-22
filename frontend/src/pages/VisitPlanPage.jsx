@@ -59,8 +59,8 @@ export default function VisitPlanPage() {
           className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/50 to-slate-900/80"
         />
         <div className="relative mx-auto w-full max-w-3xl text-center [text-shadow:0_1px_16px_rgba(0,0,0,0.45)]">
-          <h1 className="font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
+          <h1 className="hero-in font-heading text-3xl font-bold sm:text-4xl lg:text-5xl">{get('hero_title')}</h1>
+          <p className="hero-in hero-in-2 mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             {get('hero_subtitle')}
           </p>
         </div>
