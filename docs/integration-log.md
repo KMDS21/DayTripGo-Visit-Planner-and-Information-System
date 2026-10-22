@@ -723,3 +723,509 @@ _(Entries below are appended as further steps complete.)_
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 12:26 - Admin panel second edition: image uploads, stats, content editors, messages inbox (commit `1d71b6c`)
+
+- **Branch**: all work committed as one single commit per the developer's convention - **`1d71b6c admin panel second edition`** (43 files, +2132/-366) on `feature/admin-uploads-content-messages` (forked from `feature/admin-login-update`); the branch was then **renamed `admin-panel-second-edition`** - the rename is what gets pushed and the old remote branch is deleted
+
+### Backend - image upload to a server folder
+
+- **`backend/src/utils/uploadConfig.js`**: multer memory storage + rules - allowed formats **jpg / jpeg / png / webp / avif** (magic-byte sniff, not just MIME), **5 MB per file**, **500 MB total server quota** (HTTP 507 when full), `UPLOADS_ROOT` / `PUBLIC_PREFIX` constants, `removeStoredImage` helper; **`backend/src/middleware/upload.js`**: `uploader` + `quotaGate`; **`backend/src/services/imageService.js`**: set / replace / clear logic - replace uploads the new file then deletes the old one from disk, remove deletes the file and clears `image_url`
+- **Routes**: `POST /api/places/:id/image` + `DELETE /api/places/:id/image` (JWT) on `placeRoutes`; place delete now also removes the stored file (no orphans); `errorHandler.js` maps MulterError codes to friendly messages; `app.js` serves the folder at **`/uploads`** - the first mount was one level too deep (`/uploads/places/...` 404) and was fixed with `UPLOADS_ROOT`
+- **Smoke test (live API)**: 13/14 checks pass - login, create, upload, replace (old file deleted), >5 MB rejected, remove, place delete cleans the file, unauthenticated 401
+
+### Backend - dashboard stats, page content, contact messages
+
+- **`GET /api/admin/stats`** (JWT): counts of places, categories, visit plans (traffic) and unread contact messages plus storage usage (used / free / percent / full flag) for the 500 MB bar
+- **`GET/PUT /api/content/:page`** (pages `home`, `explore`, `plan`, `contact`): per-page editable text stored in a `page_content` table
+- **Messages**: `POST /api/messages` public (the Contact form now really submits), `GET /api/messages`, `PATCH /:id/read`, `DELETE /:id` (JWT)
+- Content and messages return a friendly **503** until migration `database/schema/002_contact_content.sql` (contact_messages + page_content + RLS) is run in the Supabase SQL Editor - **developer action still pending**
+
+### Frontend - admin restructure
+
+- **Dashboard = counters only**: four stat cards (Places -> /admin/places, Categories, Plans created = traffic, Contact messages = unread -> /admin/messages) + the **500 MB storage status bar** (`components/Admin/StorageBar.jsx`, green/amber/red at 70/90 %) + light-red Log out; the place table and Add place button moved off the dashboard
+- **New `pages/AdminPlacesPage.jsx` at `/admin/places`**: Add place button + full place table (cards below md) + add/edit modal with the image file picker (format/size validation, preview, upload-after-save, Replace/Remove of the stored file) + delete confirmation
+- **Sidebar restructure** (`App.jsx`, desktop + mobile drawer): public-page links (Explore -> `/`, My Day Plan -> `/visit-plan`) removed from the admin nav; main nav = Dashboard + Places; **Edit pages** group carries one editor per public page (Home, Explore, My Day Plan, Contact us -> `/admin/pages/:page`, `pages/AdminContentPage.jsx`); **Responses** is its own group (Contact responses -> `/admin/messages`, `pages/AdminMessagesPage.jsx` inbox with unread badge, mark-read, delete)
+- **Public pages wired to editable content**: `hooks/usePageContent.js` fetches `/api/content/:page` with built-in fallback defaults; Home / Explore / My Day Plan / Contact heroes and key texts read from it; `ContactPage` submits through `submitMessage()` (sending state, real backend endpoint)
+- **Single font in the admin area**: `font-heading` (Playfair) removed from every admin screen (dashboard, places, content editor, messages, StatCard, Modal) - admin renders in the body font only; the public site keeps the two-font treatment
+- **Dashboard Log out in light red**: the `danger-soft` variant from the Clear-plan round is reused (`bg-red-50`, `text-red-600`)
+
+### Housekeeping
+
+- **Commit `d5fb43b keep project logo at repository root`**: the developer wants `Logo.png` at the repo root; the working-tree copy had vanished and was restored from the identical `frontend/public/Logo.png`; root `.gitignore` also gained `backend/uploads/` (runtime image data never committed)
+- **Verification**: `npx oxlint src` 0 errors (warnings pre-existing), `npm run build` passes, live dev-server checks confirm the sidebar structure, the storage-bar removal from Places and the single-font admin
+- **Push**: `admin-panel-second-edition` pushed to origin under the new name; remote `feature/admin-uploads-content-messages` deleted after the rename
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 12:44 - Migration executed by the developer; content / messages / stats verified live end to end (14/14)
+
+- **Developer confirmed the `002_contact_content.sql` tables already exist in Supabase** - the friendly 503 fallbacks are no longer hit; every endpoint from the second-edition round now runs against real tables
+
+### Verification (live API, one script run, all PASS)
+
+- **Content**: `GET /api/content/home` and `/contact` return `200` with `{ page, sections }`; `PUT /api/content/home` saves a section and reads back exactly (`sections` is a **flat map of text fields <= 5000 chars each** - a nested-object body is correctly rejected with a per-key validation message); the probe key was blanked again afterwards (empty string = unset, pages fall back to their built-in defaults)
+- **Messages**: public `POST /api/messages` -> created; admin `GET /api/messages` lists it; `PATCH /:id/read` clears the unread flag (dashboard counter 1 -> 0); `DELETE /:id` removes it (test message cleaned up)
+- **Stats**: `GET /api/admin/stats` live - **places = 10, categories = 4, plans created = 5**, unread message count, storage usage (0 bytes used of the 500 MB quota so far)
+- **Script**: `%TEMP%\opencode\verify-migration.ps1` - 14 checks, 0 failures (login, content GET x2, content PUT + restore, message post/list/read/unread-count/delete, stats counts and storage)
+
+- **Everything from the admin panel second edition is now live**: image uploads with the 500 MB quota, dashboard counters + storage bar, the four per-page content editors, and the contact responses inbox
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 13:07 - Featured escapes + cover pickers in the content editors; a Google Maps link replaces latitude/longitude on places
+
+- **Developer requests**: (1) drop the "External image URL" field from the place form (upload only), (2) the admin picks which places the home page's **Featured escapes** carousel shows and the **cover image of each card**, (3) the admin picks the **Explore page cover photo** from the uploaded images, (4) places gain a **Google Maps location URL** instead of the manual latitude/longitude fields, and the public place cards show a **Map link** built from that URL
+
+### Content pickers (no new tables - stored in the existing `page_content` text sections)
+
+- **New `frontend/src/utils/featuredConfig.js`**: shared serialisation for the selection - `featured_place_ids` = CSV in display order ("3,7,1"), `featured_covers` = `id=cover` pairs ("3=/uploads/…;7="); one parser used by both the admin editor and the public home page
+- **Home page editor (`/admin/pages/home`) gains a "Featured escapes" section**: up to 6 rows, each = photo preview thumbnail + place dropdown (duplicates disabled) + cover dropdown (the place's own photo by default, or any image uploaded on the Places page) + remove; saved together with the text fields
+- **Explore page editor (`/admin/pages/explore`) gains a "Cover photo" section**: a thumbnail gallery of every uploaded place image with a "Default" gradient tile; the selection is stored as `explore_cover`
+- **Public side**: `FeaturedCarousel` accepts the admin's `featured` rows - chosen order and chosen covers, skipping places that were deleted since; with no selection it keeps the original "first place of each category" behaviour. `ExplorePage` renders the chosen cover behind the hero with a tinted overlay so the white text stays readable (gradient hero unchanged when no cover is set)
+- **Place form cleanup**: the "External image URL (optional)" input is gone (upload-only now), and the update payload no longer carries `image_url` at all, so editing a place can never wipe its stored server image path
+
+### Google Maps link per place (replaces manual coordinates)
+
+- **Migration `database/schema/003_place_google_maps_url.sql`** (developer action pending): `add column google_maps_url text` + `latitude/longitude drop not null` (they are derived from the link now); `select('*')` in the model picks the column up automatically
+- **New `backend/src/utils/googleMaps.js`**: `isGoogleMapsUrl` (accepts `google.*/maps`, `maps.app.goo.gl`, `goo.gl/maps`) and `parseCoordsFromGoogleMapsUrl` (`@lat,lng`, `!3d!4d`, `?q=`/`ll=`/`center=` patterns, range-checked)
+- **`placeService`**: `preparePlaceFields` trims the link and derives `latitude`/`longitude` from it whenever the caller did not supply coordinates, so the embedded OpenStreetMap views (detail page, day-plan route map) keep working; `validatePlace` no longer requires coordinates (still range-checks any that are sent) and rejects non-Google links with a clear 400
+- **Graceful degradation before the migration runs**: if the insert/update fails because the `google_maps_url` column is missing, the service strips just that field and retries - place CRUD keeps working (verified live: create/update succeeded and coordinates were still derived while the column was absent)
+- **Frontend**: the place form swaps the Latitude/Longitude inputs for one optional **Google Maps location URL** field (validated client-side too, with a hint that coordinates come from the link); `PlaceCard` shows a **Map ↗** link (new tab, `rel="noopener noreferrer"`) next to Details whenever the place has a link; `MapEmbed` already hides itself when coordinates are missing
+
+### Verification
+
+- `npx oxlint src` 0 errors - `npm run build` passes (7.19s) - live probes **12/12 PASS**: field swap in the form via HMR, Map link on the card, invalid URL -> 400, create without coordinates (derived 6.9028/79.8699 from the link), update follows a new link (7.2906), graceful fallback while the column is missing, probe place deleted; content round verified earlier at 13/13 (selection + cover round-trip and restore)
+- **Pending**: run `database/schema/003_place_google_maps_url.sql` in the Supabase SQL editor so the links themselves are stored and shown on the public cards
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-20 16:51 - Photo galleries, short-link maps, the Explore popup, the publish switch and the "Attractive Places" rework
+
+- **Developer requests covered by this entry** (every uncommitted round since `92bea66`): (1) up to 10 photos per place with cover slots, (2) one Google Maps URL per place with short share links resolved, (3) an Explore-page place popup with a photo slider and the map under the details, (4) per-place publish/unpublish in the admin table, (5) the admin section renamed to **Attractive Places**, (6) the home page's All places section shows only admin-selected places, (7) Featured escapes raised to 12 cards
+
+### 1. Photo gallery (backend)
+
+- **Migration `database/schema/004_place_photos.sql`** - `place_photos` table (photo_id, place_id, photo_url, is_primary); applied and live (spot probe: place 1 returns 7 photos, one flagged primary)
+- **New `placePhotoModel` / `placePhotoService` / `placePhotoController`** replace the old single-image endpoints; `backend/src/services/imageService.js` is deleted
+- **Routes** on `/api/places`: `GET /:id/photos` (public), `POST /:id/photos` (multipart field `photo`), `POST /:id/photos/:photoId/primary`, `DELETE /:id/photos/:photoId` - all admin ones behind the JWT + quota gate
+- **Rules**: jpg/jpeg/png/webp/avif only, 5 MB per file, 500 MB total quota (HTTP **507** when exceeded); files live on disk under `/uploads`, paths in the DB; deleting a place deletes all of its files; the primary photo's path is what `place.image_url` holds, so cards/detail/featured covers keep working
+- **Frontend service**: `getPlacePhotos` / `uploadPlacePhoto` / `removePlacePhoto` / `setPlacePrimaryPhoto`
+
+### 2. Google Maps short links + coordinates derived at read time
+
+- **`resolveCoordsFromGoogleMapsUrl()`** in `backend/src/utils/googleMaps.js`: follows a `maps.app.goo.gl` / `goo.gl/maps` share link ONCE server-side (4 s timeout), parses the destination URL and caches successes for the life of the process (failures retried after 60 s); `withCoords` became async in `placeService` and `visitPlanService`
+- **Migration 003 rewritten (idempotent, safe on top of the earlier version)**: keeps `google_maps_url` and now **drops `latitude`/`longitude`** - coordinates only ever exist, derived from the link at read time; `001_create_tables.sql` and `002_seed_places.sql` updated to match, plus a new optional seed `003_seed_google_maps_links.sql` giving the 10 proposal places working links
+- **Frontend `googleMapEmbedSrc(place, zoom)`** (new `frontend/src/utils/googleMaps.js`): server coords first, then coords parsed from the URL, then a `q=<encoded url>` embed fallback - Google resolves short links inside the iframe, so even the fallback shows the right pin
+
+### 3. Explore popup + card/map behaviour
+
+- **New `PlacePreviewModal`**: photo slider - one photo at a time with small dots, cross-fade (fetches the gallery, falls back to the card photo), details + add-to-plan, and the Google map (from the place's URL) **under** the details; Esc / outside click closes; no link to the detail page
+- **`PlaceCard`**: when the parent passes `onOpen` (Explore) clicking photo/name opens the popup instead of navigating; cards **never embed a mini-map** any more (removed from Explore first, then from home at the developer's request) - the plain "Map" link stays; `PlaceGrid` passes `onOpen` through
+
+### 4. Publish switch - "Show on public site"
+
+- **Migration `005_place_published.sql`** (applied, column verified): `published boolean not null default true`
+- **`GET /api/places?scope=admin`** returns unpublished rows too, JWT-guarded by the `adminScope` middleware; public reads apply `published = true` (the model retries unfiltered with a fresh query factory if the column is missing, so nothing breaks before the migration); **`PUT /api/places/:id/publish`** toggles
+- **Admin table**: the Opening hours column is gone, replaced by a **Show on public site** pill (desktop column and mobile card); admin lists fetch with `scope: 'admin'`
+- **Data-layer probe**: unpublishing a place -> 9 public / 10 admin rows; re-publishing -> 10/10
+
+### 5. Admin "Attractive Places" rework (form + table)
+
+- **Renamed everywhere**: sidebar + mobile nav, page H1/subtitle, dashboard stat, content-editor hints
+- **Photo section split into**: (1) **cover photos** - the Explore cover slot (upload left, selection options right) and the Featured cover upload unlocked by ticking "Show in Featured escapes (home page)"; each slot has Change photo + Remove; (2) **More photos** - extra photos per location with Remove only. Covers never appear in the More-photos grid (saved cover paths and pending cover URLs are filtered out); the old "Use as the Explore page cover photo" checkbox is removed - the Explore slot upload sets the card photo directly (`setPlacePrimaryPhoto`), so the card cover and banner follow automatically
+- **Map thumbnail** beside the Maps URL only while **adding** a place (not while editing)
+- **New "Show on home" pill** per row (desktop column + mobile card): stores the selection in the home page content section `home_place_ids` (comma-separated ids, same per-key `page_content` storage the editors already use)
+
+### 6. Home page + Featured escapes
+
+- The home **All places** section is no longer a 4-card teaser: it renders the same `PlaceGrid` cards as Explore and shows **only the places ticked "Show on home"** (with no selection yet it shows every published place); the place-count line and the category filter pills were then removed from home at the developer's request - Explore keeps both
+- **Featured escapes cap raised 6 -> 12** (`FeaturedCarousel` + `AdminContentPage` MAX_FEATURED) and the carousel row gained a left "back" arrow that fades in after load, with the cards left-flush
+
+### Verification
+
+- `npx oxlint src` **0 errors** and `npm run build` green after every round; HMR spot-checks of the popup slider, cover slots, publish/home pills and the home listing
+- Live probes: all 10 `maps.app.goo.gl` places return real coordinates (first call ~4 s, then ~370 ms cached); publish toggle 200 and 9/10 row filtering; photo gallery GET returns the stored rows with the primary flag
+
+---
+
+## 2026-10-21 11:20 - Featured escapes auto-glide that loops for ever; distance badge removed from every place card
+
+### 1. Featured escapes carousel (home page)
+
+- **Left auto-glide after the entrance**: the staggered fade-up entrance of the cards is unchanged; once the last card has landed (0.2 s per card + 0.6 s), the row starts gliding **one card to the left at a time** (1.4 s eased glide, 1.2 s pause) and carries on for as long as the visitor leaves it alone
+- **Seamless infinite loop**: a duplicate of every card is appended after the real ones, so the first card appears again at the end of the row. When the glide lands on that clone (pixel-identical to the real first card) it rewinds by exactly one loop width on the same frame the animation completes - the flow never visibly steps back or reverses
+- **Motion is hand-animated** (`requestAnimationFrame` + ease-in-out) instead of the browser's `behavior: "smooth"`, so duration and easing are identical on every browser; dots, the left chevron and card-to-card glides use the same curve
+- **Dots follow the card on screen**: position is floored (not rounded) with a 2 px tolerance, so a dot flips exactly when the next card reaches the left edge, never halfway through a glide; the clone segment maps back onto the same dots by position
+- **Control returns to the visitor** on pointer down / drag, horizontal wheel, the left chevron or a dot tap - the automatic glide cancels for good at that point
+
+### 2. Place cards
+
+- **Distance badge removed from every place card** (`PlaceCard`, used by the Explore grid and the home page's All places section): the name now sits alone in the card header and the `formatDistance` import goes with it. Distance still shows on the place preview popup, the detail page, the day-plan list and the admin table
+
+### Verification
+
+- `npx oxlint` clean (only the pre-existing `CarouselContext` fast-refresh warning) and `npm run build` green after each round
+
+---
+
+## 2026-10-21 11:50 - Tapping a home "All places" card opens that place's popup on Explore
+
+- **Home `PlaceGrid` gained `onOpen`** (`openOnExplore`): tapping a card's photo or name navigates to `/explore` and hands the place id over in the router state. "Add to plan" and the "Details" link keep working exactly as before
+- **`ExplorePage` reads `location.state.previewPlaceId`** into `previewId` once on mount, and derives the popup place from the loaded listing, so the popup appears the moment the data lands with no extra render flash. The router state is cleared with `navigate('.', { replace: true, state: null })`, so a reload or a back/forward step does not reopen it
+- The in-page Explore flow is untouched: tapping a card there still opens its popup, and closing it clears `previewId`
+
+---
+
+## 2026-10-21 12:05 - distance_km removed from the database, API and every remaining screen
+
+The distance badge was dropped from the place cards in the previous round; this round removes the field itself, end to end.
+
+### 1. Database
+
+- **New migration `database/schema/006_place_drop_distance_km.sql`**: `alter table places drop column if exists distance_km;` (idempotent, same pattern as migrations 003-005)
+- **`001_create_tables.sql`** loses the `distance_km decimal(4,1) not null` line, with a comment pointing at migration 006
+- **`002_seed_places.sql`**: the distance values and the column are gone; the insert is now 6 columns / 6 values per row (it previously listed 8 columns against 7 values, which would have failed on a fresh setup)
+
+### 2. Backend
+
+- **`middleware/validate.js`**: `distance_km` is no longer a required field and no longer range-checked
+- **`models/placeModel.js`**: `findAll` / `findByCategory` ordered by `distance_km`; they now order by `place_id` ascending (creation order), which is stable across reloads and category filters
+
+### 3. Frontend
+
+- **Admin Places**: the Distance column in the table and mobile card list, the "Distance from Wadduwa (km)" form field, its validation rule and its payload key are all gone (empty-table `colSpan` 7 -> 6)
+- **Preview popup** and **detail page**: the distance badge is removed, leaving category + open/closed
+- **Day plan**: the per-row distance badge is gone, and the summary line now reads "N places in your day plan" without the "roughly X of travel" figure; `totalDistance` is dropped from `VisitPlanContext`, `VisitPlanPage` and `PlanList`
+- **Featured escapes card content**: "12.5 km from Wadduwa · View details →" is now just "View details →"
+- **`utils/formatDistance.js` deleted** and the `distance` variant removed from `Badge` (no remaining callers)
+- **Copy that promised distances was rewritten**: the home page's "Distances up front" trust point becomes "Maps in one tap", the how-it-works step and the footer / contact blurbs no longer mention distances
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings (confirmed by stashing the working tree and re-running), `npm run build` green, `node --check` clean on the two backend files
+- Only remaining `distance` mentions are in the submitted SRS / project plan documents and in historical integration-log entries, which are left as written
+
+---
+
+## 2026-10-21 12:40 - Explore place popup rebuilt as a two-column detail layout; "Planning only" note dropped
+
+### 1. `PlacePreviewModal` (the popup opened by an Explore / home place card)
+
+- **Two-column body on lg+**: details on the left, photos on the right, inside a wider `max-w-4xl` panel. On phones the columns stack with the photo first, so the picture still leads the popup
+- **Left column**: category + open/closed badges, name, description, opening-hours card, travel-tips card, the add-to-plan button with the Google Maps link, and the embedded map underneath
+- **Right column**: the active photo in a fixed `aspect-[4/3]` frame with the close button over it, and below it a **small "More photos" box** — a 4-up grid of thumbnails with the active one ringed in brand colour. Tapping a thumbnail switches the big photo. The box only appears from 2 images up; the dot row it replaces is gone
+- Behaviour unchanged: Esc, backdrop click and scroll-lock all still work, and a place with no gallery still falls back to its card photo
+
+### 2. "Planning only. DayTripGO does not book or sell anything." removed
+
+- Dropped from the popup and from the place detail page (`DetailView`). The `pb-24 lg:pb-0` that paragraph carried now sits on the detail column itself, so nothing hides behind the fixed mobile action bar
+
+### Verification
+
+- `npx oxlint` clean apart from the modal's pre-existing `set-state-in-effect` warning (same code, only the line number moved) and `npm run build` green
+- **Migration 006 applied against Supabase on 2026-10-21** — `alter table places drop column if exists distance_km` run in the SQL editor, so the live `distance_km` column is gone (new installs never get it: `001_create_tables.sql` already omits it). The drop was safe to run because nothing in `backend/src` references the column any more — `validate.js` no longer requires or range-checks it and `placeModel` no longer orders by it
+
+---
+
+## 2026-10-21 13:05 - "Open now" / "Closed" badge removed from every place view
+
+The live open/closed chip is gone; opening hours themselves are still shown everywhere they were before (the Opening-hours card on the popup and detail page, the hours line on a day-plan row).
+
+- **Badge removed from all three views that showed it**: the place card (`PlaceCard`), the place popup (`PlacePreviewModal`) and the detail page (`DetailView`). The category badge stays, so the card photo and the detail header still carry it
+- **`utils/isOpenNow.js` deleted** - with no badge left to feed, `parseHours`, `isOpenNow` and `isOpenFromText` had no callers. `formatHours` / `normaliseHours` are untouched, so the hours text still renders in 12-hour form
+- **`Badge`** drops the `open` and `closed` variants, leaving `category` and `info`
+- **Home page copy** no longer promises the hint: the "Opening times checked" card now reads that every listing carries real opening hours so you know when a place welcomes visitors, rather than mentioning an "open now" hint
+- **`frontend/README.md`** utils line updated
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 13:25 - Place edit modal title shows the place name only
+
+- **`AdminPlacesPage` add/edit modal** title was `Edit ${editing.name}`, which read "Edit Panadura Beach". It now renders **just the place name** - "Panadura Beach" - so the word "Edit" is no longer part of the heading
+- The add case is unchanged and still reads "Add a new place"
+- Only one modal carries this title (the form modal at `AdminPlacesPage.jsx:724`); the confirm/delete dialogs were untouched
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 13:50 - Place edit modal: Opening hours set as a time range
+
+The Opening hours field on the add/edit form was one free-text box (placeholder `e.g. 6:00 AM - 8:00 PM daily`), so the time range had to be typed out. It is now a settable range.
+
+- **Three fields instead of one**: **Opens** and **Closes** are native `<input type="time">` pickers, plus a small optional **Note** box for wording like `daily`, `(visits by arrangement)` or `Open all day`. The section spans both form columns
+- **Stored value is unchanged.** `opening_hours` remains the same free-text string (SRS §6.1 `varchar(100)`), so the popup, detail page, day-plan rows and `normaliseHours` display are untouched. The three fields are only the admin's way of writing it
+- **New `frontend/src/utils/hoursRange.js`** translates both ways:
+  - `parseHoursRange(text)` → `{ from, to, note }` with 24-hour `HH:MM` values. The range is only taken when it **opens** the string, so `Open all day (boat rides 7:00 AM - 5:00 PM)` stays whole as the note instead of being cut in half
+  - `composeHours(from, to, note)` → the saved string, e.g. `5:30 AM - 8:00 PM daily`. It strips any range the note still carries so the two never repeat each other. Both times are required for a range; otherwise only the note is kept
+- **Live preview**: a `Visitors see: 5:30 AM - 8:00 PM daily` line under the fields shows exactly what will be saved
+- **Validation**: setting only one of the two times fails with *"Set both an opening and a closing time, or leave both empty."* rather than silently dropping the half-finished range
+- `frontend/README.md` utils line updated
+
+### Verification
+
+- Round-trip tested against all eight seeded hours values plus the empty and `null` cases: every one parses and composes back byte-identically (`5:30 AM - 8:00 PM daily` → `{05:30, 20:00, daily}` → `5:30 AM - 8:00 PM daily`, and the "Open all day" string passes through untouched)
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 14:20 - Covers stay out of "More photos" after saving; "Remove all photos" added
+
+Two changes to the image area of the Attractive Places edit modal (the two cover slots on top, "More photos" underneath).
+
+### 1. An already-uploaded cover photo no longer shows in "More photos"
+
+The exclusion was already coded (`savedCoverPaths` → `galleryPhotos` / `galleryPending`), but both cover paths were read back out of `page_content` (`explore_cover`, `featured_covers`). That round-trip only resolved when a `savePageContent` request had actually been pushed and `refreshContent()` had landed — otherwise the set came back empty and the covers reappeared in the grid.
+
+- **The save now records its own cover paths.** `publishPlaceToggles` already computed the *effective* paths (`coverPaths.explore || place.image_url`) but discarded them; it now returns `{ explore, featured }` and `handleSave` stores them in `coverRecord`, keyed by place id. `openEdit` keeps the record for the same place and drops it for any other
+- **The stored explore path is only claimed when this place owns the banner.** `explore_cover` is one site-wide slot, so a path is recorded when this save wrote it, or when the place already owned the banner (`ownsCover`) — another place's cover is never claimed as this place's
+- **The two sources are unioned**, so exclusion can only get stronger: the recorded paths plus the live `page_content` values (which still cover a banner this place owns that no save through this modal recorded). Pending cover picks keep their existing `coverPendingUrls` filter
+- **The counter matches the tiles** (`AdminPlacesPage` More-photos header). It now reads `3 more · 5/10 (2 as covers)` when covers are hidden, or plain `5/10` when nothing is hidden — before, it counted every photo while drawing only the filtered ones, so it looked like photos had vanished. The **Add tile still uses the true total**, because `placePhotoService.js:88` caps the whole gallery at 10 including covers
+- **`refreshContent()` is awaited on the final save path**, so the table and a reopened modal never read stale content. The Featured slot's card-photo fallback is still shown in the grid, as agreed
+
+### 2. "Remove all photos" button
+
+- Red outline pill in the More-photos header, shown only when anything exists (saved or picked), disabled while `imageBusy` / `saving` / `photosLoading`
+- Asks first through the same `Modal` used for place deletion, warning that the card photo and both covers go too
+- On confirm: `resetImageState()` drops every un-uploaded pick (and its cover designation) → each saved photo is deleted **one at a time** through `removePlacePhoto`, applying each response with `applyGallery` so `editing`, `image_url` and the table row stay in sync as the service promotes the next primary (sequential rather than `Promise.all`, so the promotion cannot race) → `coverRecord` is cleared → `syncCoversAfterPhotoGone` clears `explore_cover` and this place's featured cover
+- **`syncCoversAfterPhotoGone` now takes an array** (one path or several) and clears both sections in a single pass; the single-photo delete path passes `[photo_url]`
+- No new endpoint: there is no bulk delete, so a wipe is at most 10 `DELETE` calls. The backend already allows it — `removePhoto` has no last-photo guard and `syncCardPhoto` writes `image_url: null` when the list empties (`placePhotoService.js:55-69`)
+- A failure stops the loop, surfaces `errorMessage(err)` in `imageError` and leaves the modal open (mirrors the upload-failure path); the button can be pressed again for whatever remains
+
+### 3. Saving no longer overwrites a dedicated Featured cover
+
+The cause of the Featured photo still landing in "More photos" after a save:
+
+- `publishPlaceToggles` computed the carousel cover as `coverPaths.featured || place.image_url`. With no new file picked through the slot, that fell back to the **card photo**, so `before !== after` and the stored `featured_covers` entry was rewritten to the card photo. The dedicated cover dropped out of `featured_covers`, `savedCoverPaths` no longer contained it, and the real cover photo fell straight back into the grid — while the carousel quietly swapped to the card photo
+- The Explore side was already protected by `currentCover !== explorePath`; the Featured side had no equivalent guard
+- **Fix**: an already-stored cover now wins — `coverPaths.featured || storedFeaturedCover || place.image_url`. The card photo is the fallback only for a place that has never had a dedicated cover, which is what the old code did for those places anyway. `storedFeaturedCover` is read from the parsed rows *before* they are mutated
+- Result: a plain edit (name, hours, description) leaves the carousel cover alone, keeps it out of "More photos" through both the recorded path and `featured_covers`, and `before === after` means no needless `savePageContent` either
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 14:55 - Cover photos identified by photo_id; the slots render from the save's own record
+
+Requirement restated: **a cover photo shows only in its upload slot, and every other photo shows only in "More photos".** Two weaknesses in how that was enforced were closed.
+
+- **The record now carries `photo_id` as well as the path.** `handleSave` captures `created.photo_id` next to `photo_url` for whichever file was picked through a cover slot, and the grid excludes on the **id first** (`savedCoverIds`), path second. An id cannot differ between the upload response and the gallery list, so a string mismatch can no longer let a cover through
+- **The id is carried across a plain edit.** If a save uploads no fresh cover and the recorded path is unchanged, the previous id is kept — so editing just the name or hours cannot lose the exclusion earned by the save before it. It is dropped as soon as the recorded path changes or the cover is switched off
+- **Both cover slots now consult the record first.** `recorded` (the record, only when it belongs to the place being edited) sits ahead of `page_content` in `exploreSlotImg` / `featuredSlotImg`, so the slot shows the cover the save actually stored even if `page_content` has not caught up — previously a stale read emptied the slot *and* released the photo into the grid. The Featured slot keeps its "Card photo" badge when the recorded cover is the card photo
+- **The Featured card-photo fallback is still not excluded** (unchanged, as agreed) — only a real cover designation hides a photo
+- `coverRecord` gained `exploreId` / `featuredId` and a shared `NO_COVER_RECORD` constant, used by `openAdd`, `openEdit` and the new Remove-all handler
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 15:20 - Explore cover detection keyed on the pending entry; opening-hours pickers load the stored data
+
+### 1. Explore cover: still landing in "More photos" with an empty cover slot
+
+`exploreCoverPath` was being matched with **File-object identity** (`pending.file === pendingExploreCover.file`) across two separate pieces of state. When that match missed, `coverPaths.explore` came back `''`, so `storedExplore` evaluated to `''` — which emptied the Explore slot (dashed "Add cover photo" button) *and* left the photo unmatched in the grid.
+
+- **The designation now rides on the pending entry itself**: `handleFilesChange` sets `entry.cover = 'explore' | 'featured'` on the file it hands to a cover slot, and the upload loop reads `pending.cover`. Nothing has to be matched across state, and the flag travels with the entry through `dropPending`
+- **Safety net**: after the upload loop, if an Explore pick existed but produced no path, `exploreCoverPath` falls back to `place.image_url` — an Explore upload always forces its file to be the card photo, so `image_url` *is* that cover. A chosen cover can no longer be recorded as empty
+- With a non-empty `storedExplore`, the slot renders the cover again (via `recorded`) and the photo leaves the grid
+
+### 2. The Opens / Closes pickers never showed the stored hours
+
+`openEdit` spread `...parseHoursRange(place.opening_hours)` into the form, but the util returns `{ from, to, note }` while the form fields are `hours_from` / `hours_to` / `hours_note`. The wrong keys were written, so **the time pickers and note box were always blank when editing** — previous data never appeared.
+
+- Now parsed into a local `hours` and mapped explicitly: `hours_from: hours.from`, `hours_to: hours.to`, `hours_note: hours.note`
+- Editing a place with `5:30 AM - 8:00 PM daily` now shows `05:30` / `20:00` / `daily`, and the preview reads back the same string
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 15:45 - Name and Category share the first row of the place form
+
+- **`AdminPlacesPage` add/edit form**: `Name` lost its `sm:col-span-2`, so it now sits half-width beside `Category` as the first row of the two-column grid. Opening hours, Description, the photo section, Maps and Travel tips keep their full width below
+- Validation, labels and the error lines under each field are unchanged
+
+### Repository changes carried in this commit
+
+- **`.gitignore`**: the `backend/uploads/` ignore block was removed, so the runtime image folder is now tracked
+- **`Logo.png`** (repository root) deleted
+- **`backend/uploads/`** added — 36 files, ~7.1 MB of uploaded place images
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 15:43 - Page covers for the Explore and Contact heroes
+
+Both remaining public pages now carry their own cover image under a light green wash. On Explore the bundled cover deliberately outranks the admin-chosen photo, which stays on as a fallback.
+
+### Explore and Contact heroes — page cover images
+
+- **`ContactPage.jsx`**: the hero had no imagery at all; it now shows `/Contact us page page cover.webp` under the light green wash, matching the Explore hero's treatment
+- **`ExplorePage.jsx`**: `/explore page page cover.jpg` is now the Explore banner's cover and always wins. The admin-chosen photo (`explore_cover` in the content editor) was previously the only banner image; it is now used solely as an `onError` fallback so the banner is never left bare, and a `data-fallback` guard makes sure a broken fallback cannot loop
+  - A live check of `GET /api/content/explore` showed `explore_cover = /uploads/places/6eb5f31f….jpg` was already set, which is why the bundled cover had to take priority — otherwise the new image would never have appeared
+- **`AdminContentPage.jsx`**: the Explore cover picker's copy changed from "Pick the photo shown behind the Explore page banner" to "**Fallback** photo shown behind the Explore page banner **if its cover image is missing**", so the editor matches what the site now does
+
+### New public assets
+
+- `frontend/public/explore page page cover.jpg` — 0.4 MB
+- `frontend/public/Contact us page page cover.webp` — 1.1 MB
+- Both returned `200` with the expected content type from the running dev server on `:5173`
+
+### Shared hero tidy-up
+
+- Both heroes' green wash was lightened to **`from-brand-dark/60 via-brand/45 to-teal-500/30`** (Explore was `/75 /65 /60`) so the photo reads through instead of sitting under a colour block
+- The two decorative `bg-white/10` circles were removed from both heroes
+- The hero copy wrapper carries `[text-shadow:0_1px_16px_rgba(0,0,0,0.45)]`, which keeps the white text readable at that wash strength without darkening the picture again
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 16:22 - Full-screen video heroes, photo footer and the place-form cover rework
+
+Both landing pages carry a looping cover video, the footer carries a full-bleed photo, and the place form's cover slots were reworked to own their own picks. The Home hero was redesigned further in the same pass, to a dark cinematic treatment rather than the brand-green wash.
+
+### Cover video on both landing heroes
+
+- Both heroes gained the same `<video autoPlay muted loop playsInline preload="auto">` element — `/Home page cover.mp4` on Home, `/My day plan page cover.mp4` on My plan — `object-cover`, `absolute inset-0`, and marked `aria-hidden`
+- `autoPlay` is paired with `muted` and `playsInline`, the combination iOS Safari and Chrome Android require before they will start a background video
+- Each section keeps a solid background behind the video, so a file that fails to load still leaves a finished hero, and the copy sits last in a `relative` wrapper so nothing can ever cover it
+
+### My plan hero — full visible screen height
+
+- **`VisitPlanPage.jsx`**: the hero changed from fixed padding (`py-12 sm:py-16`) to `min-h-[calc(100svh-4.5rem)] md:min-h-[calc(100svh-4rem)]` with `flex items-center`, so it occupies exactly the screen area left below the sticky header when a visitor lands
+  - The header is `sticky top-0` with `py-3` and an `h-11` drawer button on phones, so it measures ~69px below `md` and ~61px from `md` up — the two `calc()` values round those to 72px / 64px and deliberately undershoot by a few pixels, which keeps the "no scroll needed to see the whole hero" behaviour even when a phone URL bar resizes the viewport
+  - `100svh` (not `100vh`) is used so mobile browsers with a collapsing address bar never push the hero past the fold
+- Its green wash was lightened from `from-brand-dark/95 via-brand/85 to-teal-500/75` to **`from-brand-dark/75 via-brand/55 to-teal-500/40`**
+
+### Home hero — redesigned to a cinematic dark treatment
+
+- **`HomePage.jsx`** was reworked further in the same pass: the section is now `min-h-[70svh] md:min-h-[75svh]` on `bg-slate-900`, with a `from-slate-900/80 via-slate-900/55 to-slate-900/85` overlay **instead of** the brand-green gradient, so the cover video is what carries the colour
+- The previously empty hero area now shows four floating glass highlight cards (`HERO_HIGHLIGHTS` — Beaches, Gardens, Temples, Waterfalls; each an icon, a label and a line on its own tinted gradient chip), a `HERO_STATS` row (25 km / 50+ / 100% / Free) and dual CTA buttons
+- The cards are driven by `lucide-react` icons (`Waves`, `Trees`, `Sun`, `Mountain`, plus `MapPin`, `Clock`, `Compass`, `Camera`)
+- The hero title and subtitle stay admin-editable through `usePageContent('home', …)` exactly as before
+
+### Green wash — lightened until the video reads through
+
+- **My plan** hero wash: `from-brand-dark/95 via-brand/85 to-teal-500/75` → **`from-brand-dark/75 via-brand/55 to-teal-500/40`**; the Home hero left the green wash behind entirely (see above)
+- Footer: **`from-brand-dark/80 via-brand/65 to-teal-500/55`** — kept the strongest of the three because it carries the smallest text
+- Footer text was nudged up to compensate for the lighter wash: column headings `text-white/60` → `/75`, the brand blurb `/80` → `/90`, bottom bar `/70` → `/85`
+- With the wash that light, hero legibility comes from `[text-shadow:0_1px_16px_rgba(0,0,0,0.45)]` on the copy wrapper rather than from darkening the picture again (My plan, Explore and Contact — the Home hero uses its dark overlay instead)
+- The two decorative `bg-white/10` circles were removed from every page hero; the footer keeps its two
+
+### Footer — foter.jpg full bleed behind the whole footer
+
+- **`Footer.jsx`**: `foter.jpg` stretches edge to edge behind the entire footer (`absolute inset-0 h-full w-full object-cover`, `brightness-90` to stop bright photo patches eating the white text) with the green wash over it
+- The image is `loading="lazy"` / `decoding="async"` — it sits below the fold on most pages, so it costs nothing on first paint
+- The footer itself still carries the solid gradient underneath, so a missing or slow image degrades to the previous plain green footer
+- The file comment was rewritten to describe the photo footer rather than the old gradient-only one
+
+### Place form — cover slots now own their pick
+
+- **`AdminPlacesPage.jsx`**: the Explore and Featured cover slots each take exactly one file, store it as a tagged entry (`cover: 'explore' | 'featured'`) that replaces that slot's previous pick, and can be cleared through the new `dropPendingCover(type)` helper, which also revokes the object URL
+- The upload loop was re-ordered to match what the slots mean: the **Explore cover uploads first and is set as the place's card photo** (`setPlacePrimaryPhoto`), then the **Featured cover**, then the remaining files as ordinary gallery photos
+- On publish, the Explore banner now records the place's **card photo** as `explore_cover` whenever the place owns the banner — the dedicated cover path is no longer tracked separately for it
+- `customFeaturedCoverRemoved` remembers that a custom Featured cover was taken off, so saving again cannot silently fall back to the card photo; picking a new file clears the flag
+- The `coverRecord` state (path + `photo_id` bookkeeping written by `publishPlaceToggles`) and the `image_url` safety net were both removed — the slots render from their own pending entry and the saved place, so a plain edit cannot lose or misplace a cover
+- The "at most 10 photos" check now runs **after** cover handling, so choosing a cover no longer counts against the gallery quota
+
+### New public assets
+
+| File | Size |
+| --- | --- |
+| `My day plan page cover.mp4` | 39.1 MB |
+| `Home page cover.mp4` | 9.1 MB |
+| `foter.jpg` | 1.9 MB |
+
+- All three returned `200` with `video/mp4` / `image/jpeg` from the running dev server on `:5173`
+- **Carry-forward note — still heavy.** The two videos add ~48 MB that a visitor downloads to watch a looping background. Re-encoding was attempted (a static `ffmpeg` via npm into the temp folder) but the install never finished, and no `ffmpeg` binary exists on this machine, so the originals ship as they are. A 720p H.264 re-encode at a low bitrate would land both in the 2-5 MB range at the same visual quality; `My day plan page cover.mp4` at 39 MB is the priority, since that is the file the user asked to match against the 1.1 MB Contact cover.
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 16:40 - Home hero simplified to a centred cinematic block
+
+- **`HomePage.jsx`** (`+29 / −110`): the floating glass category cards (`HERO_HIGHLIGHTS` — Beaches, Gardens, Temples, Waterfalls), the `HERO_STATS` row (25 km / 50+ / 100% / Free) and the dual CTA buttons were all removed from the hero
+- The hero copy is now a single centred column (`max-w-5xl`, `text-center`) over the same `bg-slate-900` section, `from-slate-900/80 via-slate-900/55 to-slate-900/85` overlay and cover video
+- The title uses a fluid `text-[clamp(0.85rem,3.4vw,1.15rem)]` climbing to `xl:text-[3.25rem]` with `whitespace-nowrap`, so it holds one line at every width; the subtitle keeps its `max-w-2xl` measure
+- The copy block carries `[text-shadow:0_2px_24px_rgba(0,0,0,0.65)]` — stronger than the first pass, since the overlay behind the text is lighter
+- `lucide-react` imports trimmed to the icons the rest of the page still uses (`MapPin`, `Clock`, `Compass`, `Camera`); `Sun`, `Trees`, `Waves` and `Mountain` left with the cards
+- Padding tightened to `py-12`; `min-h-[70svh] md:min-h-[75svh]` unchanged
+- Still admin-editable: `hero_title` and `hero_subtitle` keep coming from `usePageContent('home', …)`
+
+### Carried in the previous commit, still not wired
+
+- **`HeroLocationCarousel.jsx`** (244 lines) is not imported by any component — the hero's own comment refers to an "interactive location card carousel", so it reads as the next piece to drop in. Nothing renders it yet, and the build is unaffected.
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+
+---
+
+## 2026-10-21 16:58 - Every public hero cover is now editable from the admin
+
+The four bundled covers stopped being hard-coded: each page reads a `hero_cover` section from page content first and only falls back to its bundled asset, so the admin can swap any hero for a photo or a video without touching the code.
+
+### Backend — a cover upload endpoint
+
+- **`contentRoutes.js`**: `POST /api/content/:page/cover`, guarded by `requireAuth` + `quotaGate` + `uploader.single('cover')` — the same multer middleware the place gallery already uses, so covers count against the same storage quota
+- **`contentController.js`**: new `uploadCover` returns `{ success: true, data: { url: '/uploads/places/<filename>' } }`, and a 400 when no file arrived. Files land in `backend/uploads/places/` next to the place photos
+- Both imports were checked against `middleware/upload.js` — `uploader` and `quotaGate` are both exported there
+
+### Frontend service
+
+- **`contentService.js`**: `uploadPageCover(page, file)` — multipart POST that resolves to the stored URL
+
+### The four public pages
+
+- Each reads `get('hero_cover')` first, then falls back to its bundled asset, so a fresh database behaves exactly as before
+- **Home and My plan**: a cover ending `.mp4` / `.webm` (or an empty value) renders the `<video>`; anything else renders an `<img>` — so either hero can be switched from video to a still photo. `key={cover}` forces a remount when the cover changes, which restarts a swapped-in video
+- **Explore and Contact**: `hero_cover` wins, then the legacy `explore_cover`, then the bundled `.jpg` / `.webp`
+
+### `AdminContentPage.jsx` — reworked (577 changed lines)
+
+- All four page configs now carry a `defaultCover`, matching the file each page falls back to, and the intro copy tells the admin it is editing "hero cover media"
+- The editor leads with a **Hero cover** block inside the single card: a live `aspect-video` preview (autoplaying when the cover is a video) showing the current path and a **Custom cover** / **Default bundled cover** badge
+- Three actions underneath: **Upload a photo** (`accept="image/jpeg,image/png,image/webp,image/avif"`), **Choose from place photos** (expanding gallery of every distinct place image, "tap any photo to set it as this page's hero cover") and **Reset to default**, which clears `hero_cover` back to the bundled file
+- Saving writes `hero_title`, `hero_subtitle` and `hero_cover`; on the Explore page it also mirrors `hero_cover` into the legacy `explore_cover` key, so any reader still using the old key stays correct
+
+### Repository changes carried in this commit
+
+- Place images churned in `backend/uploads/places/`: `20018a92…` → `47ad52d0…`, `3aa8314c…` → `bcc63b97…`, `7a051c20…` → `7a389b64…` — the same bytes under fresh UUID names (git records all three as 100% renames), i.e. identical covers re-uploaded through the new endpoint while exercising the editor
+
+### Verification
+
+- `npx oxlint src` shows only pre-existing warnings and `npm run build` green
+- `node --check` passes on `contentController.js` and `contentRoutes.js`
+
+---
+
+_(Entries below are appended as further steps complete.)_

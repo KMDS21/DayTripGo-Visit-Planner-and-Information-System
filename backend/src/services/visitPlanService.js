@@ -1,6 +1,7 @@
 // Visit Plan Service — session-based one-day plan management (SRS FR-10…FR-13, NFR-7).
 
 const visitPlanModel = require('../models/visitPlanModel');
+const { withCoords } = require('./placeService');
 
 function httpError(status, message) {
   const err = new Error(message);
@@ -18,11 +19,18 @@ async function getPlan(planId) {
   const { data, error } = await visitPlanModel.findWithItems(planId);
   if (error) throw httpError(500, `Failed to load visit plan: ${error.message}`);
   if (!data) throw httpError(404, 'Visit plan not found.');
-  // Flatten nested rows: keep the ordered items with their place details.
-  const items = (data.visit_plan_items || [])
-    .slice()
-    .sort((a, b) => a.visit_order - b.visit_order)
-    .map(({ visit_plan_items, places, ...item }) => ({ ...item, place: places }));
+  // Flatten nested rows: keep the ordered items with their place details
+  // (withCoords derives lat/lng from the place's Google Maps link — the
+  // coordinate columns no longer exist in the schema).
+  const items = await Promise.all(
+    (data.visit_plan_items || [])
+      .slice()
+      .sort((a, b) => a.visit_order - b.visit_order)
+      .map(async ({ visit_plan_items, places, ...item }) => ({
+        ...item,
+        place: places ? await withCoords(places) : places,
+      }))
+  );
   return { ...data, visit_plan_items: items };
 }
 

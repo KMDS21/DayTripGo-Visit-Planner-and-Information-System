@@ -29,7 +29,7 @@ export default function Modal({ open, title, onClose, children, wide = false }) 
         className={`max-h-[90vh] w-full ${wide ? 'max-w-3xl' : 'max-w-md'} overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900`}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-heading text-xl font-bold">{title}</h2>
+          <h2 className="text-xl font-bold">{title}</h2>
           <button
             type="button"
             onClick={onClose}

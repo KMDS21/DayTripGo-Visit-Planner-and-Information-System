@@ -51,12 +51,8 @@ export default function AdminLoginPage() {
       <div className="overflow-hidden rounded-3xl border border-border bg-card/95 shadow-xl ring-1 ring-brand/10 backdrop-blur">
         <div className="p-6 sm:p-8">
           {/* Brand row — same card surface as the form, no separate colour strip */}
-          <div className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-4">
-            <Link
-              to="/"
-              aria-label="DayTripGO home"
-              className="flex items-center rounded-xl border border-border bg-background px-3 py-1.5 shadow-sm"
-            >
+          <div className="mb-5 flex flex-wrap items-center justify-center gap-3 border-b border-border pb-4">
+            <Link to="/" aria-label="DayTripGO home" className="flex items-center">
               <img src="/Logo.png" alt="DayTripGO" className="h-8 w-auto" />
             </Link>
             <span className="text-xs font-bold uppercase tracking-[0.22em] text-brand-dark sm:text-sm">

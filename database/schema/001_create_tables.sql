@@ -31,10 +31,14 @@ create table if not exists places (
     description   text          not null,
     opening_hours varchar(100),
     travel_tips   text,
-    distance_km   decimal(4,1)  not null check (distance_km >= 0),
-    latitude      decimal(9,6)  not null check (latitude between -90 and 90),
-    longitude     decimal(9,6)  not null check (longitude between -180 and 180),
+    -- distance_km was removed in migration 006: the site no longer shows or
+    -- stores a distance from Wadduwa.
+    -- Coordinates were removed in migration 003: the location now lives in
+    -- one optional google_maps_url link pasted by the admin.
     image_url     text,
+    -- Publish switch (migration 005): unpublished places are hidden from the
+    -- public list until the admin publishes them again.
+    published     boolean     not null default true,
     created_by    integer       references admins (admin_id),
     created_at    timestamptz   not null default now(),
     updated_at    timestamptz   not null default now()

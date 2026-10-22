@@ -8,7 +8,6 @@ import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Common/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
-import { useVisitPlan } from './hooks/useVisitPlan';
 import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
 import PlaceDetailPage from './pages/PlaceDetailPage';
@@ -16,6 +15,9 @@ import VisitPlanPage from './pages/VisitPlanPage';
 import ContactPage from './pages/ContactPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminPlacesPage from './pages/AdminPlacesPage';
+import AdminContentPage from './pages/AdminContentPage';
+import AdminMessagesPage from './pages/AdminMessagesPage';
 
 function NotFoundPage() {
   return (
@@ -97,6 +99,34 @@ function ChevronIcon({ collapsed }) {
   return (
     <svg {...ICON} className="h-4 w-4 shrink-0">
       {collapsed ? <path d="M9 18l6-6-6-6" /> : <path d="M15 18l-6-6 6-6" />}
+    </svg>
+  );
+}
+
+function PageIcon() {
+  return (
+    <svg {...ICON}>
+      <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 13h6M9 17h6" />
+    </svg>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <svg {...ICON}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7.5l9 6 9-6" />
+    </svg>
+  );
+}
+
+function PlacesIcon() {
+  return (
+    <svg {...ICON}>
+      <path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
     </svg>
   );
 }
@@ -227,13 +257,37 @@ function AdminMobileBar() {
             <DashboardIcon />
             Dashboard
           </NavLink>
-          <NavLink to="/" end onClick={() => setOpen(false)} className={drawerLinkClass}>
-            <ExploreIcon />
-            Explore
+          <NavLink to="/admin/places" onClick={() => setOpen(false)} className={drawerLinkClass}>
+            <PlacesIcon />
+            Attractive Places
           </NavLink>
-          <NavLink to="/visit-plan" onClick={() => setOpen(false)} className={drawerLinkClass}>
+
+          <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Edit pages
+          </p>
+          <NavLink to="/admin/pages/home" onClick={() => setOpen(false)} className={drawerLinkClass}>
+            <PageIcon />
+            Home page
+          </NavLink>
+          <NavLink to="/admin/pages/explore" onClick={() => setOpen(false)} className={drawerLinkClass}>
+            <ExploreIcon />
+            Explore page
+          </NavLink>
+          <NavLink to="/admin/pages/plan" onClick={() => setOpen(false)} className={drawerLinkClass}>
             <PlanIcon />
-            My Day Plan
+            My Day Plan page
+          </NavLink>
+          <NavLink to="/admin/pages/contact" onClick={() => setOpen(false)} className={drawerLinkClass}>
+            <PageIcon />
+            Contact us page
+          </NavLink>
+
+          <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Responses
+          </p>
+          <NavLink to="/admin/messages" onClick={() => setOpen(false)} className={drawerLinkClass}>
+            <MessageIcon />
+            Contact responses
           </NavLink>
         </nav>
 
@@ -255,7 +309,6 @@ function AdminMobileBar() {
 }
 
 function AdminLayout({ children }) {
-  const { count } = useVisitPlan();
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
@@ -309,20 +362,49 @@ function AdminLayout({ children }) {
               <DashboardIcon />
               {!collapsed && 'Dashboard'}
             </NavLink>
-            <NavLink to="/" end className={sideLinkClass}>
-              <ExploreIcon />
-              {!collapsed && 'Explore'}
-            </NavLink>
-            <NavLink to="/visit-plan" className={sideLinkClass}>
-              <PlanIcon />
-              {!collapsed && 'My Day Plan'}
-              {!collapsed && count > 0 && (
-                <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">
-                  {count}
-                </span>
-              )}
+            <NavLink to="/admin/places" className={sideLinkClass}>
+              <PlacesIcon />
+              {!collapsed && 'Attractive Places'}
             </NavLink>
           </nav>
+
+          {/* Edit content — one entry per public page */}
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Edit pages
+              </p>
+            )}
+            <NavLink to="/admin/pages/home" className={sideLinkClass}>
+              <PageIcon />
+              {!collapsed && 'Home page'}
+            </NavLink>
+            <NavLink to="/admin/pages/explore" className={sideLinkClass}>
+              <ExploreIcon />
+              {!collapsed && 'Explore page'}
+            </NavLink>
+            <NavLink to="/admin/pages/plan" className={sideLinkClass}>
+              <PlanIcon />
+              {!collapsed && 'My Day Plan page'}
+            </NavLink>
+            <NavLink to="/admin/pages/contact" className={sideLinkClass}>
+              <PageIcon />
+              {!collapsed && 'Contact us page'}
+            </NavLink>
+          </div>
+
+          {/* Responses — Contact us inbox */}
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Responses
+              </p>
+            )}
+            <NavLink to="/admin/messages" className={sideLinkClass}>
+              <MessageIcon />
+              {!collapsed && 'Contact responses'}
+            </NavLink>
+          </div>
         </div>
 
         <div className="space-y-3 border-t border-border pt-4">
@@ -377,6 +459,39 @@ export default function App() {
             <ProtectedRoute>
               <AdminLayout>
                 <AdminDashboardPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Place management — Add / Edit / Delete + image upload */}
+        <Route
+          path="/admin/places"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminPlacesPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Per-page content editors (Home / Explore / My Day Plan / Contact) */}
+        <Route
+          path="/admin/pages/:page"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminContentPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Contact us responses */}
+        <Route
+          path="/admin/messages"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminMessagesPage />
               </AdminLayout>
             </ProtectedRoute>
           }

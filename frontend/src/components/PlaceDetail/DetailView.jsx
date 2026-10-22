@@ -1,17 +1,13 @@
 // DetailView — full place detail (SRS FR-5: description, opening hours, travel
-// tips, distance · FR-6: add-to-plan control · FR-7: photo · FR-8/9: map).
+// tips · FR-6: add-to-plan control · FR-7: photo · FR-8/9: map).
 
 import Badge from '../Common/Badge';
 import Button from '../Common/Button';
 import PhotoGallery from './PhotoGallery';
 import MapEmbed from '../MapView/MapEmbed';
-import { formatDistance } from '../../utils/formatDistance';
 import { normaliseHours } from '../../utils/formatHours';
-import { isOpenFromText } from '../../utils/isOpenNow';
 
 export default function DetailView({ place, categoryName, inPlan, onAdd, added }) {
-  const open = isOpenFromText(place.opening_hours);
-
   return (
     <article className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-5">
@@ -19,11 +15,10 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
         <MapEmbed latitude={place.latitude} longitude={place.longitude} name={place.name} />
       </div>
 
-      <div className="space-y-5">
+      {/* pb-24 on phones keeps the last block clear of the fixed action bar */}
+      <div className="space-y-5 pb-24 lg:pb-0">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="category">{categoryName || 'Place'}</Badge>
-          <Badge variant="distance">{formatDistance(place.distance_km)} from Wadduwa</Badge>
-          {open !== null && <Badge variant={open ? 'open' : 'closed'}>{open ? 'Open now' : 'Closed'}</Badge>}
         </div>
 
         <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{place.name}</h1>
@@ -62,10 +57,6 @@ export default function DetailView({ place, categoryName, inPlan, onAdd, added }
           </Button>
           {added && <span className="text-sm font-semibold text-brand">Added!</span>}
         </div>
-
-        <p className="pb-24 text-xs text-muted-foreground lg:pb-0">
-          Planning only. DayTripGO does not book or sell anything.
-        </p>
       </div>
     </article>
   );

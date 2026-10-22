@@ -1,13 +1,12 @@
 // PlanList — consolidated one-day plan view (SRS FR-12) with reorder (FR-13)
-// and remove (FR-11). Shows the running total distance between selected places.
+// and remove (FR-11).
 
 import { Link } from 'react-router-dom';
 import Button from '../Common/Button';
 import DragReorder from './DragReorder';
 import PlanItem from './PlanItem';
-import { formatDistance } from '../../utils/formatDistance';
 
-export default function PlanList({ items, totalDistance, onMove, onRemove, onClear }) {
+export default function PlanList({ items, onMove, onRemove, onClear }) {
   if (!items.length) {
     return (
       <div className="rounded-3xl border border-dashed border-border px-6 py-16 text-center">
@@ -26,8 +25,7 @@ export default function PlanList({ items, totalDistance, onMove, onRemove, onCle
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-light px-5 py-4 lg:sticky lg:top-0 lg:z-10">
         <p className="text-sm text-brand-dark">
-          <span className="font-bold">{items.length}</span> place{items.length > 1 ? 's' : ''} in your day plan ·
-          roughly <span className="font-bold">{formatDistance(totalDistance)}</span> of travel
+          <span className="font-bold">{items.length}</span> place{items.length > 1 ? 's' : ''} in your day plan
         </p>
         {/* Soft-red button (light tint + red text, was a faint ghost link) so the
             clear action is clearly visible without a heavy solid red; sticky at
