@@ -1,14 +1,18 @@
 // VisitPlanPage — /visit-plan (SRS FR-10…FR-13, NFR-7 session-based).
-// Layout: stacked and full width on phones/tablets (route map first, plan list
-// below) so both are clearly visible on small screens; on large screens the
-// ordered plan list sits left and the live route map right, with the map column
-// sticking while the list scrolls. An empty plan shows only the empty-state card.
+// Features:
+// 1) First section: starting location input (auto GPS detect or address search)
+// 2) Road-based route calculation & real-time travel time & distance via OSRM
+// 3) Interactive Leaflet map with road line geometry & numbered stops
+// 4) Reorderable stop list & Google Maps live navigation export
 
+import { useState } from 'react';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
 import usePageContent from '../hooks/usePageContent';
 import PlanList from '../components/VisitPlan/PlanList';
 import PlanRouteMap from '../components/VisitPlan/PlanRouteMap';
+import UserLocationInput from '../components/VisitPlan/UserLocationInput';
+import RouteSummary from '../components/VisitPlan/RouteSummary';
 import Loader from '../components/Common/Loader';
 
 export default function VisitPlanPage() {
@@ -20,13 +24,13 @@ export default function VisitPlanPage() {
   });
   const { items, loading, moveItem, removePlace, clearPlan } = useVisitPlan();
 
+  const [userLocation, setUserLocation] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
+
   return (
-    <div className="space-y-10 pb-8">
-      {/* Hero — compact cover matching the Contact page size: cover video
-          under a dark cinematic wash so the white copy stays readable (the
-          dark background remains as the fallback if the video never arrives). */}
+    <div className="space-y-8 pb-12">
+      {/* Hero — compact cover video/image */}
       <section className="relative overflow-hidden rounded-b-[2.5rem] bg-slate-900 px-4 py-12 text-white sm:px-6 sm:py-16">
-        {/* Cover video or image */}
         {(() => {
           const cover = get('hero_cover');
           const isVideo = !cover || cover.endsWith('.mp4') || cover.endsWith('.webm');
@@ -66,14 +70,13 @@ export default function VisitPlanPage() {
         </div>
       </section>
 
-      {/* Layout: mobile/tablet stacked and full width (route map first, plan list
-          below) so both stay clearly visible; large screens list left, map right. */}
+      {/* Main Content Area */}
       {loading ? (
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl px-4">
           <Loader label="Loading your plan…" />
         </div>
       ) : items.length === 0 ? (
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl px-4">
           <PlanList
             items={items}
             onMove={moveItem}
@@ -82,20 +85,51 @@ export default function VisitPlanPage() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2 lg:gap-8">
-          {/* At lg+ the list scrolls inside its height (aligned with the map
-              column: map h-[560px] + directions button row) so a long plan never
-              pushes the map off screen; below lg it flows full width instead. */}
-          <div className="order-2 min-w-0 lg:order-1 lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
-            <PlanList
-              items={items}
-              onMove={moveItem}
-              onRemove={removePlace}
-              onClear={clearPlan}
+        <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
+          {/* First Section: User Starting Location & Route Summary */}
+          <section className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+            <UserLocationInput
+              location={userLocation}
+              onLocationChange={setUserLocation}
             />
-          </div>
-          <div className="order-1 min-w-0 lg:order-2 lg:sticky lg:top-24">
-            <PlanRouteMap items={items} />
+            {routeInfo ? (
+              <RouteSummary
+                distance={routeInfo.distance}
+                duration={routeInfo.duration}
+                stops={items.length}
+                loading={routeInfo.loading}
+                hasUserLocation={Boolean(userLocation)}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/40 p-5 text-center text-muted-foreground">
+                <p className="text-sm font-semibold text-foreground">Interactive Road Routing</p>
+                <p className="mt-1 text-xs max-w-xs">
+                  Set your starting point above or view driving distance and times calculated across your stops.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* Second Section: Ordered Plan List + Sticky Live Route Map */}
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2 lg:gap-8">
+            {/* Left: Reorderable stop list */}
+            <div className="order-2 min-w-0 lg:order-1 lg:max-h-[38rem] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+              <PlanList
+                items={items}
+                onMove={moveItem}
+                onRemove={removePlace}
+                onClear={clearPlan}
+              />
+            </div>
+
+            {/* Right: Road-based Map */}
+            <div className="order-1 min-w-0 lg:order-2 lg:sticky lg:top-24">
+              <PlanRouteMap
+                items={items}
+                userLocation={userLocation}
+                onRouteCalculated={setRouteInfo}
+              />
+            </div>
           </div>
         </div>
       )}
