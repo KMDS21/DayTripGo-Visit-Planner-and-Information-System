@@ -10,7 +10,7 @@
 | ---- | ----- | ----- | ---- | ------ |
 | 1 | Unit | 12 files / **116 tests** (backend 62 · frontend 54) | Green in <10 s, no network | ✅ **Done** — `npm run test:unit` both apps, ~9.5 s |
 | 2 | Integration | 5 files / **21 tests** — real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ✅ **Done** — `npm run test:integration`, ~29 s per run |
-| 3 | API | supertest contracts over all 8 route groups | Green, auth matrix proven | ⬜ Not started |
+| 3 | API | 3 files / **16 tests** — supertest over the real `app.js`, auth matrix | Green, auth matrix proven | ✅ **Done** — `npm run test:api`, ~25 s per run |
 | 4 | Smoke | Playwright: whole stack boots, 5 pages render | One command = app green/red | ⬜ Not started |
 | 5 | Load | autocannon, read-only endpoints | p99 < 500 ms, errors <1 % | ⬜ Not started |
 
@@ -41,7 +41,7 @@
 "test":         "npm run test:unit",              // steps 2–3 extend this chain
 "test:unit":    "jest tests/unit",
 "test:integration": "jest tests/integration --runInBand",  // added in step 2
-"test:api":     "jest tests/api"                  // added in step 3
+"test:api":     "jest tests/api --runInBand"       // added in step 3
 
 // frontend/package.json
 "test":         "npm run test:unit",
@@ -60,7 +60,7 @@ backend/
   tests/setup.js                 ✅ loads backend/.env first, then dummy fallbacks (step 2)
     unit/                        ✅ 6 suites (utils, middleware, mocked service)
     integration/                 ✅ 5 files (places, categories, content, messages, visit plans)
-    api/                         ⬜ step 3
+    api/                         ✅ 3 files (health+reads, auth matrix, write contracts)
 frontend/
   vitest.config.js               ✅ jsdom + pool vmThreads (16.9s → 6.3s)
   tests/setup.js                 ✅ jest-dom matchers
@@ -72,7 +72,7 @@ docs/testing/
   TESTING-PLAN.md                ✅ this file
   01-unit-testing.md             ✅
   02-integration-testing.md      ✅
-  03-api-testing.md              ⬜
+  03-api-testing.md              ✅
   04-smoke-testing.md            ⬜
   05-load-testing.md             ⬜
 ```
@@ -92,12 +92,12 @@ docs/testing/
 - **Infra trap solved**: `tests/setup.js` now loads `backend/.env` **before** the dummy fallbacks — dotenv never overrides set variables, so the step-1 dummies would have shadowed the real credentials and pointed the suite at a fake URL.
 - **Gate**: ✅ 21 tests, green twice consecutively (~29 s), units still 62/62, build + lint green. **Doc**: `02-integration-testing.md`.
 
-### Step 3 — API
+### Step 3 — API ✅
 - `backend/tests/api/` (supertest vs `app.js` — it exports the app without listening):
-  - `GET /api/health` contract; public reads (200 + shape) on places/categories/content
-  - **Auth matrix**: 401 no token / 403 garbage token / 200 valid JWT (login with seeded admin, or mint via `tokenUtils` + `JWT_SECRET`)
-  - Validation 400s through `validatePlace`/`validatePlanItems`; unknown route → 404 via central `errorHandler` shape
-- **Gate**: green; writes only to `IT-*` fixtures. **Doc**: `03-api-testing.md`.
+  - `GET /api/health` contract; public reads (200 + `{ success, count, data }` envelope) on places/categories/content; unmatched route → Express HTML 404 (no JSON catch-all exists)
+  - **Auth matrix**: every credential failure is **401** (no header, bare `Bearer`, wrong scheme, garbage token, foreign-secret JWT) — **this codebase has no 403 path**; valid tokens proven both minted (`tokenUtils` + real `JWT_SECRET`) and issued (`POST /api/auth/login` against env-override-or-seeded creds)
+  - Write contracts: `validatePlace`/`validatePlanItems` 400 envelopes, place create→update→publish-switch→delete over HTTP, `?scope=admin` JWT-gated, messages inbox flow, content PUT + public readback — writes IT-tagged, cleaned in `afterAll`
+- **Gate**: ✅ 16 tests, green twice consecutively (~25 s), auth matrix proven, units 62/62, build + lint green. **Doc**: `03-api-testing.md`.
 
 ### Step 4 — Smoke
 - Install `@playwright/test` + Chromium; boot backend (:5000) + `vite build && vite preview` as Playwright `webServer`s.
@@ -132,7 +132,7 @@ docs/testing/
 
 - [x] Step 1 — unit suites green (116 tests) + `01-unit-testing.md`
 - [x] Step 2 — integration green twice (21 tests) + `02-integration-testing.md`
-- [ ] Step 3 — API contracts green + `03-api-testing.md`
+- [x] Step 3 — API contracts green (16 tests) + `03-api-testing.md`
 - [ ] Step 4 — smoke green + `04-smoke-testing.md`
 - [ ] Step 5 — load report under thresholds + `05-load-testing.md`
 - [ ] 5 integration-log entries, 5 commits on `testing`, pushed on instruction

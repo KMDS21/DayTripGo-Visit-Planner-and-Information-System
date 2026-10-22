@@ -1507,3 +1507,34 @@ Step 2 of the five-layer rollout (unit → integration → API → smoke → loa
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:30 - Test-suite rollout step 3 of 5: API contracts and the auth matrix through the real Express app (16 tests)
+
+Step 3 of the five-layer rollout, committed on the **`testing`** branch as one single commit. The suite runs **supertest against `src/app.js`** — the real routes → controllers → services → live Supabase chain over HTTP, with no server process (`app.js` exports the app without listening).
+
+### Backend suite — `backend/tests/api/` (3 files, 16 tests, `--runInBand`)
+
+- **`healthAndReads.api.test.js`**: `/api/health` contract (service name, parseable timestamp); the `{ success, count, data }` envelope on places/categories with `count === data.length`; proof that the public list **never leaks unpublished places**; category filter + unknown category → empty 200, not an error; place detail + 404 envelope; content sections map + unknown-page 404; unmatched routes → Express's own HTML 404
+- **`auth.api.test.js`**: login contract **400 / 401 / 200** (missing credentials / wrong password / correct — with the issued token verified as a real JWT against `JWT_SECRET`); the full credential-failure matrix on `GET /api/messages`; `/api/admin/stats` JWT-guarded (401 → 200); logout 401 → 200. Credentials mirror `authService`'s own precedence — `ADMIN_USERNAME`/`ADMIN_PASSWORD` from `backend/.env` when both are set, else the seeded `admin` account
+- **`writeContracts.api.test.js`**: places over HTTP — 401 without JWT → `validatePlace` 400 envelopes (missing fields listed together, non-Maps link rejected) → 201 create with coordinates derived from the link → 200 update → publish switch (non-boolean → 400; hide/re-show proven across the public list vs `?scope=admin`, which is itself JWT-gated) → 200 delete → 404 afterwards; messages 400/201 + inbox 401→200 → mark-read → delete → 404; content PUT 401→200 with public readback; visit plans 201/400 (non-array, malformed item) + ordered round-trip + unknown-plan 404. All writes IT-tagged, cleaned in `afterAll` via the Supabase client
+
+### Two honest corrections to the plan sketch
+
+- **There is no 403 in this API.** The plan (and step-2's "Next" note) sketched "401 / 403 / 200", but `requireAuth` answers **401 for every credential failure** — missing header, bare `Bearer`, wrong scheme, garbage token, foreign-secret JWT. The matrix asserts the real 401/401/200 behaviour and `03-api-testing.md` records why
+- **Unmatched routes are not the JSON envelope**: with no catch-all, Express's default HTML `Cannot GET /api/…` 404 is what a client receives — the central `errorHandler` `{ success: false, message }` shape only covers thrown service errors
+
+### Verification
+
+- `npm run test:api`: **3 suites / 16 tests green, ~25 s**, run **twice consecutively** — exit 0 both times; the morgan access log doubles as a trace (every asserted status visible in the output)
+- Backend units still **62/62** (~2.2 s); step-2 integration suite untouched
+- `npm run build` and `npm run lint` remain green
+- New script: `test:api` = `jest tests/api --runInBand`; doc `docs/testing/03-api-testing.md`; plan status board updated
+- Token strategy: half the matrix mints JWTs directly with `tokenUtils.signToken` + the real `JWT_SECRET` (no admin seeding needed), half exercises the real login flow
+
+### Next
+
+- **Step 4 — smoke**: Playwright boots the whole stack (backend + built frontend as `webServer`s) and proves `/`, `/explore`, `/visit-plan`, `/contact`, `/admin` render without console errors
+
+---
+
+_(Entries below are appended as further steps complete.)_
