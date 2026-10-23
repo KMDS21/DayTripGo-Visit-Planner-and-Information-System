@@ -16,7 +16,7 @@ const categories = ['Religious', 'Nature', 'Heritage', 'Cultural'];
 
 export default function Footer() {
   return (
-    <footer className="relative mt-16 overflow-hidden rounded-t-[2.5rem] bg-slate-900 text-white">
+    <footer className="relative mt-6 sm:mt-8 overflow-hidden rounded-t-[2.5rem] bg-slate-900 text-white">
       {/* Photo layer first, then a dark wash over it — the slate-900 above
           stays on the footer itself, so a missing/slow foter.jpg still leaves
           a solid dark footer. */}
@@ -41,7 +41,7 @@ export default function Footer() {
           <img src="/Logo.png" alt="DayTripGO" className="h-10 w-auto rounded-xl bg-white px-3 py-2" />
           <p className="mt-3 text-sm leading-relaxed text-white/90">
             One perfect day around Wadduwa, with verified places of interest within 25 km,
-            opening times and practical tips, plus a simple one-day
+            opening times and practical tips, plus a simple one day
             plan builder.
           </p>
         </div>

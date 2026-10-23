@@ -1286,3 +1286,126 @@ Seven rounds of polish on the public pages, all hanging off one idea: what a vis
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 13:52 - "How DayTripGO works" rebuilt as borderless glass panes in a single row; wider tagline; copy de-hyphenated
+
+Developer asks this round, verbatim: *"analyis and add more glass effect to box in How DayTripGO works"*, *"in line"*, *"add more width to it"*, *"remove box border"*.
+
+### Analysis — why the first pass didn't read as glass
+
+- The cards were `bg-white/10 + border-white/20 + backdrop-blur-xl` with a single top glare: blur alone gives a *tinted panel*, not glass
+- Glassmorphism needs four cues together — **refraction** (strong blur), **colour pickup** (saturation, so the photo behind tints through), a **gradient pane body** (light falling across the sheet, not a flat fill) and **specular highlights** (lit edges/streaks)
+
+### The panes today (`HomePage.jsx`, "How it works" step cards)
+
+- **Pane body**: `bg-gradient-to-b from-white/25 via-white/12 to-white/8` replaces the flat `bg-white/10`
+- **Refraction + colour**: `backdrop-blur-2xl` (64px) upgraded from `blur-xl`, plus `backdrop-saturate-150` — the classic glassmorphism saturation boost
+- **Highlights**: top glare strengthened (`from-white/45 via-white/10`), a new diagonal sheen layer (`-rotate-12`, `via-white/20`, `blur-md`) that slides across on hover, and an `inset 0 1px 0 rgba(255,255,255,0.55)` top-edge light in the shadow stack
+- **Hover**: pane turns `bg-white/25`, drops a deeper shadow; transition `duration-300` → `duration-500` to match walkerstours.com's `transition: all 0.5s`
+
+### "in line" — one row at every width
+
+- Grid went `sm:grid-cols-3` → **`grid-cols-3`**: the three steps are always side by side, never stacked
+- Type and padding scale down instead of the layout collapsing: card `p-3 sm:p-8`, gap `gap-2.5 sm:gap-5`, title `text-[13px] → sm:text-lg → md:text-xl`, body `text-[10px] → sm:text-sm`
+- Accepted trade-off: body copy is 10px on a ~390px phone (mirrors the hero's clamped title approach); widening the window restores `sm` sizes
+
+### "add more width to it" — the tagline measure
+
+- The title/subtitle wrapper went `max-w-2xl` → **`max-w-3xl`** (672px → 768px), so *"Three steps from landing on this page to standing in front of something worth the trip."* (~730px at `sm:text-lg`) reads as one line from `sm` up instead of breaking early
+
+### "remove box border"
+
+- Dropped `border border-white/35` and `hover:border-white/35`/`60` from the cards, **and** the inset `ring-1 ring-inset ring-white/30` overlay that drew the same outline — a leftover ring would have kept a visible edge
+- The panes now separate from the photo by light (gradient + glare + shadow) rather than by a line
+- Deliberately kept: the ghost hero CTA's `border-white/40` — that is a button outline, not a box
+
+### Photo backdrop + copy (developer's own working-tree edits, carried in this commit)
+
+- The section's backdrop is now the bundled **`BG - 1.jpg`** (added to the repo in `56ef091`), with the cinematic overlay lightened `from-slate-950/85 via-slate-900/70 to-slate-950/90` → **`from-slate-950/50 via-slate-900/35 to-slate-950/55`** so the scenery shows through the glass
+- Step 3 badge pill removed (`i + 1` number circle) — no numeric affordance on the borderless panes
+- De-hyphenated copy: step 3 title *"Build your one-day plan"* → *"Build your one day plan"*, body *"no sign-up"* → *"no sign up"*, footer blurb *"one-day"* → *"one day"*, and the em dash dropped from the "All places" subtitle
+- Number badges gone also means the `.map((step, i) => …)` index is unused — signature simplified to `(step)`
+
+### Verification & publish
+
+- `npm run build` green (7.80s) and `npm run lint` exit 0 (pre-existing warnings only) against these exact changes; built CSS checked for `backdrop-saturate` / `backdrop-blur` / `grid-cols-3` utilities
+- Round committed as one single commit (log + code) per the convention, then **pushed to origin with `git push -u origin updates`** — first publish of the `updates` branch (it existed locally only until now)
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 14:45 - Hero made readable on phones and vivid on desktop; page rhythm becomes responsive
+
+Developer's own working-tree edits on `HomePage.jsx`, committed here with this entry — a two-sided hero pass: **small screens get real type and real touch targets, large screens get a brighter cover.**
+
+### Title — legible on mobile, still one line from `sm` up
+
+- Was `whitespace-nowrap` with `clamp(0.55rem, 2.5vw, 0.85rem)` — a maximum of **13.6px**, held on one line by shrinking to nothing. Now split by breakpoint:
+  - **< 640px**: `max-w-[15ch]` + `clamp(2rem, 9vw, 2.65rem)` (32–42px) and `leading-[1.06]` — the title wraps over two lines at a readable size instead of being a 13px ribbon
+  - **≥ 640px**: `sm:max-w-none sm:whitespace-nowrap` and the original ladder `sm:text-2xl → md:text-4xl → lg:text-5xl → xl:text-6xl → min-[1440px]:4.25rem → min-[1600px]:4.75rem` — *"One perfect day around Wadduwa"* back to a single line on the desktop the request came from
+- Text shadow strengthened `0_2px_24px …0.65` → `…0.75` to hold contrast over the brighter overlay below
+
+### Cover shows through, text stays legible
+
+- Hero overlay lightened `from-slate-900/75 via-slate-900/55 to-slate-900/90` → **`from-slate-950/40 via-slate-900/20 to-slate-950/65`** — the video/photo now reads vibrantly, with the stronger text-shadow (and the taller bottom stop) carrying WCAG contrast instead of a heavy scrim
+
+### Touch targets and small-screen polish
+
+- **CTAs**: `min-h-[44px]` on both pills (WCAG 2.5.5 target size), `px-6 py-2.5 gap-2`, icons back to `h-4 w-4`; the ghost button's edge strengthened `border-white/40 bg-white/10` → `border-white/50 bg-white/15` (`hover:70/25`) so it doesn't disappear against the brighter video
+- **Subtitle**: `text-[11px]` → `text-xs` and `white/90` → `white/95`, `mt-2.5` → `mt-3`
+- **Scroll cue**: `bottom-4 sm:bottom-6`, label `10px → sm:11px`, chevron `h-4 → sm:h-5`, opacity `60` → `70`
+- **Hero padding**: `py-16` → `py-12` below `sm`, matching the tighter mobile stack
+
+### Page rhythm now scales
+
+- Section gap `space-y-20 … min-[1281px]:space-y-24` → **`space-y-12 sm:space-y-16 lg:space-y-20 min-[1281px]:space-y-24`** — the desktop air stays, phones get 48px instead of 80px between sections
+
+### Verification
+
+- `npm run build` green (5.66s) and `npm run lint` exit 0 (pre-existing warnings only) against these exact edits
+- Committed as one single commit (log + code) per the convention
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
+
+Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.
+
+### Titles move to DM Sans (`f2d83b9`)
+
+- **Developer request**: the heading font must be "best more visible clearly user font" - Playfair Display's thin serifs were losing legibility at body-adjacent sizes, so headings switched to **DM Sans**, the same family walkerstours.com uses
+- **`index.css`**: the Playfair import out, `@fontsource-variable/dm-sans` in, `--font-heading: 'DM Sans Variable', 'Figtree Variable', sans-serif`; added `-webkit-font-smoothing: antialiased`, `font-optical-sizing: auto` and `text-wrap: balance` on `h1`–`h6` so long admin-editable headings break evenly instead of orphaning a word
+- Body copy stays **Figtree** - the contrast between a geometric display sans and a humanist text sans carries the hierarchy now that the serif is gone
+- `@fontsource-variable/playfair-display` is still in `package.json` but nothing imports it (dead dep, left for a later cleanup round)
+- Committed first on its own (developer asked for the font change as its own commit) before the layout work
+
+### Home page scale-up and de-clutter (`7adfe50` + this entry)
+
+- **`7adfe50`**: section headings scaled up (text-3xl/sm:text-4xl baseline), eyebrow tags added above each section, leftover decorative blur circles removed, the hero `whitespace-nowrap` clipping bug fixed, CTAs enlarged, place cards gained a hover lift
+- **Section rhythm**: the wrapper went `space-y-14 pb-8` → `space-y-20 pb-16 min-[1281px]:space-y-24`, then `pb-16` → `pb-2` in this entry - the developer's "too messy" note was vertical crowding, and the fix is fewer, larger blocks with real air between them
+- **All four eyebrow tags removed** (developer: "Remove the redundant tags") - `Why DayTripGO`, `Featured`, `How it works` and `Destinations` are gone; each section now leads with its one big heading, since the heading already said what the tag repeated
+- **Hero title forced onto one line**: the `Wadduwa · Sri Lanka` eyebrow tag dropped (developer: "wadduwa sri lanka is tag remove in page hero"), the `max-w-[20ch]` cap removed and the hero container widened `max-w-4xl` → `max-w-6xl`. The `<h1>` carries `whitespace-nowrap` with a `clamp(0.55rem, 2.5vw, 0.85rem)` base size stepping up through `sm:text-2xl … min-[1600px]:text-[4.75rem]`, so *"One perfect day around Wadduwa"* reads as a single line at every width without overflowing
+- Hero internals tightened to match the smaller title block: subtitle `mt-5` → `mt-2.5` and `text-[11px]` at the smallest width, CTA row `mt-8` → `mt-6` with `px-5 py-2 text-xs` pills growing to `sm:px-8 sm:py-3.5 sm:text-base`
+- **Footer** (`Footer.jsx`): `mt-16` → `mt-6 sm:mt-8` so the home page doesn't throw away a full screen of gap above it
+
+### Road routing on the Visit Plan map (`356b507`)
+
+- **Developer request**: real directions between the start point and the planned stops instead of straight lines
+- **Routing engine**: **OSRM** (free, no API key) + OSM/Leaflet - chosen over the Google Maps JS API so the feature costs nothing and needs no billing account; the Google link survives only as a turn-by-turn *export* (`RouteSummary` builds the `dir=` URL), which needs no key either
+- **`PlanRouteMap.jsx`** (+261): plots the actual driving geometry between the starting point and each ordered stop, a numbered DayTripGO pin per stop, a distinct blue start pin, and live total distance/time while routes resolve
+- **`UserLocationInput.jsx`** (new): one-click browser geolocation or Nominatim address search, resolved to `{ lat, lng, label }` and passed up through `onLocationChange`
+- **`RouteSummary.jsx`** (new): total driving distance and duration in km / min, formatted from the OSRM legs
+- **`VisitPlanPage.jsx`**: start-location input + summary above the reorderable list and the sticky map column
+- Deviations from the earlier plan: `limitBelowXl` stays on the home `PlaceGrid` (only `HomePage` needs the four-card cap), and home category filtering remains local component state so `FeaturedCarousel` keeps reading the global `places` untouched (NFR-3)
+
+### Verification
+
+- `npm run build` green before every commit in this run (`✓ built in 7.40s`, `✓ built in 5.30s`), `npm run lint` exit 0 with warnings only (pre-existing, e.g. `set-state-in-effect` in `PlanRouteMap:129`)
+- Work happened on the **`updates`** branch (created from `admin-panel-second-edition`); recent history: `00af96e` → `f2d83b9` → `7adfe50` → `356b507`
+
+---
+
+_(Entries below are appended as further steps complete.)_
