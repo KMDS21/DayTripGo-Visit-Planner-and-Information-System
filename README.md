@@ -1,7 +1,7 @@
-<h1 align="center">DayTripGO — Visit Planner &amp; Information System</h1>
+<h1 align="center">DayTripGO - Visit Planner &amp; Information System</h1>
 
 <p align="center">
-  A local tourism guide and day-trip planner for the Wadduwa area of Sri Lanka —<br>
+  A local tourism guide and day trip planner for the Wadduwa area of Sri Lanka -<br>
   verified places within 25&nbsp;km, opening times, practical details, and a simple one-day visit plan.
 </p>
 
@@ -39,7 +39,7 @@ DayTripGO is a three-tier web application:
 | Tier | What it does |
 | --- | --- |
 | **Presentation** | React single-page app (Vite + Tailwind CSS v4) with public site, business-owner portal, and admin panel |
-| **Application** | Express 5 REST API — JWT auth, validation, photo uploads, caching, morgan logging |
+| **Application** | Express 5 REST API - JWT auth, validation, photo uploads, caching, morgan logging |
 | **Data** | Supabase (hosted PostgreSQL) for all business data + server disk for uploaded photos |
 
 Three kinds of users share one codebase:
@@ -54,7 +54,7 @@ Three kinds of users share one codebase:
 
 ### Public website
 
-| Home — hero | Home — featured escapes | Home — top places |
+| Home - hero | Home - featured escapes | Home - top places |
 | :---: | :---: | :---: |
 | <img src="SS/site-1.png" alt="Home page hero: One perfect day around Wadduwa" width="420"> | <img src="SS/site-2.png" alt="Home page featured escapes carousel" width="420"> | <img src="SS/site-3.png" alt="Home page top places to visit and footer" width="420"> |
 | <sub>Hero with category CTAs</sub> | <sub>Featured escapes carousel</sub> | <sub>Top places + footer</sub> |
@@ -75,14 +75,14 @@ Three kinds of users share one codebase:
 
 ## Full functionality
 
-### 🧭 Public website (visitors — no account needed)
+### 🧭 Public website (visitors - no account needed)
 
-- **Home** — hero, “Featured escapes” carousel (up to 12 admin-picked places), “Top places to visit”, category entry points, and admin-editable per-page content.
-- **Explore** — every published place in one grid, category filters (Religious / Nature / Heritage / Cultural), opening hours, and *Add to plan* straight from the card.
-- **Place detail** — photo gallery, description, opening hours, distance-from-Wadduwa, Google Maps link, and add-to-plan.
-- **My Day Plan** — add / remove / drag-reorder stops, set a starting point (typed or geolocated), **route summary** (total distance, driving time, stop count) computed over the road network, live route drawn on a Leaflet map, plan persisted to the backend, and a “Open in Google Maps” hand-off.
-- **Contact us** — validated message form; messages land in the admin’s *Contact responses* inbox.
-- **Business CTA** — public registration/login entry points for owners.
+- **Home** - hero, “Featured escapes” carousel (up to 12 admin-picked places), “Top places to visit”, category entry points, and admin-editable per-page content.
+- **Explore** - every published place in one grid, category filters (Religious / Nature / Heritage / Cultural), opening hours, and *Add to plan* straight from the card.
+- **Place detail** - photo gallery, description, opening hours, distance-from-Wadduwa, Google Maps link, and add-to-plan.
+- **My Day Plan** - add / remove / drag-reorder stops, set a starting point (typed or geolocated), **route summary** (total distance, driving time, stop count) computed over the road network, live route drawn on a Leaflet map, plan persisted to the backend, and a “Open in Google Maps” hand-off.
+- **Contact us** - validated message form; messages land in the admin’s *Contact responses* inbox.
+- **Business CTA** - public registration/login entry points for owners.
 
 ### 🏢 Business owner portal (`/owner/*`)
 
@@ -93,11 +93,11 @@ Three kinds of users share one codebase:
 
 ### 🛠 Admin panel (`/admin/*`)
 
-- **Dashboard** — site statistics (places, categories, plans created, unread messages) and server-storage usage.
-- **Attractive Places** — full CRUD modal with opening hours, notes, description, cover photos, “Featured escapes” placement, and publish/unpublish.
-- **Businesses** — review owner submissions: approve, unpublish, or delete; manage business tags.
-- **Edit pages** — per-page content editors for Home, Explore, My Day Plan, and Contact (text sections + hero covers).
-- **Contact responses** — read / mark read / delete visitor messages.
+- **Dashboard** - site statistics (places, categories, plans created, unread messages) and server-storage usage.
+- **Attractive Places** - full CRUD modal with opening hours, notes, description, cover photos, “Featured escapes” placement, and publish/unpublish.
+- **Businesses** - review owner submissions: approve, unpublish, or delete; manage business tags.
+- **Edit pages** - per-page content editors for Home, Explore, My Day Plan, and Contact (text sections + hero covers).
+- **Contact responses** - read / mark read / delete visitor messages.
 
 ---
 
@@ -105,10 +105,10 @@ Three kinds of users share one codebase:
 
 ```mermaid
 flowchart LR
-    B["Browser — React 19 SPA"]
-    B -->|"static assets"| V["Vercel — frontend build"]
+    B["Browser - React 19 SPA"]
+    B -->|"static assets"| V["Vercel - frontend build"]
     B -->|"/api/*  /uploads/*"| R["vercel.json rewrites"]
-    R --> E["Render — Express 5 API"]
+    R --> E["Render - Express 5 API"]
     E --> S[("Supabase PostgreSQL")]
     E --> U[("Uploads disk")]
 ```
@@ -130,10 +130,10 @@ flowchart LR
 
 ```
 DayTripGo-Visit-Planner-and-Information-System/
-├── frontend/          # React SPA — src/{pages,components,services,hooks,context}
+├── frontend/          # React SPA - src/{pages,components,services,hooks,context}
 │                      #   vite.config.js proxies /api and /uploads → localhost:5000 in dev
 │                      #   vercel.json forwards them to Render in production
-├── backend/           # Express REST API — src/{routes,controllers,services,models,middleware}
+├── backend/           # Express REST API - src/{routes,controllers,services,models,middleware}
 │                      #   uploads/ holds admin/owner uploaded photos (served at /uploads)
 ├── database/
 │   ├── schema/        # 001…010 SQL migrations (run in order)
@@ -208,36 +208,36 @@ npm run lint    # oxlint
 
 ```bash
 npm install           # repo root (Playwright + autocannon)
-npm run test:smoke    # Playwright smoke suite — needs frontend + backend running
-npm run test:load     # autocannon load test — spawns its own backend if needed
+npm run test:smoke    # Playwright smoke suite - needs frontend + backend running
+npm run test:load     # autocannon load test - spawns its own backend if needed
 ```
 
 ---
 
 ## REST API
 
-Base URL: `http://localhost:5000` (dev) — all routes under `/api`.
+Base URL: `http://localhost:5000` (dev) - all routes under `/api`.
 
 | Method & path | Auth | Purpose |
 | --- | --- | --- |
-| `GET /api/health` | — | Service health check |
-| `GET /api/categories` | — | Place categories |
-| `GET /api/places` · `GET /api/places/:id` | — / admin scope | Public place list (published only) & detail |
+| `GET /api/health` | - | Service health check |
+| `GET /api/categories` | - | Place categories |
+| `GET /api/places` · `GET /api/places/:id` | - / admin scope | Public place list (published only) & detail |
 | `POST/PUT/DELETE /api/places[/:id]` | admin JWT | Place CRUD |
 | `PUT /api/places/:id/publish` | admin JWT | Publish / unpublish |
 | `GET/POST/DELETE /api/places/:id/photos…` | admin JWT | Photo gallery, primary photo, uploads |
-| `POST/GET/PUT /api/visit-plans[/:id]` | — | Save / read / update a visitor's day plan |
+| `POST/GET/PUT /api/visit-plans[/:id]` | - | Save / read / update a visitor's day plan |
 | `POST /api/auth/login` · `/logout` | admin JWT on logout | Admin login |
 | `POST /api/owner/auth/register` · `/login` · `/logout` | owner JWT | Owner registration & sessions |
 | `GET/PUT /api/owner/auth/me` · `PUT /password` | owner JWT | Profile & password |
-| `GET /api/businesses` · `GET /api/businesses/:id` | — | Public listings (approved only) |
+| `GET /api/businesses` · `GET /api/businesses/:id` | - | Public listings (approved only) |
 | `POST/PUT/DELETE /api/businesses[/:id]` | owner JWT | Owner listing CRUD |
 | `GET/POST/PUT/DELETE /api/businesses/:id/photos…` | owner JWT | Listing photos (quota-gated) |
 | `PUT /api/businesses/:id/publish` · `DELETE /admin/:id` | admin JWT | Moderation |
 | `GET/POST/PUT/DELETE /api/business-tags[/:id]` | public read / admin write | Business tags |
 | `GET /api/admin/stats` | admin JWT | Dashboard statistics |
 | `GET/PUT /api/content/:page` · `POST /cover` | public read / admin write | Page content & hero covers |
-| `POST /api/messages` | — | Contact form submission |
+| `POST /api/messages` | - | Contact form submission |
 | `GET /api/messages` · `PATCH /:id/read` · `DELETE /:id` | admin JWT | Contact responses |
 
 Conventions: JSON envelope `{ success, count, data }` (or `{ success, message }`), admin JWTs and owner JWTs are separate so tokens can never cross, and validation errors come back through the central error handler.
@@ -272,7 +272,7 @@ Schema lives in `database/schema/` as ordered, idempotent SQL (`create table if 
 | End-to-end smoke | Playwright | `npm run test:smoke` (repo root) |
 | Load | autocannon | `npm run test:load` (repo root) |
 
-Detailed plans and results: [`docs/testing/`](docs/testing/TESTING-PLAN.md) — unit, integration, API, smoke, and load testing guides, plus recorded load reports in `tests/load/reports/`.
+Detailed plans and results: [`docs/testing/`](docs/testing/TESTING-PLAN.md) - unit, integration, API, smoke, and load testing guides, plus recorded load reports in `tests/load/reports/`.
 
 ---
 
@@ -280,8 +280,8 @@ Detailed plans and results: [`docs/testing/`](docs/testing/TESTING-PLAN.md) — 
 
 | Piece | Host | Notes |
 | --- | --- | --- |
-| Frontend | **Vercel** | Root directory `frontend`, build `vite build`, output `dist` — <https://day-trip-go-visit-planner-and-infor.vercel.app> |
-| Backend | **Render** | Start command `npm start` (`node src/server.js`) — <https://daytripgo-visit-planner-and-information.onrender.com> |
+| Frontend | **Vercel** | Root directory `frontend`, build `vite build`, output `dist` - <https://day-trip-go-visit-planner-and-infor.vercel.app> |
+| Backend | **Render** | Start command `npm start` (`node src/server.js`) - <https://daytripgo-visit-planner-and-information.onrender.com> |
 | Database | **Supabase** | Hosted PostgreSQL |
 
 Because the SPA calls the API with a **relative** `/api` base, production traffic is forwarded by rewrites in [`frontend/vercel.json`](frontend/vercel.json):
@@ -298,7 +298,7 @@ Because the SPA calls the API with a **relative** `/api` base, production traffi
 
 That keeps the browser same-origin (no CORS configuration needed), proxies uploaded photos, and gives deep links an SPA fallback.
 
-> **Note:** on free tiers the Render service sleeps after inactivity — the first request can take 30–60 s while it wakes up.
+> **Note:** on free tiers the Render service sleeps after inactivity - the first request can take 30–60 s while it wakes up.
 
 ---
 
@@ -320,5 +320,5 @@ PDF versions of the proposal and SRS live on the [`Documents`](https://github.co
 
 <p align="center">
   Built for <strong>ITE2953</strong> · P.K.M. De Silva (E2410884) · Wadduwa, Sri Lanka<br>
-  <sub>Visit planning only — no booking or payment services.</sub>
+  <sub>Visit planning only - no booking or payment services.</sub>
 </p>
