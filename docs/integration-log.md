@@ -1715,3 +1715,30 @@ Developer instruction: *"push al thing clean work"* and *"also update intergrati
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:26 - Toolchain record: exactly what each testing layer runs on (versions pinned as installed)
+
+Developer instruction: *"update with what using thing in tetsing"* - an inventory of every tool the suite uses, where its config lives, and how it is wired. Versions are the ones installed in the lockfiles today.
+
+### Per layer
+
+| Layer | Runner | Key libraries (installed version) | Config | Where it runs / notes |
+| ----- | ------ | --------------------------------- | ------ | --------------------- |
+| Unit - backend | **Jest** `^30.5.2` | jest only (models are `jest.mock`-ed; no DB, no network) | `backend/jest.config.js` - node env, `setupFiles: tests/setup.js`, `testMatch: tests/**/*.test.js`, timeout 15 s | `cd backend && npm run test:unit` (7 suites / 71 tests, ~14 s) |
+| Unit - frontend | **Vitest** `^5.0.5` | `@testing-library/react` `^16.3.3`, `@testing-library/jest-dom` `^7.0.1`, `jsdom` `^30.1.3` | `frontend/vitest.config.js` - jsdom env, `pool: 'vmThreads'` (one jsdom per worker: 6 files were paying ~4 s each for env creation), `setupFiles: tests/setup.js` | `cd frontend && npm run test` (8 suites / 54 tests) |
+| Integration | **Jest** (same install) | real **Supabase** client via `src/config/db` - service -> model -> hosted DB, IT-tagged fixtures, idempotent `afterAll` deletes | same `backend/jest.config.js`; suites add `jest.setTimeout(30000)` for multi-step flows | `cd backend && npm run test:integration` (5 suites / 21 tests, ~29 s, needs `backend/.env`) |
+| API contracts | **Jest** + **supertest** `^7.3.1` | supertest drives the Express `app` in-process (no listening server; morgan output is expected noise) | same `backend/jest.config.js` | `cd backend && npm run test:api` (3 suites / 16 tests) |
+| Smoke | **Playwright** `@playwright/test` `^1.64.1` (Chromium browser binary installed) | `dotenv` `^18.0.8` reads `backend/.env` for the admin credentials with the same precedence as `authService` | `tests/smoke/playwright.config.js` - 2 `webServers` (backend :5000 + `vite preview` which inherits `server.proxy`, so the frontend reaches the API exactly as in production) | repo root `npm run test:smoke` (7 tests, ~17-26 s) |
+| Load | **autocannon** `^8.0.0` | Node `child_process` to auto-spawn/kill the backend; `fetch` for probes and warm-up | thresholds and guardrails are constants in `tests/load/load.js` itself (p99 < 500 ms, errors < 1 %, <=50 conns, <=90 s, read-only URL allowlist - enforced in code) | repo root `npm run test:load` (4 phases, 85 s, writes `tests/load/reports/<timestamp>.json`, exit code honours the gates) |
+
+### Support machinery (the unglamorous parts that make it work)
+
+- **Three `package.json` scopes**: backend (jest, supertest), frontend (vitest + testing-library + jsdom), and a **private root** package (`@playwright/test`, `autocannon`, `dotenv`) so browser/load tooling never bloats the app installs. Root scripts: `test:smoke`, `test:load`.
+- **`dotenv` everywhere it matters**: `backend/tests/setup.js` loads `backend/.env` before anything else (dotenv never overrides already-set vars, so the step-1 dummy values cannot shadow real credentials); the smoke suite re-reads the same file for login; the load runner only needs the backend to boot, which loads its own env.
+- **Full backend chain**: `cd backend && npm test` = unit -> integration -> api = **108 tests, exit 0** (~66 s).
+- **Fixtures**: integration/API writes are IT-tagged (`it_<timestamp>` section keys on the `contact` page, `IT-<tag>` place/category names) and deleted in `afterAll`, so repeated runs stay green against the shared real database.
+- **CI-free by design**: every layer runs with one command on a dev machine; the only external dependency is the hosted Supabase project (steps 2-3-5) and the Playwright Chromium binary (step 4).
+
+---
+
+_(Entries below are appended as further steps complete.)_
