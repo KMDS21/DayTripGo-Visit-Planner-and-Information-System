@@ -1,9 +1,4 @@
-<h1 align="center">DayTripGO - Project Documents</h1>
 
-<p align="center">
-  Documentation branch of <strong>DayTripGO - Visit Planner &amp; Information System</strong>,<br>
-  a local tourism guide and day trip planner for the Wadduwa area of Sri Lanka.
-</p>
 
 <p align="center">
   <a href="https://day-trip-go-visit-planner-and-infor.vercel.app"><strong>Live website</strong></a> ·

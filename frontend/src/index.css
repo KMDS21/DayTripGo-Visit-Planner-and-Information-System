@@ -1,0 +1,214 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/figtree";
+@import "@fontsource-variable/dm-sans";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.5 0.1 175);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.96 0.035 85);
+    --accent-foreground: oklch(0.33 0.05 60);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.5 0.1 175 / 0.5);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.45rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+    --font-sans: 'Figtree Variable', sans-serif;
+    --font-heading: 'DM Sans Variable', 'Figtree Variable', sans-serif;
+    --color-brand: oklch(0.5 0.1 175);
+    --color-brand-dark: oklch(0.38 0.08 175);
+    --color-brand-light: oklch(0.96 0.03 175);
+    --color-sand: oklch(0.96 0.035 85);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    /* Legibility: subpixel antialiasing + consistent emoji/number rendering. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    }
+  html {
+    @apply font-sans;
+    /* Prevent the iOS "bounce" zooming out when the plan list is dragged. */
+    @apply overscroll-y-contain;
+    }
+  /* Headings (font-heading = DM Sans Variable): optical sizing keeps the
+     strokes even as the type scales up, and slightly tighter tracking keeps
+     large display lines from looking loose. */
+  h1, h2, h3, h4, h5, h6 {
+    font-optical-sizing: auto;
+    text-wrap: balance;
+    }
+  /* Comfortable minimum touch targets on interactive elements (WCAG 2.5.5
+     recommends ~44px). Only applied where buttons/pills were smaller. */
+  button, a, input, select, textarea {
+    @apply touch-manipulation;
+  }
+}
+
+@utility safe-b {
+  /* Respect the iOS home-indicator area for fixed bottom bars. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Page hero entrance ───────────────────────────────────────────────────
+   Hero text fades up and un-blurs once when the page mounts, staggered from
+   title → subtitle → actions. `both` holds the from-state through the delay
+   and the to-state afterwards, so a browser that never ran the animation
+   would still show the text (nothing is hard-coded to opacity: 0). */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+.hero-in {
+  animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Stagger — declared after .hero-in so these longhand delays take effect. */
+.hero-in-2 {
+  animation-delay: 0.12s;
+}
+.hero-in-3 {
+  animation-delay: 0.26s;
+}
+.hero-in-4 {
+  animation-delay: 0.4s;
+}
+
+/* ── Home "All places" card limit ─────────────────────────────────────────
+   Below 1200px (tablets / mobile / low screen size) only the first 4 cards are shown.
+   From 1200px up (higher resolution / desktop) exactly 5 cards are shown in a single line. */
+@media (max-width: 1199px) {
+  .grid-cards-4 > :nth-child(n + 5) {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid-cards-4 > :nth-child(n + 6) {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in,
+  .hero-in-2,
+  .hero-in-3,
+  .hero-in-4 {
+    animation: none;
+  }
+}
