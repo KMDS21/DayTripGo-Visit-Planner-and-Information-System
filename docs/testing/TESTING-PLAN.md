@@ -12,7 +12,7 @@
 | 2 | Integration | 5 files / **21 tests** — real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ✅ **Done** — `npm run test:integration`, ~29 s per run |
 | 3 | API | 3 files / **16 tests** — supertest over the real `app.js`, auth matrix | Green, auth matrix proven | ✅ **Done** — `npm run test:api`, ~25 s per run |
 | 4 | Smoke | Playwright: whole stack boots, 7 tests over 5 pages + login | One command = app green/red | ✅ **Done** — `npm run test:smoke`, 7/7, ~20 s |
-| 5 | Load | autocannon, read-only endpoints | p99 < 500 ms, errors <1 % | ⏸ **Deferred** — spec'd below, build later (developer instruction) |
+| 5 | Load | autocannon, read-only endpoints, 4 phases × 2 runs | p99 < 500 ms, errors <1 % | ⚠️ **Ran** — errors 0 % ✅, **p99 gate missed** (502–1047 ms on DB-backed phases) — `05-load-testing.md` |
 
 ## Decisions (confirmed with developer)
 
@@ -32,7 +32,7 @@
 | `backend/` devDeps | `jest`, `supertest` | ✅ step 1 |
 | `frontend/` devDeps | `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` | ✅ step 1 |
 | repo (`tests/`) | `@playwright/test` | ✅ step 4 (root `package.json`, private) |
-| repo (`tests/`) | `autocannon` | ⬜ step 5 |
+| repo (`tests/`) | `autocannon` | ✅ step 5 |
 | one-time | `npx playwright install chromium` | ✅ step 4 |
 
 **npm scripts**
@@ -68,14 +68,14 @@ frontend/
     unit/                        ✅ 6 files (utils + errorMessage)
 tests/
   smoke/                         ✅ playwright.config.js (2 webServers) + smoke.spec.js (7 tests)
-  load/                          ⬜ step 5 — autocannon script, thresholds, reports/
+  load/                          ✅ load.js (guardrailed runner) + reports/*.json (2 runs)
 docs/testing/
   TESTING-PLAN.md                ✅ this file
   01-unit-testing.md             ✅
   02-integration-testing.md      ✅
   03-api-testing.md              ✅
   04-smoke-testing.md            ✅
-  05-load-testing.md             ⬜
+  05-load-testing.md             ✅
 ```
 
 ## Step-by-step definitions
@@ -105,21 +105,24 @@ docs/testing/
 - 7 tests: health-through-proxy, home/explore/visit-plan/contact landmarks (h1s are admin-editable → *visible + non-empty* asserted, not frozen copy), `/admin` → login redirect, and a **real login → protected dashboard** flow. Every test fails on any `console.error`/`pageerror` (OSM tile hosts exempt).
 - **Gate**: ✅ `npm run test:smoke` → 7/7 green twice (~17–26 s); a genuine strict-mode selector failure proved the gate bites. **Doc**: `04-smoke-testing.md`.
 
-### Step 5 — Load (deferred — spec kept for when it is built)
-- `tests/load/load.js` with autocannon — **read-only only**: `/api/health`, `/api/places`, `/api/content/home`; ramp 10→50 connections, ~30 s each; report JSON → `tests/load/reports/<timestamp>.json`.
-- Guardrails: bounded total runtime (≤60–90 s), no writes — the DB is hosted Supabase.
-- **Gate**: p99 < 500 ms, error rate <1 %. **Doc**: `05-load-testing.md`.
+### Step 5 — Load ✅ (built and run; p99 gate missed — recorded honestly)
+- `tests/load/load.js` (autocannon): auto-spawns the backend, warms endpoints, runs 4 guardrailed phases (health@10 → places@10 → places@50 → content@50, 85 s total), writes `tests/load/reports/<timestamp>.json`, exits non-zero on threshold violation. **Guardrails enforced in code** (≤50 conns, ≤90 s, read-only URL allowlist).
+- **Result (2/2 identical verdicts)**: error rate **0 % everywhere** ✅; `/api/health` p99 **6 ms** at ~7500 rps ✅; DB-backed phases **p99 502–1047 ms vs the 500 ms gate** ❌ — a fixed ~320 ms hosted-Supabase round-trip floor (throughput saturates at `conns ÷ 0.32 s`) with jitter on top. App layer proven not to be the bottleneck.
+- Follow-ups (cache public reads / region proximity / threshold recalibration) tracked in the Deferred table. **Doc**: `05-load-testing.md`.
 
-## Deferred — to build later (developer instruction, 2026-10-22)
+## Deferred — to build later (developer instruction, 2026-10-22; items 1–2 completed 2026-10-23)
 
 | # | Item | Where / notes |
 | - | ---- | ------------- |
-| 1 | **Step 5 — load suite** | Fully spec'd above: root `npm i -D autocannon`, `tests/load/load.js` + `tests/load/reports/`, read-only endpoints only, ramp 10→50 conns, ≤90 s total, thresholds p99 < 500 ms / errors < 1 %; the root `test:load` script already points at the not-yet-existing file |
-| 2 | **Backend `npm test` chain** | `"test"` still maps to `test:unit` only; extend to run unit → integration → api in sequence when the load round lands |
+| 1 | ~~**Step 5 — load suite**~~ | ✅ **Done (2026-10-23)** — `tests/load/load.js` + 2 reports; p99 gate missed, see `05-load-testing.md` |
+| 2 | ~~**Backend `npm test` chain**~~ | ✅ **Done (2026-10-23)** — `"test"` now runs unit → integration → api (99 tests, exit 0) |
 | 3 | **`markRead` on unknown id → 500** | Real-DB behaviour observed in step 2 (`.single()` PGRST116 bypasses the service's 404 branch); fix in `messageService`/`messageModel`, then update `02-integration-testing.md` which documents it as-is |
 | 4 | **No 403 in the API** | `requireAuth` answers 401 for every credential failure (step 3); decide whether any route needs a genuine 403 |
 | 5 | **Unmatched `/api/*` routes → HTML 404** | No JSON catch-all exists; add one if API clients must always receive `{ success, message }` |
 | 6 | **Dead dependency** | `@fontsource-variable/playfair-display` installed but unimported since the DM Sans round |
+| 7 | **Cache the public reads** *(perf — the load-gate fix)* | `/api/places` and `/api/content/home` cost a fixed ~320 ms hosted-Supabase round-trip per request; a short-TTL in-process cache would put p99 near the health-endpoint numbers (6 ms) and clear the missed gate |
+| 8 | **Region proximity** | Host the app near the Supabase region to cut the round-trip floor directly |
+| 9 | **p99 threshold recalibration** | If the cold-DB-hop-per-request model stays, agree a realistic target (e.g. p99 < 700 ms) with the developer — never move a gate silently |
 
 ## Round mechanics (per step)
 
@@ -146,5 +149,5 @@ docs/testing/
 - [x] Step 2 — integration green twice (21 tests) + `02-integration-testing.md`
 - [x] Step 3 — API contracts green (16 tests) + `03-api-testing.md`
 - [x] Step 4 — smoke green (7/7) + `04-smoke-testing.md`
-- [ ] Step 5 — load report under thresholds + `05-load-testing.md` — **deferred, see "Deferred — to build later"**
-- [ ] 5 integration-log entries, 5 commits on `testing`, pushed on instruction
+- [ ] Step 5 — load report under thresholds + `05-load-testing.md` — ⚠️ **suite built and run (doc ✅); p99 threshold NOT met** — fixes tracked as deferred items 7–9
+- [x] 5 integration-log entries, 5 commits on `testing` (step 5 round local, push on instruction)

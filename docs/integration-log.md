@@ -1596,3 +1596,47 @@ This entry and the step-4 entry ride the same single commit (tests + plan + log)
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 09:45 - Step 5 (load) built and run - verdict FAIL on the p99 gate, recorded honestly
+
+Developer instruction: *"do other testing"* - the deferred load round is now complete. Everything here is **local on `testing`**; push on instruction.
+
+### What was built
+
+- `tests/load/load.js` - autocannon runner, one command (`npm run test:load` from the repo root): reuses a backend already on `:5000` or auto-spawns `node src/server.js` (killed afterwards), warms each endpoint (5 requests so Supabase cold caches don't pollute the first phase), writes `tests/load/reports/<timestamp>.json`, and exits non-zero on threshold violation. **Guardrails enforced in code** - the script refuses to start if a future edit breaks them: <=50 connections, <=90 s total, and a read-only URL allowlist (`/api/health`, `/api/places`, `/api/content/home`).
+- Phases (85 s total, ramp 10 -> 50 connections): health @10/15s -> places @10/20s -> places @50/30s -> content/home @50/20s.
+- Root `package.json`: added `autocannon ^8` (dev) alongside the existing `test:load` script.
+- `backend/package.json`: `npm test` now chains all three backend suites - unit -> integration -> api = **99 tests, exit 0** (~66 s). *(Deferred item 2, closed.)*
+
+### Result - ran twice, identical verdicts (FAIL)
+
+| Phase | Run 1 p99 | Run 2 p99 | errors |
+| --- | --- | --- | --- |
+| health baseline (10 conns) | 6 ms ✅ | 6 ms ✅ | 0 % |
+| places steady (10 conns) | 1047 ms ❌ | 406 ms ✅ | 0 % |
+| places peak (50 conns) | 525 ms ❌ | 594 ms ❌ | 0 % |
+| content peak (50 conns) | 530 ms ❌ | 502 ms ❌ | 0 % |
+
+- Error-rate gate (<1 %): **passed everywhere** - 0.000 %, no timeouts, no 5xx, in either run.
+- p99 < 500 ms gate: **missed on DB-backed phases** (502-1047 ms). The gate was **not** relaxed - both JSON reports are committed as evidence (`2026-10-23T04-00-28-633Z.json` and `...04-02-54-017Z.json`).
+
+### What it means
+
+`/api/health` (zero DB work) does ~7200-7700 req/s at p99 6 ms, so the application layer is not the bottleneck. Every DB-backed request costs a fixed ~310-340 ms **regardless of concurrency** - that is the hosted-Supabase round-trip floor; throughput simply saturates at connections / 0.32 s (10 conns -> ~30 rps, 50 conns -> ~156 rps, exactly as measured). p99 sits just above the gate because jitter stacks on top of that floor; run 1's 1047 ms came from a handful of slow outliers on a small sample.
+
+### Follow-ups (plan -> Deferred items 7-9)
+
+1. **Cache the public reads** (`/api/places`, `/api/content/home`) - a short-TTL in-process cache removes the ~320 ms hop from all but the first request and would put p99 near the health-endpoint numbers.
+2. **Region proximity** - host the app near the Supabase region to cut the floor directly.
+3. **Threshold recalibration** - if a cold DB hop per request stays, agree a realistic target (e.g. p99 < 700 ms) with the developer. Never move a gate silently.
+
+### Docs and plan
+
+- `docs/testing/05-load-testing.md` - full writeup with both runs, analysis, and the three fix options.
+- `TESTING-PLAN.md` - status board step 5 now ⚠️ "Ran - errors 0 % ✅, p99 gate missed"; tooling `autocannon` ✅; layout `tests/load/` ✅; Deferred items 1-2 struck through as done, items 7-9 added; DoD step-5 line left unchecked with the ⚠️ note.
+
+**Rollout complete - five layers**: unit 116 (backend 62 + frontend 54) · integration 21 · API 16 · smoke 7 · load 4 phases x 2 runs.
+
+---
+
+_(Entries below are appended as further steps complete.)_

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "npx nodemon src/server.js",
-    "test": "npm run test:unit",
+    "test": "npm run test:unit && npm run test:integration && npm run test:api",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration --runInBand",
     "test:api": "jest tests/api --runInBand"
