@@ -107,6 +107,24 @@ describe('markRead', () => {
     messageModel.markRead.mockResolvedValue({ data: null, error: null });
     await expect(messageService.markRead(999)).rejects.toMatchObject({ status: 404 });
   });
+
+  test('PGRST116 from .single() (no matching row) → 404, not 500', async () => {
+    // The real-DB shape: an UPDATE matching zero rows makes .single() fail
+    // with PGRST116. The service maps that to "not found", not a server fault.
+    messageModel.markRead.mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' },
+    });
+    await expect(messageService.markRead(999)).rejects.toMatchObject({ status: 404 });
+  });
+
+  test('other database errors stay 500', async () => {
+    messageModel.markRead.mockResolvedValue({
+      data: null,
+      error: { code: 'XX000', message: 'connection to server lost' },
+    });
+    await expect(messageService.markRead(1)).rejects.toMatchObject({ status: 500 });
+  });
 });
 
 describe('deleteMessage', () => {

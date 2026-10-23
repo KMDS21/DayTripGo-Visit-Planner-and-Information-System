@@ -3,14 +3,36 @@
 > Step 5 of 5 in the test-suite rollout (plan: unit → integration → API → smoke → load).
 > Load tests hammer the **read-only public endpoints** with autocannon under the agreed guardrails: **≤50 connections, ≤90 s total, no writes** — the database is hosted Supabase.
 
-## Result at a glance — ⚠️ verdict: FAIL (reproducible, 2/2 runs)
+## Result at a glance — ✅ verdict: PASS (round 2, after the caching fix)
 
-| Gate | Result |
-| ---- | ------ |
-| Error rate < 1 % | ✅ **0.000 % in every phase of both runs** |
-| p99 latency < 500 ms | ❌ **missed on DB-backed phases** (502–1047 ms); the no-DB phase passed at 6 ms |
+| Gate | Round 1 — before fix | Round 2 — after fix |
+| ---- | -------------------- | ------------------- |
+| Error rate < 1 % | ✅ 0.000 % (all phases, 2 runs) | ✅ 0.000 % (all phases) |
+| p99 latency < 500 ms | ❌ **502–1047 ms** on DB-backed phases | ✅ **10–135 ms everywhere** |
 
-The suite itself works exactly as designed — it ran twice, produced two JSON reports, and correctly exited non-zero. The failing gate is a **real performance finding**, documented below, not a test defect.
+Round 1 (kept below as history) **failed the p99 gate reproducibly (2/2 runs)** and diagnosed the cause precisely: every DB-backed request paid a fixed ~320 ms hosted-Supabase round-trip. The agreed fix (deferred item 7 — *cache the public reads*) landed the same day; round 2 clears the gate with margin. **All three JSON reports are committed as evidence.**
+
+### Round 2 — after the caching fix (2026-10-23): PASS
+
+What changed in the backend:
+
+- `utils/ttlCache.js` — tiny in-process TTL cache (60 s safety net, bounded size).
+- `placeService.listPlaces` — caches the **public** list only (`?scope=admin` always reads fresh); **every place write (create/update/delete/publish) invalidates it**, so admin edits are visible immediately.
+- `contentService.getPage` — caches per page; `updatePage` invalidates that page before its re-read.
+- Side effect worth knowing: cached JSON is served without re-deriving coordinates per row, which also removes the per-request `withCoords` work on the hot path.
+
+Measurements (one run, same phases/guardrails, verdict **PASS**, exit 0):
+
+| Phase | req/s | avg | p90 | **p99** | errors |
+| ----- | ----- | --- | --- | ------- | ------ |
+| health baseline (10 conns) | 2124 | 4.2 ms | 6 ms | **10 ms** ✅ | 0 % |
+| places steady (10 conns) | 1897 | 4.8 ms | 7 ms | **10 ms** ✅ | 0 % |
+| places peak (50 conns) | 1679 | 29.3 ms | 33 ms | **135 ms** ✅ | 0 % |
+| content peak (50 conns) | 2012 | 24.4 ms | 25 ms | **114 ms** ✅ | 0 % |
+
+Report: `tests/load/reports/2026-10-23T04-40-52-155Z.json`. Throughput on the DB-backed endpoints jumped ~12× (156 → 1679 rps at 50 conns) because the cache turns the ~320 ms DB hop into an in-memory read; the residual p99 at 50 conns is Express/JSON work under concurrency, nowhere near the gate. The runner reused the already-running backend — confirmed to be serving the fixed code (unmatched `/api` route answers the JSON 404 envelope, `Content-Type: application/json`). The ~320 ms cost still exists on the **cold path** (first request after a write/TTL expiry) and on `GET /api/places/:id`, which was intentionally left uncached this round.
+
+## Measurements — round 1 (before the fix): FAIL, reproducible 2/2 runs
 
 ## What runs
 
@@ -46,11 +68,11 @@ Reports: `tests/load/reports/2026-10-23T04-00-28-633Z.json` and `…04-02-54-017
 - **p99 sits just above the 500 ms gate** (502–594 ms at peak) because jitter stacks on top of that ~320 ms floor. Run 1's 1047 ms steady-phase p99 came from a handful of slow outliers on a small sample (cold pool / Supabase hiccup).
 - **Zero errors everywhere**: no timeouts, no 5xx, no connection failures — the stack is stable under sustained load, only tail latency misses target.
 
-## Ways to get p99 under 500 ms (for a later round)
+## Ways to get p99 under 500 ms (the round-1 fix list)
 
-1. **Cache the public reads** — `/api/places` and `/api/content/home` are public and rarely change; an in-process (or edge) cache with a short TTL removes the ~320 ms DB hop from all but the first request, which would put p99 near the health-endpoint numbers.
-2. **Region proximity** — hosting the app near the Supabase region cuts the round-trip floor directly.
-3. **Threshold recalibration** — if p99 < 500 ms must hold *with* a cold DB hop per request, the target realistically needs to reflect the ~320 ms floor (e.g. p99 < 700 ms), agreed with the developer rather than quietly moved.
+1. ✅ **Cache the public reads** — **done the same day (2026-10-23)**; see *Round 2* above. This is what moved the verdict from FAIL to PASS.
+2. **Region proximity** — still open, and now only matters for the cold path (first request after a write/TTL expiry) and for uncached endpoints like `GET /api/places/:id`.
+3. ~~**Threshold recalibration**~~ — no longer needed: the gate passes with the real target intact (p99 10–135 ms vs 500 ms). It stays documented here as the option that was deliberately **not** taken.
 
 ## How to run
 
@@ -60,12 +82,12 @@ npm run test:load       # from the repo root (backend auto-spawned if not runnin
 
 Root devDeps for this round: `autocannon ^8`.
 
-## Gate (step 5 acceptance)
+## Gate (step 5 acceptance) — ✅ met (round 2)
 
-- Suite runs to completion twice with **identical verdicts** — reports persisted, exit code honours the thresholds ✅
-- **p99 gate missed** on DB-backed phases (documented above); error gate passed with 0 % in all 8 phase-runs
-- Backend `npm test` now chains **all three backend suites**: unit 62 → integration 21 → API 16 = **99 tests, exit 0** (~66 s)
+- Round 1 ran twice with **identical FAIL verdicts** — reports persisted, exit code honoured the thresholds, gate never relaxed ✅
+- Round 2 (after the caching fix): **PASS** — p99 10–135 ms against the 500 ms gate, 0 % errors in every phase ✅
+- Backend `npm test` chains **all three backend suites**: unit 71 → integration 21 → API 16 = **108 tests, exit 0** (the unit count grew with the ttlCache suite and the PGRST116 mapping cases)
 
 ## Rollout complete
 
-All five layers exist and run: **unit 116 (both apps) · integration 21 · API 16 · smoke 7 · load 4 phases** — remaining backlog (perf follow-ups above, `markRead` 500, 403 decision, JSON 404 catch-all, dead dep) is tracked in [`TESTING-PLAN.md`](TESTING-PLAN.md) → *Deferred — to build later*.
+All five layers exist and run: **unit 125 (backend 71 + frontend 54) · integration 21 · API 16 · smoke 7 · load 4 phases (PASS)** — remaining backlog (`403` decision, region proximity for the cold path, dead playfair dep) is tracked in [`TESTING-PLAN.md`](TESTING-PLAN.md) → *Deferred — to build later*.

@@ -37,7 +37,7 @@ Requires the real credentials in `backend/.env` (`SUPABASE_URL`, `SUPABASE_SECRE
 
 ## Observed behaviour worth knowing
 
-- **`markRead` on an unknown id surfaces a 500, not a 404**: `messageModel.markRead` uses `.single()`, which errors with `PGRST116` when no row matches, so the service's `if (!data) → 404` branch never fires on the real DB. The test asserts the real behaviour (500) rather than the hoped-for one.
+- ~~**`markRead` on an unknown id surfaces a 500, not a 404**~~ — **fixed 2026-10-23** (caching round): `messageModel.markRead` uses `.single()`, which errors with `PGRST116` when no row matches; `messageService.markRead` now maps that code to its 404 branch. The integration test asserts 404 against the real DB, and a mocked unit case (`PGRST116 → 404`, other errors stay 500) locks the mapping in.
 - The publish-switch, cascade-delete and coordinate-derivation paths are only provable against the real schema — mocks in step 1 can't see migrations 003/005 at all.
 
 ## Gate (step 2 acceptance)

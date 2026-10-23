@@ -73,7 +73,12 @@ async function listMessages() {
 async function markRead(messageId) {
   try {
     const { data, error } = await messageModel.markRead(messageId);
-    if (error) return rethrow(error);
+    if (error) {
+      // `.single()` answers PGRST116 when the UPDATE matched no row — for a
+      // PK update that means "no such message", which is a 404, not a fault.
+      if (error.code === 'PGRST116') throw httpError(404, 'Message not found.');
+      return rethrow(error);
+    }
     if (!data) throw httpError(404, 'Message not found.');
     return data;
   } catch (err) {

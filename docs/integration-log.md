@@ -1640,3 +1640,37 @@ Developer instruction: *"do other testing"* - the deferred load round is now com
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:17 - Fix round: cache the public reads, markRead 404, JSON api catch-all - load gate now PASS
+
+Developer instruction: *"do"* (after the bad-area summary) - implemented deferred items **7, 3 and 5** in that order, plus their test and doc updates. Local on `testing`; push on instruction.
+
+### What changed (backend)
+
+1. **Item 7 - cache the public reads** (the load-gate fix)
+   - New `src/utils/ttlCache.js`: tiny in-process TTL cache (default 60 s, bounded size, oldest-entry eviction).
+   - `placeService.listPlaces`: caches the **public** list only (`?scope=admin` always reads fresh); keyed per category. `invalidatePublicListCache()` is called after **every** successful write - create, update, delete, publish switch - so admin edits are visible immediately; the TTL is only a safety net for out-of-process changes (SQL editor, a second instance).
+   - `contentService.getPage`: per-page cache; `updatePage` deletes that page's entry before its final re-read, which re-warms with fresh rows.
+   - `GET /api/places/:id` was deliberately left uncached this round (not on the load gate; can be a later tweak).
+2. **Item 3 - markRead unknown id is a 404**: `messageService.markRead` now maps the PGRST116 error from `.single()` (zero rows matched on a PK update = "no such message") to its 404 branch instead of the generic 500.
+3. **Item 5 - JSON catch-all for `/api`**: `app.js` gained `app.use('/api', …)` after every route incl. `/api/health` and before the error handler - unmatched API paths now answer `{ success: false, message: "Cannot <METHOD> <url>" }` with `Content-Type: application/json` instead of Express's HTML page.
+
+### Verification
+
+- **Backend chain** (`npm test`): unit **71** (+7 ttlCache cases, +2 markRead mapping cases) -> integration **21** -> api **16` = **108 tests, exit 0**. The two tests that documented the old behaviour were flipped to assert the fixed behaviour: `messages.integration.test.js` (markRead unknown -> 404, against the real DB) and `healthAndReads.api.test.js` (unmatched GET/POST -> JSON envelope).
+- **Load re-run: verdict PASS, exit 0** - health p99 10 ms, places steady p99 10 ms (was 406-1047), places peak p99 135 ms (was 525-594), content peak p99 114 ms (was 502-530), errors 0 % everywhere. DB-backed throughput up ~12x (156 -> 1679 rps at 50 conns). Report committed: `tests/load/reports/2026-10-23T04-40-52-155Z.json`. The runner reused the backend already on :5000; verified empirically that it serves the fixed code (unmatched route answered the JSON envelope).
+- Round 1's FAIL verdict and both of its reports are kept - the gate was never softened; the fix moved the numbers.
+
+### Docs updated
+
+- `05-load-testing.md` - new "Round 2 - after the caching fix: PASS" section with the measurements; round 1 preserved as history; fix-option list annotated (option 1 done, option 3 deliberately not taken).
+- `02-integration-testing.md` / `03-api-testing.md` - the two "observed behaviour" findings struck through as fixed.
+- `TESTING-PLAN.md` - status board step 5 now PASS; deferred items 3, 5, 7 struck through as done, item 9 marked moot; items 4 (403 decision), 6 (dead dep) and 8 (region proximity, cold path only now) remain open.
+
+### Totals now
+
+unit 125 (backend 71 + frontend 54) . integration 21 . api 16 . smoke 7 . load 4 phases (PASS).
+
+---
+
+_(Entries below are appended as further steps complete.)_

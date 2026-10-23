@@ -60,9 +60,9 @@ test('deleting an unknown message is a 404', async () => {
   await expect(messageService.deleteMessage(999999999)).rejects.toMatchObject({ status: 404 });
 });
 
-test('marking an unknown message read fails loudly', async () => {
-  // Observed behaviour on the real DB: .single() errors with PGRST116 when no
-  // row matches, so the service surfaces a 500 rather than the 404 its
-  // no-data branch would give. Asserted as-is; noted in 02-integration-testing.md.
-  await expect(messageService.markRead(999999999)).rejects.toMatchObject({ status: 500 });
+test('marking an unknown message read is a 404', async () => {
+  // Fixed in the caching round: .single() answers PGRST116 when no row
+  // matches — the service now maps that to its 404 branch instead of the
+  // generic 500 it used to raise (see 02-integration-testing.md).
+  await expect(messageService.markRead(999999999)).rejects.toMatchObject({ status: 404 });
 });

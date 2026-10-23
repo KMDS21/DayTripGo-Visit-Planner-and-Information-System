@@ -12,7 +12,7 @@
 | 2 | Integration | 5 files / **21 tests** — real Supabase round-trips, `IT-<timestamp>` fixtures | Green **twice consecutively** | ✅ **Done** — `npm run test:integration`, ~29 s per run |
 | 3 | API | 3 files / **16 tests** — supertest over the real `app.js`, auth matrix | Green, auth matrix proven | ✅ **Done** — `npm run test:api`, ~25 s per run |
 | 4 | Smoke | Playwright: whole stack boots, 7 tests over 5 pages + login | One command = app green/red | ✅ **Done** — `npm run test:smoke`, 7/7, ~20 s |
-| 5 | Load | autocannon, read-only endpoints, 4 phases × 2 runs | p99 < 500 ms, errors <1 % | ⚠️ **Ran** — errors 0 % ✅, **p99 gate missed** (502–1047 ms on DB-backed phases) — `05-load-testing.md` |
+| 5 | Load | autocannon, read-only endpoints, 4 phases | p99 < 500 ms, errors <1 % | ✅ **PASS** (round 2) — round 1 failed p99 502–1047 ms honestly (2 runs), caching fix cleared it to 10–135 ms — `05-load-testing.md` |
 
 ## Decisions (confirmed with developer)
 
@@ -68,7 +68,7 @@ frontend/
     unit/                        ✅ 6 files (utils + errorMessage)
 tests/
   smoke/                         ✅ playwright.config.js (2 webServers) + smoke.spec.js (7 tests)
-  load/                          ✅ load.js (guardrailed runner) + reports/*.json (2 runs)
+  load/                          ✅ load.js (guardrailed runner) + reports/*.json (3 runs: 2 FAIL + 1 PASS after fix)
 docs/testing/
   TESTING-PLAN.md                ✅ this file
   01-unit-testing.md             ✅
@@ -105,10 +105,10 @@ docs/testing/
 - 7 tests: health-through-proxy, home/explore/visit-plan/contact landmarks (h1s are admin-editable → *visible + non-empty* asserted, not frozen copy), `/admin` → login redirect, and a **real login → protected dashboard** flow. Every test fails on any `console.error`/`pageerror` (OSM tile hosts exempt).
 - **Gate**: ✅ `npm run test:smoke` → 7/7 green twice (~17–26 s); a genuine strict-mode selector failure proved the gate bites. **Doc**: `04-smoke-testing.md`.
 
-### Step 5 — Load ✅ (built and run; p99 gate missed — recorded honestly)
+### Step 5 — Load ✅ (round 1 FAIL recorded honestly → caching fix → round 2 PASS)
 - `tests/load/load.js` (autocannon): auto-spawns the backend, warms endpoints, runs 4 guardrailed phases (health@10 → places@10 → places@50 → content@50, 85 s total), writes `tests/load/reports/<timestamp>.json`, exits non-zero on threshold violation. **Guardrails enforced in code** (≤50 conns, ≤90 s, read-only URL allowlist).
-- **Result (2/2 identical verdicts)**: error rate **0 % everywhere** ✅; `/api/health` p99 **6 ms** at ~7500 rps ✅; DB-backed phases **p99 502–1047 ms vs the 500 ms gate** ❌ — a fixed ~320 ms hosted-Supabase round-trip floor (throughput saturates at `conns ÷ 0.32 s`) with jitter on top. App layer proven not to be the bottleneck.
-- Follow-ups (cache public reads / region proximity / threshold recalibration) tracked in the Deferred table. **Doc**: `05-load-testing.md`.
+- **Round 1 (2/2 identical FAIL verdicts)**: error rate **0 % everywhere** ✅; `/api/health` p99 **6 ms** ✅; DB-backed phases **p99 502–1047 ms vs the 500 ms gate** ❌ — a fixed ~320 ms hosted-Supabase round-trip floor with jitter on top. App layer proven not to be the bottleneck.
+- **Round 2 (after the caching fix, deferred item 7)**: **PASS** — p99 10–135 ms everywhere, 0 % errors, DB-backed throughput up ~12× (156 → 1679 rps at 50 conns). **Doc**: `05-load-testing.md` (both rounds).
 
 ## Deferred — to build later (developer instruction, 2026-10-22; items 1–2 completed 2026-10-23)
 
@@ -116,13 +116,13 @@ docs/testing/
 | - | ---- | ------------- |
 | 1 | ~~**Step 5 — load suite**~~ | ✅ **Done (2026-10-23)** — `tests/load/load.js` + 2 reports; p99 gate missed, see `05-load-testing.md` |
 | 2 | ~~**Backend `npm test` chain**~~ | ✅ **Done (2026-10-23)** — `"test"` now runs unit → integration → api (99 tests, exit 0) |
-| 3 | **`markRead` on unknown id → 500** | Real-DB behaviour observed in step 2 (`.single()` PGRST116 bypasses the service's 404 branch); fix in `messageService`/`messageModel`, then update `02-integration-testing.md` which documents it as-is |
+| 3 | ~~**`markRead` on unknown id → 500**~~ | ✅ **Done (2026-10-23)** — service maps PGRST116 → 404; covered by a real-DB integration test and mocked unit cases; `02-integration-testing.md` updated |
 | 4 | **No 403 in the API** | `requireAuth` answers 401 for every credential failure (step 3); decide whether any route needs a genuine 403 |
-| 5 | **Unmatched `/api/*` routes → HTML 404** | No JSON catch-all exists; add one if API clients must always receive `{ success, message }` |
+| 5 | ~~**Unmatched `/api/*` routes → HTML 404**~~ | ✅ **Done (2026-10-23)** — `/api` JSON catch-all added in `app.js` (after all routes, before the error handler); API test asserts the envelope for GET and POST; `03-api-testing.md` updated |
 | 6 | **Dead dependency** | `@fontsource-variable/playfair-display` installed but unimported since the DM Sans round |
-| 7 | **Cache the public reads** *(perf — the load-gate fix)* | `/api/places` and `/api/content/home` cost a fixed ~320 ms hosted-Supabase round-trip per request; a short-TTL in-process cache would put p99 near the health-endpoint numbers (6 ms) and clear the missed gate |
-| 8 | **Region proximity** | Host the app near the Supabase region to cut the round-trip floor directly |
-| 9 | **p99 threshold recalibration** | If the cold-DB-hop-per-request model stays, agree a realistic target (e.g. p99 < 700 ms) with the developer — never move a gate silently |
+| 7 | ~~**Cache the public reads** *(perf — the load-gate fix)*~~ | ✅ **Done (2026-10-23)** — `utils/ttlCache.js` + public-list cache in `placeService` (invalidated by every place write; admin scope always fresh) + per-page cache in `contentService` (invalidated by `updatePage`). Load gate cleared: p99 10–135 ms vs 500 ms, verdict PASS |
+| 8 | **Region proximity** | Host the app near the Supabase region — now only matters for the cold path (first request after a write/TTL expiry) and uncached endpoints like `GET /api/places/:id` |
+| 9 | ~~**p99 threshold recalibration**~~ | **Moot (2026-10-23)** — the gate passes with the original target intact; recalibration was deliberately not taken |
 
 ## Round mechanics (per step)
 
@@ -149,5 +149,5 @@ docs/testing/
 - [x] Step 2 — integration green twice (21 tests) + `02-integration-testing.md`
 - [x] Step 3 — API contracts green (16 tests) + `03-api-testing.md`
 - [x] Step 4 — smoke green (7/7) + `04-smoke-testing.md`
-- [ ] Step 5 — load report under thresholds + `05-load-testing.md` — ⚠️ **suite built and run (doc ✅); p99 threshold NOT met** — fixes tracked as deferred items 7–9
-- [x] 5 integration-log entries, 5 commits on `testing` (step 5 round local, push on instruction)
+- [x] Step 5 — load report under thresholds + `05-load-testing.md` — ✅ **met after the caching fix (round 2 PASS, p99 10–135 ms); round 1's honest FAIL kept as history**
+- [x] One log entry + one subject-only commit per round on `testing` (local; push on instruction)

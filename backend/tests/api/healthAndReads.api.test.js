@@ -83,8 +83,19 @@ test('GET /api/content/:page returns the sections map; unknown page is a 404 env
   expect(unknown.body.message).toMatch(/Unknown page/);
 });
 
-test('unmatched API routes fall through to Express\'s 404 (not the JSON envelope)', async () => {
+test('unmatched API routes get the JSON 404 envelope', async () => {
+  // Fixed in the caching round: app.js gained a /api catch-all, so API
+  // clients always receive { success, message } instead of Express's HTML
+  // error page (was asserted as HTML before; see 03-api-testing.md).
   const res = await request(app).get('/api/no-such-route');
   expect(res.status).toBe(404);
-  expect(res.text).toContain('Cannot GET /api/no-such-route');
+  expect(res.headers['content-type']).toMatch(/application\/json/);
+  expect(res.body).toMatchObject({
+    success: false,
+    message: 'Cannot GET /api/no-such-route',
+  });
+
+  const post = await request(app).post('/api/no-such-route');
+  expect(post.status).toBe(404);
+  expect(post.body).toMatchObject({ success: false, message: 'Cannot POST /api/no-such-route' });
 });
