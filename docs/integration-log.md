@@ -1674,3 +1674,44 @@ unit 125 (backend 71 + frontend 54) . integration 21 . api 16 . smoke 7 . load 4
 ---
 
 _(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:20 - Test-suite rollout: full wrap-up (all five layers + fix round), repo cleanup, pushed
+
+Developer instruction: *"push al thing clean work"* and *"also update intergration log with full details"* - this entry records the complete rollout in one place, then the branch is pushed and the tree left clean.
+
+### The whole rollout, round by round (branch `testing`, one commit per round, all subject-only)
+
+| # | Round | Commit | What landed | Suite totals |
+| - | ----- | ------ | ----------- | ------------ |
+| 1 | Unit | `d362ad8` | Jest (backend, 6 suites) + Vitest (frontend, 8 suites); `tests/setup.js` loads `backend/.env` so dummy values never shadow real credentials | 62 backend + 54 frontend = **116** |
+| 2 | Integration | `a046e95` | Real-Supabase round-trips, IT-tagged fixtures on the `contact` page (service only allows 4 real page keys), idempotent cleanup proven green twice | **21** |
+| 3 | API | `808c8e6` | supertest against the app, full auth matrix (401/401/200), write contracts, honest-behaviour assertions | **16** |
+| 4 | Smoke | `52760c5` | Playwright, 7 tests, both servers auto-started; asserts landmark shape (visible non-empty h1), not frozen copy; proxy verified empirically | **7** |
+| 5 | Load | `c6f023d` | autocannon, 4 guardrailed phases (read-only allowlist, <=50 conns, <=90 s enforced in code), threshold-honouring exit code | 4 phases x 2 runs - **FAIL** |
+| 6 | Fix | `719e54c` | Cached public reads (TTL util + write invalidation), markRead PGRST116 -> 404, `/api` JSON catch-all | gate re-run - **PASS** |
+| 7 | Wrap-up | this commit | This entry + removal of the 5 empty `.gitkeep` placeholders | - |
+
+### The load story in numbers (the one honest failure, and its fix)
+
+- **Round 1 - FAIL, reproducible 2/2 runs**: error rate 0 % everywhere, `/api/health` p99 6 ms at ~7500 rps - but every DB-backed phase paid a fixed ~310-340 ms hosted-Supabase round-trip (throughput saturated at `conns / 0.32 s`: 10 conns -> ~30 rps, 50 -> ~156 rps), so p99 came in at 502-1047 ms against the 500 ms gate. The gate was **not** relaxed; both JSON reports were committed as evidence.
+- **Diagnosis**: app layer proven not the bottleneck (health endpoint); the cost was the cold DB hop per request, plus jitter stacking on that floor.
+- **Fix (same day)**: `utils/ttlCache.js` (60 s TTL, bounded); `placeService.listPlaces` caches the public list only and invalidates on **every** place write (create/update/delete/publish); `contentService.getPage` caches per page, invalidated by `updatePage`. Admin scope (`?scope=admin`) always reads fresh.
+- **Round 2 - PASS**: p99 10 / 10 / 135 / 114 ms across the four phases (gate 500 ms), errors 0 %, DB-backed throughput up ~12x (156 -> 1679 rps at 50 conns). Report `tests/load/reports/2026-10-23T04-40-52-155Z.json`. Cold-path ~320 ms still exists (first request after a write/TTL expiry) and `GET /api/places/:id` was left uncached deliberately.
+
+### Other fixes that rode the fix round
+
+- `markRead` on an unknown id: PGRST116 from `.single()` is now mapped to **404** (was a generic 500); covered by a real-DB integration test and mocked unit cases (PGRST116 -> 404, other errors stay 500).
+- Unmatched `/api/*` routes: **JSON** `{ success: false, message: "Cannot <METHOD> <url>" }` catch-all (was Express's HTML page); asserted for GET and POST.
+- The two tests that had documented the old behaviour as-is were flipped to assert the fixed behaviour (`02-integration-testing.md`, `03-api-testing.md` updated in step).
+
+### Final state at push time
+
+- **Branch `testing` pushed to origin with 7 commits** (`d362ad8` -> this one); `updates` untouched at `739f1d6` (disjoint files, trivial merge later).
+- **Suite totals**: unit **125** (backend 71 + frontend 54) . integration **21** . api **16** . smoke **7** . load **4 phases (PASS)**. Backend `npm test` chains unit -> integration -> api = **108 tests, exit 0** (~66 s).
+- **How to run everything**: frontend `npm run test` (unit) / `npm run test:smoke` (repo root) / backend `npm test` (all three backend layers) / repo root `npm run test:load` (auto-spawns the backend, guardrails in code).
+- **Cleanup**: the 5 empty `.gitkeep` placeholders (`docs/api`, `docs/design`, `docs/diagrams`, `docs/test-plan`, `docs/user-guide`) removed - the directories they padded no longer need padding; `docs/testing/` and the real docs are unaffected.
+- **Open items** (plan -> Deferred): **4** - decide whether the API needs a genuine 403 (today every credential failure is 401); **6** - drop the dead `@fontsource-variable/playfair-display` dependency; **8** - region proximity (now only relevant for the cold path / uncached detail endpoint).
+
+---
+
+_(Entries below are appended as further steps complete.)_
