@@ -2,6 +2,14 @@
 
 const placeModel = require('../models/placeModel');
 const { resolveCoordsFromGoogleMapsUrl } = require('../utils/googleMaps');
+const { createTtlCache } = require('../utils/ttlCache');
+
+// Public list cache (load round: GET /api/places costs a fixed ~320 ms
+// hosted-Supabase round-trip per request). Only the PUBLIC list is cached —
+// the admin view (includeUnpublished) always reads fresh. Every write below
+// invalidates it, so admins see their changes immediately; the TTL is a
+// safety net for edits made outside this process.
+const publicListCache = createTtlCache({ ttlMs: 60 * 1000 });
 
 function httpError(status, message) {
   const err = new Error(message);
@@ -45,11 +53,26 @@ function isMissingMapsColumn(error) {
 }
 
 async function listPlaces(categoryId, options = {}) {
+  const cacheable = !options.includeUnpublished;
+  const cacheKey = `places:public:${categoryId || 'all'}`;
+  if (cacheable) {
+    const hit = publicListCache.get(cacheKey);
+    if (hit) return hit;
+  }
+
   const { data, error } = categoryId
     ? await placeModel.findByCategory(categoryId, options)
     : await placeModel.findAll(options);
   if (error) throw httpError(500, `Failed to load places: ${error.message}`);
-  return await Promise.all((data || []).map(withCoords));
+  const places = await Promise.all((data || []).map(withCoords));
+  if (cacheable) publicListCache.set(cacheKey, places);
+  return places;
+}
+
+// Called after every successful write so the public list never serves
+// pre-write data (published flag, fields, row presence).
+function invalidatePublicListCache() {
+  publicListCache.clear();
 }
 
 // Publish switch — publishes/unpublishes one place on the public site.
@@ -66,6 +89,7 @@ async function setPlacePublished(placeId, published) {
     throw httpError(400, `Failed to update publish state: ${error.message}`);
   }
   if (!data) throw httpError(404, 'Place not found.');
+  invalidatePublicListCache();
   return await withCoords(data);
 }
 
@@ -85,6 +109,7 @@ async function createPlace(fields, adminId) {
   }
   const { data, error } = result;
   if (error) throw httpError(400, `Failed to create place: ${error.message}`);
+  invalidatePublicListCache();
   return await withCoords(data);
 }
 
@@ -98,6 +123,7 @@ async function updatePlace(placeId, fields) {
   }
   const { data, error } = result;
   if (error) throw httpError(400, `Failed to update place: ${error.message}`);
+  invalidatePublicListCache();
   if (data) return await withCoords(data);
   const merged = { ...existing, ...prepared };
   delete merged.latitude;
@@ -122,6 +148,7 @@ async function deletePlace(placeId) {
 
   const { error } = await placeModel.remove(placeId);
   if (error) throw httpError(400, `Failed to delete place: ${error.message}`);
+  invalidatePublicListCache();
 
   // Remove the stored server images so no orphan files are left behind.
   try {
@@ -134,4 +161,13 @@ async function deletePlace(placeId) {
   return { place_id: Number(placeId) };
 }
 
-module.exports = { listPlaces, getPlace, createPlace, updatePlace, deletePlace, setPlacePublished, withCoords };
+module.exports = {
+  listPlaces,
+  getPlace,
+  createPlace,
+  updatePlace,
+  deletePlace,
+  setPlacePublished,
+  withCoords,
+  invalidatePublicListCache,
+};

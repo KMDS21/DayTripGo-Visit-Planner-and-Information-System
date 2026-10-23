@@ -1370,6 +1370,59 @@ Developer's own working-tree edits on `HomePage.jsx`, committed here with this e
 
 _(Entries below are appended as further steps complete.)_
 
+## 2026-10-22 15:48 - Test-suite rollout step 1 of 5: unit tests for backend (Jest, 62) and frontend (Vitest, 54)
+
+Developer instruction: *"write unit, intergration, api, smoke, load testing seperately need to test step by step"* — a five-step rollout (unit → integration → API → smoke → load), each step its own round with a dedicated doc under `docs/testing/`. Decisions confirmed before building: real Supabase fixtures for steps 2–3, Playwright for smoke, autocannon for load, one commit per step. The full plan lives in the developer's plan file; this entry documents step 1 as built.
+
+### Starting point
+
+- The repository had **zero tests**: no `*.test.*`/`*.spec.*` anywhere, backend `npm test` was the stock `echo "Error: no test specified" && exit 1`, and the frontend had no test script at all
+
+### Tooling installed
+
+- **backend** devDeps: `jest`, `supertest` (supertest lands its first use in step 3, installed now so the API round needs no extra install)
+- **frontend** devDeps: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
+- Scripts: each package's `npm test` now maps to `test:unit` (`jest tests/unit` / `vitest run`); steps 2–3 will extend the backend chain
+
+### Backend suite — `backend/tests/unit/` (6 suites, 62 tests)
+
+- **`passwordUtils`**: bcrypt prefix, per-hash salt uniqueness, accept/reject compare (NFR-5)
+- **`tokenUtils`**: sign→verify round-trip; tampered, foreign-secret and back-dated expired JWTs rejected; a clear `JWT_SECRET is not configured.` throw when the env var is absent (asserted through `jest.isolateModules` so the module re-reads the env)
+- **`googleMaps`**: accepted/rejected link forms, all three coordinate patterns (`@lat,lng`, `!3d…!4d…`, `?q=`), out-of-range rejection, and short-link resolution against a **mocked `global.fetch`** — direct URLs never fetch, offline → `null`, and a second call for the same short link is proven to be cache-served (`fetch` called once)
+- **`uploadConfig`**: mime→extension rules, UUID filenames, magic-byte sniffing (JPEG/PNG/WEBP/AVIF accepted, short buffers and `%PDF` rejected), `used + free = 500 MB quota` identity, and `removeStoredImage` deleting only paths under `/uploads/places/` (creates then removes its own temp file — self-cleaning)
+- **`validate` middleware**: the FR-19 400-vs-`next()` contract for places and plan items — missing fields listed together in one message, whitespace-only counts as missing, coordinate ranges, Maps-link validation — driven with hand-rolled `req`/`res`/`next` doubles, no server
+- **`messageService`**: model auto-mocked (`jest.mock`) — validation 400s never reach the model, field trimming (120/5000 column limits), defaults (`General enquiry`, `status: 'new'`), missing table → **503 with the `002_contact_content.sql` migration hint**, unexpected failure → 500, 404s on unknown ids
+
+### Frontend suite — `frontend/tests/unit/` (6 files, 54 tests)
+
+- **`formatHours`**: `to12h` boundary table (midnight = 12 AM, noon = 12 PM, 11:59 PM), en-dash joining, dash unification + whitespace collapse (FR-5)
+- **`hoursRange`**: stored string ↔ three admin form fields — dotted meridiems (`a.m.`/`p.m.`), `9 AM – 5 PM` without minutes, noon/midnight conversion, a time range in the *middle* of a note deliberately kept whole, and a **compose→parse round-trip** proving no data loss through the place form
+- **`googleMaps` (frontend mirror)**: the embed-src ladder — place coordinates → parsed from the link → raw link as query → `null` — plus zoom passthrough and non-finite coordinate fallback
+- **`placeImage`**: stored URL wins; otherwise an SVG data-URI placeholder; names are XML-escaped so `<T&F>` cannot inject markup into the generated SVG; per-category palettes with fallback (FR-1/FR-7)
+- **`featuredConfig`**: CSV/cover-pair parsing, junk-id filtering (`0`, `-2`, `abc`), serialisation, and **parse→serialize→parse stability** for the admin Featured escapes editor
+- **`api.errorMessage`**: server message → axios message → friendly default ladder (NFR-9)
+
+### Test infrastructure (the traps these tests route around)
+
+- **`backend/tests/setup.js`** as Jest `setupFiles` injects dummy `SUPABASE_URL`/keys/`JWT_SECRET` **before any module loads** — `src/config/db.js` calls `process.exit(1)` on missing env, which would kill the worker before `jest.mock` could apply
+- The failed-fetch case in `googleMaps` runs on **fake timers** so the resolver's 4s abort timer is flushed inside the test; this removed Jest's *"worker process failed to exit gracefully"* warning (verified by re-run)
+- **`frontend/vitest.config.js`** sets `pool: 'vmThreads'` after Vitest measured 6 separate jsdom environments at 16.9s — one environment per worker brought the same 54 tests to **6.3s**; `tests/setup.js` registers the `jest-dom` matchers
+
+### Verification
+
+- Backend: **6 suites / 62 tests green, 3.2s, no open-handle warning** (`npm run test:unit`, exit 0)
+- Frontend: **6 files / 54 tests green, 6.3s** (`npm run test:unit`, exit 0)
+- Combined **116 tests ≈ 9.5s** — inside the <10s gate so the pair can run before every commit
+- Committed as one single commit (tests + configs + scripts + this entry) per the convention
+
+### Next
+
+- **Step 2 — integration**: real Supabase round-trips with `IT-<timestamp>` fixtures and `afterAll` cleanup, doc `docs/testing/02-integration-testing.md`
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
 ## 2026-10-22 13:15 - DM Sans titles, a larger home page, road routing on the plan map, and a de-cluttered home (commits `f2d83b9`, `7adfe50`, `356b507`)
 
 Four rounds since the last entry, bundled into one log entry per the single-commit convention; the first three are already committed and the fourth rides along with this entry.
@@ -1405,6 +1458,286 @@ Four rounds since the last entry, bundled into one log entry per the single-comm
 
 - `npm run build` green before every commit in this run (`✓ built in 7.40s`, `✓ built in 5.30s`), `npm run lint` exit 0 with warnings only (pre-existing, e.g. `set-state-in-effect` in `PlanRouteMap:129`)
 - Work happened on the **`updates`** branch (created from `admin-panel-second-edition`); recent history: `00af96e` → `f2d83b9` → `7adfe50` → `356b507`
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:20 - Test-suite rollout step 2 of 5: integration tests against real Supabase (21 tests, IT-tagged fixtures)
+
+Step 2 of the five-layer rollout (unit → integration → API → smoke → load), committed on the **`testing`** branch as one single commit per the convention. The suite drives every flow **service → model → real Supabase** — the actual hosted schema, not mocks — and every row it creates is tagged and deleted again.
+
+### Starting point
+
+- Step 1 left a trap in `backend/tests/setup.js`: its dummy `SUPABASE_URL`/keys sat in `process.env` before anything loaded, and **dotenv never overrides variables that are already set** — so `config/db.js` would have built a client pointed at the fake `localhost:54321` and the whole "real Supabase" decision would have silently degraded to a mock-free local failure
+- **Fix**: `setup.js` now calls `require('dotenv').config({ path: backend/.env })` **first**; the dummies remain as fallbacks for environments without an `.env`. Unit suites are unaffected (they mock the data layer and read `JWT_SECRET` dynamically)
+
+### Backend suite — `backend/tests/integration/` (5 files, 21 tests, `--runInBand`)
+
+- **`places.integration.test.js`**: full CRUD round-trip — create (coordinates **derived from the Maps link**, migrations 003), update persists + untouched fields survive, public list includes the published fixture, category filter returns exactly it, **publish switch** hides it from the public list while `includeUnpublished` still shows it, delete → read is 404 and it vanishes from every list (FR-1…FR-9)
+- **`categories.integration.test.js`**: record shape, the four seeded categories present, tagged fixture visible
+- **`content.integration.test.js`**: sections upsert on `(page_key, section_key)` and read back as a map, re-upsert overwrites only its own key, unknown page → 404, malformed payloads → 400 **with a DB probe proving nothing was written**
+- **`messages.integration.test.js`**: validation 400s never insert; submit → admin list → mark-read → delete round-trip; delete/mark-read on unknown ids fail loudly (FR-8)
+- **`visitPlans.integration.test.js`**: create plan → replace items (fed **deliberately out of order**, returned sorted by `visit_order`) with place details + derived coordinates → second replace swaps the whole set → empty list clears and a `visit_plan_items` probe proves **no orphan rows** (FK cascade); unknown plan → 404 (FR-10…FR-13, NFR-7)
+
+### Fixture & cleanup policy
+
+- Per-file tag **`IT-<timestamp>-<random>`** on place/category names, plan `session_id`, message email (`it-…@example.com`) and content section keys (`it_<ts>_intro`)
+- `afterAll` deletes each file's rows **plus defensive tag-based deletes**, so a half-failed test still leaves the database clean — the green-twice gate then proves that claim
+- Maps links in fixtures are full URLs with inline coordinates (`…/@6.0234,80.0560,15z`) — parsed locally, zero network hops
+- `--runInBand`: five suites sequential — gentler on hosted Supabase, deterministic to reason about
+
+### Deviations from the plan sketch (both honest)
+
+- **`page_key='test-*'` is impossible through the service** — `contentService.assertPage` only allows the four real page keys. Fixtures therefore ride as IT-tagged *section keys* on the real `contact` page (the site ignores unknown sections); cleanup deletes exactly those rows
+- **`markRead` on an unknown id surfaces 500, not 404**: `messageModel.markRead` uses `.single()`, which errors with `PGRST116` on zero rows, so the service's `if (!data) → 404` branch never fires on the real DB. The test asserts the real behaviour and `02-integration-testing.md` records the quirk
+
+### Verification
+
+- `npm run test:integration`: **5 suites / 21 tests green, ~29 s**, run **twice consecutively** (second run proves cleanup idempotence) — exit 0 both times
+- Backend units unaffected by the setup change: **62/62 green** (~3.4 s)
+- One debugging round during the first run: two `expectOk(...)` call sites destructured `{ data }` from its return value (it *returns* data) — fixed, then the suite went green and stayed green
+- `npm run build` and `npm run lint` remain green
+- New script: `test:integration` = `jest tests/integration --runInBand`; doc `docs/testing/02-integration-testing.md`; plan status board updated
+
+### Next
+
+- **Step 3 — API**: supertest contracts over `app.js` — health/read shapes, the 401/403/200 auth matrix, validation 400s and the central error-handler envelope
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:30 - Test-suite rollout step 3 of 5: API contracts and the auth matrix through the real Express app (16 tests)
+
+Step 3 of the five-layer rollout, committed on the **`testing`** branch as one single commit. The suite runs **supertest against `src/app.js`** — the real routes → controllers → services → live Supabase chain over HTTP, with no server process (`app.js` exports the app without listening).
+
+### Backend suite — `backend/tests/api/` (3 files, 16 tests, `--runInBand`)
+
+- **`healthAndReads.api.test.js`**: `/api/health` contract (service name, parseable timestamp); the `{ success, count, data }` envelope on places/categories with `count === data.length`; proof that the public list **never leaks unpublished places**; category filter + unknown category → empty 200, not an error; place detail + 404 envelope; content sections map + unknown-page 404; unmatched routes → Express's own HTML 404
+- **`auth.api.test.js`**: login contract **400 / 401 / 200** (missing credentials / wrong password / correct — with the issued token verified as a real JWT against `JWT_SECRET`); the full credential-failure matrix on `GET /api/messages`; `/api/admin/stats` JWT-guarded (401 → 200); logout 401 → 200. Credentials mirror `authService`'s own precedence — `ADMIN_USERNAME`/`ADMIN_PASSWORD` from `backend/.env` when both are set, else the seeded `admin` account
+- **`writeContracts.api.test.js`**: places over HTTP — 401 without JWT → `validatePlace` 400 envelopes (missing fields listed together, non-Maps link rejected) → 201 create with coordinates derived from the link → 200 update → publish switch (non-boolean → 400; hide/re-show proven across the public list vs `?scope=admin`, which is itself JWT-gated) → 200 delete → 404 afterwards; messages 400/201 + inbox 401→200 → mark-read → delete → 404; content PUT 401→200 with public readback; visit plans 201/400 (non-array, malformed item) + ordered round-trip + unknown-plan 404. All writes IT-tagged, cleaned in `afterAll` via the Supabase client
+
+### Two honest corrections to the plan sketch
+
+- **There is no 403 in this API.** The plan (and step-2's "Next" note) sketched "401 / 403 / 200", but `requireAuth` answers **401 for every credential failure** — missing header, bare `Bearer`, wrong scheme, garbage token, foreign-secret JWT. The matrix asserts the real 401/401/200 behaviour and `03-api-testing.md` records why
+- **Unmatched routes are not the JSON envelope**: with no catch-all, Express's default HTML `Cannot GET /api/…` 404 is what a client receives — the central `errorHandler` `{ success: false, message }` shape only covers thrown service errors
+
+### Verification
+
+- `npm run test:api`: **3 suites / 16 tests green, ~25 s**, run **twice consecutively** — exit 0 both times; the morgan access log doubles as a trace (every asserted status visible in the output)
+- Backend units still **62/62** (~2.2 s); step-2 integration suite untouched
+- `npm run build` and `npm run lint` remain green
+- New script: `test:api` = `jest tests/api --runInBand`; doc `docs/testing/03-api-testing.md`; plan status board updated
+- Token strategy: half the matrix mints JWTs directly with `tokenUtils.signToken` + the real `JWT_SECRET` (no admin seeding needed), half exercises the real login flow
+
+### Next
+
+- **Step 4 — smoke**: Playwright boots the whole stack (backend + built frontend as `webServer`s) and proves `/`, `/explore`, `/visit-plan`, `/contact`, `/admin` render without console errors
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:51 - Test-suite rollout step 4 of 5: whole-stack Playwright smoke suite, 7/7 green
+
+Step 4 of the five-layer rollout, on the **`testing`** branch. The smoke suite boots the **deployed-shape stack** — Express API + the *production* frontend bundle behind a same-origin proxy — in headless Chromium and turns the whole app green/red with one command.
+
+### Infrastructure — `tests/smoke/` at the repo root
+
+- **New repo-root `package.json`** (private): holds `@playwright/test` + `dotenv` (for reading `backend/.env`'s admin credentials with the same precedence as `authService`); scripts `test:smoke` (and `test:load`, wired in step 5)
+- **`playwright.config.js`** runs two `webServer`s: backend `npm start` (:5000) and frontend `npm run build && vite preview` (:4173), both with `reuseExistingServer` for fast local iteration
+- **Proxy discovery**: axios uses a relative `/api` base, so the built app needs `/api` forwarded on its own origin. `vite preview` **inherits `server.proxy`** — verified empirically with a probe request (`http://localhost:4199/api/health` through a manual preview) before trusting it; no config change was needed
+- One-time browser setup done: `npx playwright install chromium` (Chromium 156 + headless shell + ffmpeg, ~317 MB); `test-results/` + `playwright-report/` git-ignored
+
+### The suite — `tests/smoke/smoke.spec.js` (7 tests, sequential)
+
+- **API health through the frontend origin** — proves the proxy chain end-to-end without a browser quirk masking it
+- **Home `/`** — `DayTripGO` title, visible non-empty hero `h1`, footer shell
+- **Explore `/explore`** — waits for a **200 from `/api/places`** (grid data actually arrives) + heading
+- **Visit plan `/visit-plan`** — planner shell renders
+- **Contact `/contact`** — heading + name/email enquiry inputs
+- **`/admin`** — redirects to `/admin/login` with both credential fields
+- **Login → dashboard** — real credentials through the proxy, `ProtectedRoute` admits, `Dashboard` heading + the sidebar's *Attractive Places* link
+- **Every test fails on any `console.error` or uncaught page error**; only OpenStreetMap tile hosts are exempt (an OSM rate-limit is not an application failure)
+- Headings are admin-editable content, so assertions check *landmark shape* (visible, non-empty) instead of frozen copy an editor could legitimately change
+
+### Verification
+
+- `npm run test:smoke`: **7/7 green twice** (~17 s, ~26 s with the rebuild) — one command, whole app
+- The gate earned its keep on the first run: **red** on a strict-mode selector clash (the dashboard quick-link card and the sidebar link share the name "Attractive Places") — fixed by scoping to `#admin-sidebar`; failure screenshot attached by Playwright as designed
+- Earlier layers unaffected: backend unit 62 · integration 21 · API 16; `npm run lint` exit 0
+
+### Branch note (parallel work)
+
+- The developer ran a **design round on `updates` concurrently** — `739f1d6` "show 5 places in line on higher resolution (≥1200px) and 4 cards full-width on lower screens" (PlaceCard/PlaceGrid/index.css), **committed and pushed by the developer**; it also carried this round's `.gitignore` addition, which is re-applied here so `testing` stays self-contained. The two branches have fully disjoint files, so merging later stays trivial
+
+### Next
+
+- **Step 5 — load**: autocannon against the read-only endpoints (`/api/health`, `/api/places`, `/api/content/home`), ramp 10→50 connections, thresholds p99 < 500 ms and error rate < 1 %
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-22 16:55 - Step 5 deferred to a later round; deferred backlog recorded in the plan
+
+Developer instruction: *"add other things to plan will build after later and commit and push"* — the load round is **not started now**; its full spec stays in `TESTING-PLAN.md` (status board shows ⏸ Deferred) together with five smaller follow-ups gathered from the four completed rounds:
+
+1. **Step 5 — load suite** — autocannon, read-only endpoints, p99 < 500 ms / < 1 % errors, ≤90 s total (root `test:load` script already wired)
+2. **Backend `npm test` chain** — still unit-only; extend to unit → integration → api
+3. **`markRead` unknown-id → 500** — the PGRST116 quirk documented in `02-integration-testing.md`; fix the service, update the doc
+4. **No 403 path in the API** — decide whether any route needs a genuine 403
+5. **Unmatched `/api/*` → HTML 404** — add a JSON catch-all if clients must always get `{ success, message }`
+6. **Dead dependency** — `@fontsource-variable/playfair-display` unimported since the DM Sans round
+
+This entry and the step-4 entry ride the same single commit (tests + plan + log), then `testing` is pushed to origin per instruction.
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 09:45 - Step 5 (load) built and run - verdict FAIL on the p99 gate, recorded honestly
+
+Developer instruction: *"do other testing"* - the deferred load round is now complete. Everything here is **local on `testing`**; push on instruction.
+
+### What was built
+
+- `tests/load/load.js` - autocannon runner, one command (`npm run test:load` from the repo root): reuses a backend already on `:5000` or auto-spawns `node src/server.js` (killed afterwards), warms each endpoint (5 requests so Supabase cold caches don't pollute the first phase), writes `tests/load/reports/<timestamp>.json`, and exits non-zero on threshold violation. **Guardrails enforced in code** - the script refuses to start if a future edit breaks them: <=50 connections, <=90 s total, and a read-only URL allowlist (`/api/health`, `/api/places`, `/api/content/home`).
+- Phases (85 s total, ramp 10 -> 50 connections): health @10/15s -> places @10/20s -> places @50/30s -> content/home @50/20s.
+- Root `package.json`: added `autocannon ^8` (dev) alongside the existing `test:load` script.
+- `backend/package.json`: `npm test` now chains all three backend suites - unit -> integration -> api = **99 tests, exit 0** (~66 s). *(Deferred item 2, closed.)*
+
+### Result - ran twice, identical verdicts (FAIL)
+
+| Phase | Run 1 p99 | Run 2 p99 | errors |
+| --- | --- | --- | --- |
+| health baseline (10 conns) | 6 ms ✅ | 6 ms ✅ | 0 % |
+| places steady (10 conns) | 1047 ms ❌ | 406 ms ✅ | 0 % |
+| places peak (50 conns) | 525 ms ❌ | 594 ms ❌ | 0 % |
+| content peak (50 conns) | 530 ms ❌ | 502 ms ❌ | 0 % |
+
+- Error-rate gate (<1 %): **passed everywhere** - 0.000 %, no timeouts, no 5xx, in either run.
+- p99 < 500 ms gate: **missed on DB-backed phases** (502-1047 ms). The gate was **not** relaxed - both JSON reports are committed as evidence (`2026-10-23T04-00-28-633Z.json` and `...04-02-54-017Z.json`).
+
+### What it means
+
+`/api/health` (zero DB work) does ~7200-7700 req/s at p99 6 ms, so the application layer is not the bottleneck. Every DB-backed request costs a fixed ~310-340 ms **regardless of concurrency** - that is the hosted-Supabase round-trip floor; throughput simply saturates at connections / 0.32 s (10 conns -> ~30 rps, 50 conns -> ~156 rps, exactly as measured). p99 sits just above the gate because jitter stacks on top of that floor; run 1's 1047 ms came from a handful of slow outliers on a small sample.
+
+### Follow-ups (plan -> Deferred items 7-9)
+
+1. **Cache the public reads** (`/api/places`, `/api/content/home`) - a short-TTL in-process cache removes the ~320 ms hop from all but the first request and would put p99 near the health-endpoint numbers.
+2. **Region proximity** - host the app near the Supabase region to cut the floor directly.
+3. **Threshold recalibration** - if a cold DB hop per request stays, agree a realistic target (e.g. p99 < 700 ms) with the developer. Never move a gate silently.
+
+### Docs and plan
+
+- `docs/testing/05-load-testing.md` - full writeup with both runs, analysis, and the three fix options.
+- `TESTING-PLAN.md` - status board step 5 now ⚠️ "Ran - errors 0 % ✅, p99 gate missed"; tooling `autocannon` ✅; layout `tests/load/` ✅; Deferred items 1-2 struck through as done, items 7-9 added; DoD step-5 line left unchecked with the ⚠️ note.
+
+**Rollout complete - five layers**: unit 116 (backend 62 + frontend 54) · integration 21 · API 16 · smoke 7 · load 4 phases x 2 runs.
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:17 - Fix round: cache the public reads, markRead 404, JSON api catch-all - load gate now PASS
+
+Developer instruction: *"do"* (after the bad-area summary) - implemented deferred items **7, 3 and 5** in that order, plus their test and doc updates. Local on `testing`; push on instruction.
+
+### What changed (backend)
+
+1. **Item 7 - cache the public reads** (the load-gate fix)
+   - New `src/utils/ttlCache.js`: tiny in-process TTL cache (default 60 s, bounded size, oldest-entry eviction).
+   - `placeService.listPlaces`: caches the **public** list only (`?scope=admin` always reads fresh); keyed per category. `invalidatePublicListCache()` is called after **every** successful write - create, update, delete, publish switch - so admin edits are visible immediately; the TTL is only a safety net for out-of-process changes (SQL editor, a second instance).
+   - `contentService.getPage`: per-page cache; `updatePage` deletes that page's entry before its final re-read, which re-warms with fresh rows.
+   - `GET /api/places/:id` was deliberately left uncached this round (not on the load gate; can be a later tweak).
+2. **Item 3 - markRead unknown id is a 404**: `messageService.markRead` now maps the PGRST116 error from `.single()` (zero rows matched on a PK update = "no such message") to its 404 branch instead of the generic 500.
+3. **Item 5 - JSON catch-all for `/api`**: `app.js` gained `app.use('/api', …)` after every route incl. `/api/health` and before the error handler - unmatched API paths now answer `{ success: false, message: "Cannot <METHOD> <url>" }` with `Content-Type: application/json` instead of Express's HTML page.
+
+### Verification
+
+- **Backend chain** (`npm test`): unit **71** (+7 ttlCache cases, +2 markRead mapping cases) -> integration **21** -> api **16` = **108 tests, exit 0**. The two tests that documented the old behaviour were flipped to assert the fixed behaviour: `messages.integration.test.js` (markRead unknown -> 404, against the real DB) and `healthAndReads.api.test.js` (unmatched GET/POST -> JSON envelope).
+- **Load re-run: verdict PASS, exit 0** - health p99 10 ms, places steady p99 10 ms (was 406-1047), places peak p99 135 ms (was 525-594), content peak p99 114 ms (was 502-530), errors 0 % everywhere. DB-backed throughput up ~12x (156 -> 1679 rps at 50 conns). Report committed: `tests/load/reports/2026-10-23T04-40-52-155Z.json`. The runner reused the backend already on :5000; verified empirically that it serves the fixed code (unmatched route answered the JSON envelope).
+- Round 1's FAIL verdict and both of its reports are kept - the gate was never softened; the fix moved the numbers.
+
+### Docs updated
+
+- `05-load-testing.md` - new "Round 2 - after the caching fix: PASS" section with the measurements; round 1 preserved as history; fix-option list annotated (option 1 done, option 3 deliberately not taken).
+- `02-integration-testing.md` / `03-api-testing.md` - the two "observed behaviour" findings struck through as fixed.
+- `TESTING-PLAN.md` - status board step 5 now PASS; deferred items 3, 5, 7 struck through as done, item 9 marked moot; items 4 (403 decision), 6 (dead dep) and 8 (region proximity, cold path only now) remain open.
+
+### Totals now
+
+unit 125 (backend 71 + frontend 54) . integration 21 . api 16 . smoke 7 . load 4 phases (PASS).
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:20 - Test-suite rollout: full wrap-up (all five layers + fix round), repo cleanup, pushed
+
+Developer instruction: *"push al thing clean work"* and *"also update intergration log with full details"* - this entry records the complete rollout in one place, then the branch is pushed and the tree left clean.
+
+### The whole rollout, round by round (branch `testing`, one commit per round, all subject-only)
+
+| # | Round | Commit | What landed | Suite totals |
+| - | ----- | ------ | ----------- | ------------ |
+| 1 | Unit | `d362ad8` | Jest (backend, 6 suites) + Vitest (frontend, 8 suites); `tests/setup.js` loads `backend/.env` so dummy values never shadow real credentials | 62 backend + 54 frontend = **116** |
+| 2 | Integration | `a046e95` | Real-Supabase round-trips, IT-tagged fixtures on the `contact` page (service only allows 4 real page keys), idempotent cleanup proven green twice | **21** |
+| 3 | API | `808c8e6` | supertest against the app, full auth matrix (401/401/200), write contracts, honest-behaviour assertions | **16** |
+| 4 | Smoke | `52760c5` | Playwright, 7 tests, both servers auto-started; asserts landmark shape (visible non-empty h1), not frozen copy; proxy verified empirically | **7** |
+| 5 | Load | `c6f023d` | autocannon, 4 guardrailed phases (read-only allowlist, <=50 conns, <=90 s enforced in code), threshold-honouring exit code | 4 phases x 2 runs - **FAIL** |
+| 6 | Fix | `719e54c` | Cached public reads (TTL util + write invalidation), markRead PGRST116 -> 404, `/api` JSON catch-all | gate re-run - **PASS** |
+| 7 | Wrap-up | this commit | This entry + removal of the 5 empty `.gitkeep` placeholders | - |
+
+### The load story in numbers (the one honest failure, and its fix)
+
+- **Round 1 - FAIL, reproducible 2/2 runs**: error rate 0 % everywhere, `/api/health` p99 6 ms at ~7500 rps - but every DB-backed phase paid a fixed ~310-340 ms hosted-Supabase round-trip (throughput saturated at `conns / 0.32 s`: 10 conns -> ~30 rps, 50 -> ~156 rps), so p99 came in at 502-1047 ms against the 500 ms gate. The gate was **not** relaxed; both JSON reports were committed as evidence.
+- **Diagnosis**: app layer proven not the bottleneck (health endpoint); the cost was the cold DB hop per request, plus jitter stacking on that floor.
+- **Fix (same day)**: `utils/ttlCache.js` (60 s TTL, bounded); `placeService.listPlaces` caches the public list only and invalidates on **every** place write (create/update/delete/publish); `contentService.getPage` caches per page, invalidated by `updatePage`. Admin scope (`?scope=admin`) always reads fresh.
+- **Round 2 - PASS**: p99 10 / 10 / 135 / 114 ms across the four phases (gate 500 ms), errors 0 %, DB-backed throughput up ~12x (156 -> 1679 rps at 50 conns). Report `tests/load/reports/2026-10-23T04-40-52-155Z.json`. Cold-path ~320 ms still exists (first request after a write/TTL expiry) and `GET /api/places/:id` was left uncached deliberately.
+
+### Other fixes that rode the fix round
+
+- `markRead` on an unknown id: PGRST116 from `.single()` is now mapped to **404** (was a generic 500); covered by a real-DB integration test and mocked unit cases (PGRST116 -> 404, other errors stay 500).
+- Unmatched `/api/*` routes: **JSON** `{ success: false, message: "Cannot <METHOD> <url>" }` catch-all (was Express's HTML page); asserted for GET and POST.
+- The two tests that had documented the old behaviour as-is were flipped to assert the fixed behaviour (`02-integration-testing.md`, `03-api-testing.md` updated in step).
+
+### Final state at push time
+
+- **Branch `testing` pushed to origin with 7 commits** (`d362ad8` -> this one); `updates` untouched at `739f1d6` (disjoint files, trivial merge later).
+- **Suite totals**: unit **125** (backend 71 + frontend 54) . integration **21** . api **16** . smoke **7** . load **4 phases (PASS)**. Backend `npm test` chains unit -> integration -> api = **108 tests, exit 0** (~66 s).
+- **How to run everything**: frontend `npm run test` (unit) / `npm run test:smoke` (repo root) / backend `npm test` (all three backend layers) / repo root `npm run test:load` (auto-spawns the backend, guardrails in code).
+- **Cleanup**: the 5 empty `.gitkeep` placeholders (`docs/api`, `docs/design`, `docs/diagrams`, `docs/test-plan`, `docs/user-guide`) removed - the directories they padded no longer need padding; `docs/testing/` and the real docs are unaffected.
+- **Open items** (plan -> Deferred): **4** - decide whether the API needs a genuine 403 (today every credential failure is 401); **6** - drop the dead `@fontsource-variable/playfair-display` dependency; **8** - region proximity (now only relevant for the cold path / uncached detail endpoint).
+
+---
+
+_(Entries below are appended as further steps complete.)_
+
+## 2026-10-23 10:26 - Toolchain record: exactly what each testing layer runs on (versions pinned as installed)
+
+Developer instruction: *"update with what using thing in tetsing"* - an inventory of every tool the suite uses, where its config lives, and how it is wired. Versions are the ones installed in the lockfiles today.
+
+### Per layer
+
+| Layer | Runner | Key libraries (installed version) | Config | Where it runs / notes |
+| ----- | ------ | --------------------------------- | ------ | --------------------- |
+| Unit - backend | **Jest** `^30.5.2` | jest only (models are `jest.mock`-ed; no DB, no network) | `backend/jest.config.js` - node env, `setupFiles: tests/setup.js`, `testMatch: tests/**/*.test.js`, timeout 15 s | `cd backend && npm run test:unit` (7 suites / 71 tests, ~14 s) |
+| Unit - frontend | **Vitest** `^5.0.5` | `@testing-library/react` `^16.3.3`, `@testing-library/jest-dom` `^7.0.1`, `jsdom` `^30.1.3` | `frontend/vitest.config.js` - jsdom env, `pool: 'vmThreads'` (one jsdom per worker: 6 files were paying ~4 s each for env creation), `setupFiles: tests/setup.js` | `cd frontend && npm run test` (8 suites / 54 tests) |
+| Integration | **Jest** (same install) | real **Supabase** client via `src/config/db` - service -> model -> hosted DB, IT-tagged fixtures, idempotent `afterAll` deletes | same `backend/jest.config.js`; suites add `jest.setTimeout(30000)` for multi-step flows | `cd backend && npm run test:integration` (5 suites / 21 tests, ~29 s, needs `backend/.env`) |
+| API contracts | **Jest** + **supertest** `^7.3.1` | supertest drives the Express `app` in-process (no listening server; morgan output is expected noise) | same `backend/jest.config.js` | `cd backend && npm run test:api` (3 suites / 16 tests) |
+| Smoke | **Playwright** `@playwright/test` `^1.64.1` (Chromium browser binary installed) | `dotenv` `^18.0.8` reads `backend/.env` for the admin credentials with the same precedence as `authService` | `tests/smoke/playwright.config.js` - 2 `webServers` (backend :5000 + `vite preview` which inherits `server.proxy`, so the frontend reaches the API exactly as in production) | repo root `npm run test:smoke` (7 tests, ~17-26 s) |
+| Load | **autocannon** `^8.0.0` | Node `child_process` to auto-spawn/kill the backend; `fetch` for probes and warm-up | thresholds and guardrails are constants in `tests/load/load.js` itself (p99 < 500 ms, errors < 1 %, <=50 conns, <=90 s, read-only URL allowlist - enforced in code) | repo root `npm run test:load` (4 phases, 85 s, writes `tests/load/reports/<timestamp>.json`, exit code honours the gates) |
+
+### Support machinery (the unglamorous parts that make it work)
+
+- **Three `package.json` scopes**: backend (jest, supertest), frontend (vitest + testing-library + jsdom), and a **private root** package (`@playwright/test`, `autocannon`, `dotenv`) so browser/load tooling never bloats the app installs. Root scripts: `test:smoke`, `test:load`.
+- **`dotenv` everywhere it matters**: `backend/tests/setup.js` loads `backend/.env` before anything else (dotenv never overrides already-set vars, so the step-1 dummy values cannot shadow real credentials); the smoke suite re-reads the same file for login; the load runner only needs the backend to boot, which loads its own env.
+- **Full backend chain**: `cd backend && npm test` = unit -> integration -> api = **108 tests, exit 0** (~66 s).
+- **Fixtures**: integration/API writes are IT-tagged (`it_<timestamp>` section keys on the `contact` page, `IT-<tag>` place/category names) and deleted in `afterAll`, so repeated runs stay green against the shared real database.
+- **CI-free by design**: every layer runs with one command on a dev machine; the only external dependency is the hosted Supabase project (steps 2-3-5) and the Playwright Chromium binary (step 4).
 
 ---
 

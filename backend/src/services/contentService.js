@@ -2,10 +2,17 @@
 // Admins edit it (PUT), the public site reads it (GET) with client-side fallbacks.
 
 const contentModel = require('../models/contentModel');
+const { createTtlCache } = require('../utils/ttlCache');
 
 const PAGES = ['home', 'explore', 'plan', 'contact'];
 const KEY_PATTERN = /^[a-z0-9_]{1,60}$/;
 const MAX_VALUE_LENGTH = 5000;
+
+// Public page copy cache (load round: GET /api/content/:page costs a fixed
+// ~320 ms hosted-Supabase round-trip per request). updatePage invalidates the
+// affected page, so admin edits are visible immediately; the TTL is a safety
+// net for edits made outside this process.
+const pageCache = createTtlCache({ ttlMs: 60 * 1000 });
 
 function httpError(status, message) {
   const err = new Error(message);
@@ -39,10 +46,14 @@ function toMap(rows) {
 
 async function getPage(pageKey) {
   assertPage(pageKey);
+  const hit = pageCache.get(pageKey);
+  if (hit) return hit;
   try {
     const { data, error } = await contentModel.findByPage(pageKey);
     if (error) return rethrow(error);
-    return toMap(data);
+    const sections = toMap(data);
+    pageCache.set(pageKey, sections);
+    return sections;
   } catch (err) {
     if (err.status) throw err;
     return rethrow(err);
@@ -80,6 +91,9 @@ async function updatePage(pageKey, sections) {
     return rethrow(err);
   }
 
+  // The written page must not be served from cache any more; getPage below
+  // re-fetches (and re-warms) it with the fresh rows.
+  pageCache.delete(pageKey);
   return getPage(pageKey);
 }
 

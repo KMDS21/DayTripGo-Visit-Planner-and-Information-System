@@ -44,6 +44,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ─── JSON 404 for unmatched /api routes ──────────────────────
+// Without this, Express answers unknown API paths with its HTML error page,
+// which API clients cannot parse. Placed after every route (incl. /api/health)
+// so only genuine misses fall through to the standard { success, message } shape.
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+  });
+});
+
 // ─── Central Error Handling ──────────────────────────────────
 app.use(require('./middleware/errorHandler'));
 

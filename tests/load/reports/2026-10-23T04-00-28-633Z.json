@@ -1,0 +1,89 @@
+{
+  "tool": "autocannon",
+  "base": "http://localhost:5000",
+  "startedAt": "2026-10-23T04:00:28.633Z",
+  "wallClockSeconds": 101,
+  "thresholds": {
+    "p99Ms": 500,
+    "errorRatePct": 1
+  },
+  "guardrails": {
+    "maxConnections": 50,
+    "maxTotalSeconds": 90,
+    "readOnly": true
+  },
+  "phases": [
+    {
+      "phase": "health baseline",
+      "url": "/api/health",
+      "connections": 10,
+      "durationSeconds": 15,
+      "requestsTotal": 115485,
+      "rpsAverage": 7699,
+      "latencyAvgMs": 0.81,
+      "latencyP90Ms": 2,
+      "latencyP99Ms": 6,
+      "errors": 0,
+      "non2xx": 0,
+      "errorRatePct": 0,
+      "violations": []
+    },
+    {
+      "phase": "places steady",
+      "url": "/api/places",
+      "connections": 10,
+      "durationSeconds": 20,
+      "requestsTotal": 595,
+      "rpsAverage": 30,
+      "latencyAvgMs": 336.7,
+      "latencyP90Ms": 351,
+      "latencyP99Ms": 1047,
+      "errors": 0,
+      "non2xx": 0,
+      "errorRatePct": 0,
+      "violations": [
+        "p99 1047ms >= 500ms"
+      ]
+    },
+    {
+      "phase": "places peak",
+      "url": "/api/places",
+      "connections": 50,
+      "durationSeconds": 30,
+      "requestsTotal": 4668,
+      "rpsAverage": 156,
+      "latencyAvgMs": 320.23,
+      "latencyP90Ms": 353,
+      "latencyP99Ms": 525,
+      "errors": 0,
+      "non2xx": 0,
+      "errorRatePct": 0,
+      "violations": [
+        "p99 525ms >= 500ms"
+      ]
+    },
+    {
+      "phase": "content peak",
+      "url": "/api/content/home",
+      "connections": 50,
+      "durationSeconds": 20,
+      "requestsTotal": 3112,
+      "rpsAverage": 156,
+      "latencyAvgMs": 319.23,
+      "latencyP90Ms": 352,
+      "latencyP99Ms": 530,
+      "errors": 0,
+      "non2xx": 0,
+      "errorRatePct": 0,
+      "violations": [
+        "p99 530ms >= 500ms"
+      ]
+    }
+  ],
+  "verdict": "FAIL",
+  "violations": [
+    "places steady: p99 1047ms >= 500ms",
+    "places peak: p99 525ms >= 500ms",
+    "content peak: p99 530ms >= 500ms"
+  ]
+}
