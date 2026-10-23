@@ -1,19 +1,22 @@
-// HomePage — hero, why/how sections, the Featured escapes carousel and the
-// full "All places" listing: the same cards and category selector as the
-// Explore page (published places from the Attractive Places table).
+// HomePage — hero, why/how sections, the Featured escapes carousel (places and
+// businesses mixed by the admin's choice) and the full "All places" listing:
+// the same cards as the Explore page (published places plus the businesses the
+// admin ticked "Show on home" for).
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Compass, Camera, ChevronDown } from 'lucide-react';
 import { usePlaces } from '../hooks/usePlaces';
+import { useBusinesses } from '../hooks/useBusinesses';
 import { useVisitPlan } from '../hooks/useVisitPlan';
 import usePageTitle from '../hooks/usePageTitle';
 import usePageContent from '../hooks/usePageContent';
 import FeaturedCarousel from '../components/PlaceListing/FeaturedCarousel';
-import PlaceGrid from '../components/PlaceListing/PlaceGrid';
+import PlaceCard from '../components/PlaceListing/PlaceCard';
+import BusinessCard from '../components/BusinessListing/BusinessCard';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
-import { parseFeaturedRows } from '../utils/featuredConfig';
+import { parseFeaturedRows, parseIdCsv } from '../utils/featuredConfig';
 
 export default function HomePage() {
   usePageTitle();
@@ -25,17 +28,44 @@ export default function HomePage() {
     how_body: 'Three steps from landing on this page to standing in front of something worth the trip.',
   });
   const { places, categories, loading, error, refresh } = usePlaces();
+  const {
+    businesses,
+    tags: businessTags,
+    loading: businessesLoading,
+    error: businessesError,
+    refresh: refreshBusinesses,
+  } = useBusinesses();
   const { addPlace, hasPlace } = useVisitPlan();
   const [flash, setFlash] = useState(null);
   const navigate = useNavigate();
 
   // Only the places the admin ticked "Show on home" for (Attractive Places
   // table) appear here; with no selection yet the whole published list shows.
-  const homeIds = String(sections.home_place_ids || '')
-    .split(',')
-    .map((value) => Number(value.trim()))
-    .filter((value) => Number.isFinite(value) && value > 0);
+  const homeIds = parseIdCsv(sections.home_place_ids);
   const listedPlaces = homeIds.length > 0 ? places.filter((place) => homeIds.includes(place.place_id)) : places;
+
+  // Businesses are chosen the same way from the Businesses panel ("Show on
+  // home"), one tick per listing — no tick, no card. Only approved listings
+  // are in the list at all, so a pending or unpublished one never appears.
+  const homeBusinessIds = parseIdCsv(sections.home_business_ids);
+  const listedBusinesses =
+    homeBusinessIds.length > 0
+      ? businesses.filter((business) => homeBusinessIds.includes(business.business_id))
+      : [];
+
+  // One grid for both listings, alternating place / business so the four cards
+  // shown on tablets and phones always include businesses when any are chosen.
+  const mergedItems = [];
+  for (let i = 0; i < Math.max(listedPlaces.length, listedBusinesses.length); i += 1) {
+    if (i < listedPlaces.length) mergedItems.push({ type: 'place', place: listedPlaces[i] });
+    if (i < listedBusinesses.length) mergedItems.push({ type: 'business', business: listedBusinesses[i] });
+  }
+
+  const categoryName = (id) => categories.find((c) => c.category_id === id)?.category_name;
+  const tagNamesFor = (business) =>
+    (business.tags || [])
+      .map((id) => businessTags.find((t) => t.category_id === id)?.category_name)
+      .filter(Boolean);
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -48,6 +78,12 @@ export default function HomePage() {
   // there as soon as the listing has loaded (see ExplorePage).
   const openOnExplore = (place) => {
     navigate('/explore', { state: { previewPlaceId: place.place_id } });
+  };
+
+  // Businesses have no page of their own — the card opens Explore on the
+  // Businesses tab with that listing's popup showing.
+  const openBusinessOnExplore = (business) => {
+    navigate('/explore', { state: { previewBusinessId: business.business_id } });
   };
 
   return (
@@ -184,17 +220,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured carousel (Aceternity Apple Cards) */}
+      {/* Featured carousel (Aceternity Apple Cards) — the admin picks the
+          places in Attractive Places and the businesses in the Businesses
+          panel; both feed one row, places first in the order they were ticked. */}
       <section className="w-full">
         <div className="mx-auto mb-8 max-w-2xl text-center">
           <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Featured escapes</h2>
           <p className="mt-3 text-muted-foreground">A taste of each category. Tap a card for the full story.</p>
         </div>
-        {/* Admin-chosen selection (see the Home page content editor); empty = default order */}
         <FeaturedCarousel
           places={places}
           categories={categories}
-          featured={parseFeaturedRows(sections.featured_place_ids, sections.featured_covers)}
+          businesses={businesses}
+          tags={businessTags}
+          featured={[
+            ...parseFeaturedRows(sections.featured_place_ids, sections.featured_covers).map((row) => ({
+              ...row,
+              type: 'place',
+            })),
+            ...parseFeaturedRows(sections.featured_business_ids, sections.featured_business_covers).map((row) => ({
+              ...row,
+              type: 'business',
+            })),
+          ]}
         />
       </section>
 
@@ -270,38 +318,65 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* All places — the same cards as the Explore page, showing only the
-          places ticked "Show on home" in the Attractive Places table. */}
+      {/* All places — the same cards as the Explore page: every published
+          place (or just the ones ticked "Show on home" in Attractive Places)
+          plus the businesses ticked "Show on home" in the Businesses panel. */}
       <section id="places" className="w-full space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
-            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">All places</h2>
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+              All places &amp; businesses
+            </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
-              Our selected places within 25 km of Wadduwa filter by category and add your favourites straight to your day plan.
+              Everything selected for this page within 25 km of Wadduwa — add your favourite places
+              straight to your day plan, or tap a business for its hours, contact details and map.
             </p>
           </div>
           <Link
             to="/explore"
             className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
           >
-            Explore all places
+            Explore everything
             <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
               →
             </span>
           </Link>
         </div>
 
-        {loading && <Loader label="Loading places…" />}
-        {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
-        {!loading && !error && (
-          <PlaceGrid
-            places={listedPlaces}
-            categories={categories}
-            hasPlace={hasPlace}
-            onAdd={handleAdd}
-            onOpen={openOnExplore}
-            limitBelowXl
-          />
+        {(loading || businessesLoading) && <Loader label="Loading listings…" />}
+        {/* One error box per listing that failed; the other one still renders. */}
+        {error && <ErrorMessage message={error} onRetry={refresh} />}
+        {businessesError && <ErrorMessage message={businessesError} onRetry={refreshBusinesses} />}
+
+        {!loading && !businessesLoading && mergedItems.length > 0 && (
+          <div className="grid grid-cards-4 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {mergedItems.map((item) =>
+              item.type === 'business' ? (
+                <BusinessCard
+                  key={`business-${item.business.business_id}`}
+                  business={item.business}
+                  tagNames={tagNamesFor(item.business)}
+                  onOpen={openBusinessOnExplore}
+                />
+              ) : (
+                <PlaceCard
+                  key={`place-${item.place.place_id}`}
+                  place={item.place}
+                  categoryName={categoryName(item.place.category_id)}
+                  inPlan={hasPlace(item.place.place_id)}
+                  onAdd={handleAdd}
+                  onOpen={openOnExplore}
+                />
+              )
+            )}
+          </div>
+        )}
+
+        {!loading && !businessesLoading && mergedItems.length === 0 && !error && !businessesError && (
+          <div className="rounded-2xl border border-dashed border-border py-16 text-center text-muted-foreground">
+            Nothing is selected for this page yet — published places and businesses ticked
+            &ldquo;Show on home&rdquo; appear here.
+          </div>
         )}
       </section>
 

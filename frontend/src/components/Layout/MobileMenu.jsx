@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink } from 'react-router-dom';
 import { useVisitPlan } from '../../hooks/useVisitPlan';
+import { useAuth } from '../../hooks/useAuth';
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -22,8 +23,12 @@ const links = [
 
 export default function MobileMenu() {
   const { count } = useVisitPlan();
+  const { isOwner } = useAuth();
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
+
+  const ctaTo = isOwner ? '/owner/dashboard' : '/business/register';
+  const ctaLabel = isOwner ? 'Open my business panel' : 'Register your business';
 
   // Close on Escape and lock background scroll while open.
   useEffect(() => {
@@ -70,8 +75,8 @@ export default function MobileMenu() {
           )}
 
           {/* Drawer — solid background so it never blends with page content.
-              The nav list is the only scroll area, which keeps the plan CTA
-              pinned at the bottom and inside the viewport even on short
+              The nav list is the only scroll area, which keeps the registration
+              CTA pinned at the bottom and inside the viewport even on short
               (landscape) phone screens. */}
           <div
             id="mobile-menu"
@@ -123,11 +128,11 @@ export default function MobileMenu() {
             </nav>
 
             <Link
-              to="/visit-plan"
+              to={ctaTo}
               onClick={() => setOpen(false)}
               className="mt-4 shrink-0 rounded-2xl bg-brand px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-dark safe-b"
             >
-              Let&apos;s plan your tour
+              {ctaLabel}
             </Link>
           </div>
         </>,

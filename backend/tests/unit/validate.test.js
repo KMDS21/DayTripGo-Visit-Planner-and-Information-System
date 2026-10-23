@@ -1,7 +1,12 @@
 // Unit — request validation middleware (SRS FR-19).
 // Validates the res.status().json() contract without a server.
 
-const { validatePlace, validatePlanItems } = require('../../src/middleware/validate');
+const {
+  validatePlace,
+  validatePlanItems,
+  validateOwnerRegister,
+  validateBusiness,
+} = require('../../src/middleware/validate');
 
 function makeRes() {
   const res = {
@@ -147,5 +152,168 @@ describe('validatePlanItems', () => {
       expect(res.statusCode).toBe(400);
       expect(next).not.toHaveBeenCalled();
     }
+  });
+});
+
+const VALID_OWNER = {
+  full_name: 'Nimal Perera',
+  email: 'nimal@example.com',
+  username: 'nimalp',
+  password: 'secret123',
+};
+
+describe('validateOwnerRegister', () => {
+  test('passes a valid registration through to next()', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateOwnerRegister({ body: { ...VALID_OWNER } }, res, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBeNull();
+  });
+
+  test('lists every missing required field in one 400', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateOwnerRegister({ body: {} }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(400);
+    for (const field of ['full_name', 'email', 'username', 'password']) {
+      expect(res.body.message).toContain(field);
+    }
+  });
+
+  test('rejects a malformed email', () => {
+    const res = makeRes();
+    validateOwnerRegister({ body: { ...VALID_OWNER, email: 'not-an-email' } }, res, jest.fn());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('valid email');
+  });
+
+  test('rejects a username under 3 characters', () => {
+    const res = makeRes();
+    validateOwnerRegister({ body: { ...VALID_OWNER, username: 'ab' } }, res, jest.fn());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('username');
+  });
+
+  test('rejects a password shorter than 6 characters', () => {
+    const res = makeRes();
+    validateOwnerRegister({ body: { ...VALID_OWNER, password: '12345' } }, res, jest.fn());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('password');
+  });
+});
+
+const VALID_BUSINESS = {
+  name: 'Coastal Cars',
+  description: 'Car and van hire next to the beach road.',
+};
+
+describe('validateBusiness', () => {
+  test('passes a valid listing through to next()', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness({ body: { ...VALID_BUSINESS } }, res, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBeNull();
+  });
+
+  test('requires name and description', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness({ body: { name: '   ' } }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('name');
+    expect(res.body.message).toContain('description');
+  });
+
+  test('rejects a malformed contact email', () => {
+    const res = makeRes();
+    validateBusiness({ body: { ...VALID_BUSINESS, email: 'nope' } }, res, jest.fn());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('valid email');
+  });
+
+  test('rejects a google_maps_url that is not a Google Maps link', () => {
+    const res = makeRes();
+    validateBusiness(
+      { body: { ...VALID_BUSINESS, google_maps_url: 'https://example.com/map' } },
+      res,
+      jest.fn()
+    );
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('Google Maps link');
+  });
+
+  test('rejects a website_url without a protocol', () => {
+    const res = makeRes();
+    validateBusiness({ body: { ...VALID_BUSINESS, website_url: 'example.com' } }, res, jest.fn());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('website_url');
+  });
+
+  test('accepts a website_url and tags when well formed', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness(
+      { body: { ...VALID_BUSINESS, website_url: 'https://coastalcars.lk', tags: [1, '2'] } },
+      res,
+      next
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  test('rejects tags that are not an array of ids', () => {
+    for (const tags of ['Restaurant', [1, 'abc'], { a: 1 }]) {
+      const res = makeRes();
+      const next = jest.fn();
+      validateBusiness({ body: { ...VALID_BUSINESS, tags } }, res, next);
+      expect(res.statusCode).toBe(400);
+      expect(next).not.toHaveBeenCalled();
+      expect(res.body.message).toContain('tags');
+    }
+  });
+
+  // Card copy + contact name are new listing fields (migration 010) with the
+  // same length caps the DB columns enforce.
+  test('accepts a short_description and owner_name at their length limits', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness(
+      {
+        body: {
+          ...VALID_BUSINESS,
+          short_description: 'a'.repeat(160),
+          owner_name: 'b'.repeat(150),
+        },
+      },
+      res,
+      next
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBeNull();
+  });
+
+  test('rejects a short_description longer than the Explore card allows', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness(
+      { body: { ...VALID_BUSINESS, short_description: 'a'.repeat(161) } },
+      res,
+      next
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('short_description');
+  });
+
+  test('rejects an owner_name longer than 150 characters', () => {
+    const res = makeRes();
+    const next = jest.fn();
+    validateBusiness({ body: { ...VALID_BUSINESS, owner_name: 'a'.repeat(151) } }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toContain('owner_name');
   });
 });

@@ -1,4 +1,4 @@
-// Smoke — the whole stack boots and the five key pages actually render.
+// Smoke — the whole stack boots and the key pages actually render.
 //
 // Every test fails on ANY console.error or uncaught page error; the only
 // exemption is the known-external map-tile hosts (OpenStreetMap rate-limits
@@ -75,6 +75,30 @@ test('contact page renders the enquiry form', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('input[autocomplete="name"]')).toBeVisible();
   await expect(page.locator('input[autocomplete="email"]')).toBeVisible();
+  expectCleanConsole(errors);
+});
+
+test('business registration collects the account only (step 1 of 2)', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('/business/register');
+  await expect(page.locator('#username')).toBeVisible();
+  await expect(page.locator('#password')).toBeVisible();
+  // The listing itself — business name, contact details, photos — is step 2
+  // and lives on a separate screen behind the account form.
+  await expect(page.locator('#business_name')).toHaveCount(0);
+  await expect(page.getByText('2 · Your listing', { exact: true })).toBeVisible();
+  expectCleanConsole(errors);
+});
+
+test('explore lists businesses behind the Businesses tab', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('/explore');
+  const businessesLoaded = page.waitForResponse(
+    (res) => res.url().includes('/api/businesses') && res.status() === 200
+  );
+  await page.getByRole('tab', { name: 'Businesses' }).click();
+  await businessesLoaded;
+  await expect(page.getByRole('tab', { name: 'Businesses' })).toHaveAttribute('aria-selected', 'true');
   expectCleanConsole(errors);
 });
 

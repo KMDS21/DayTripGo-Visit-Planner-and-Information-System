@@ -11,8 +11,16 @@ import usePageContent from '../hooks/usePageContent';
 import CategoryFilter from '../components/PlaceListing/CategoryFilter';
 import PlaceGrid from '../components/PlaceListing/PlaceGrid';
 import PlacePreviewModal from '../components/PlaceListing/PlacePreviewModal';
+import BusinessesPanel from '../components/BusinessListing/BusinessesPanel';
 import Loader from '../components/Common/Loader';
 import ErrorMessage from '../components/Common/ErrorMessage';
+
+// Two listings behind one page: tourist places (the original Explore) and
+// owner-submitted businesses.
+const VIEWS = [
+  { id: 'places', label: 'Places' },
+  { id: 'businesses', label: 'Businesses' },
+];
 
 export default function ExplorePage() {
   usePageTitle();
@@ -35,9 +43,25 @@ export default function ExplorePage() {
   const [previewId, setPreviewId] = useState(() => Number(location.state?.previewPlaceId) || null);
   const preview = previewId === null ? null : places.find((p) => p.place_id === previewId) || null;
 
+  // Same hand-off for businesses: a featured card on the home page opens this
+  // page straight on the Businesses tab with that listing's popup showing.
+  const [previewBusinessId, setPreviewBusinessId] = useState(
+    () => Number(location.state?.previewBusinessId) || null
+  );
+
+  // Which listing the page is showing — tourist places or owner businesses.
+  const [view, setView] = useState(previewBusinessId !== null ? 'businesses' : 'places');
+
   useEffect(() => {
-    if (previewId !== null) navigate('.', { replace: true, state: null });
-  }, [previewId, navigate]);
+    if (previewId !== null || previewBusinessId !== null) navigate('.', { replace: true, state: null });
+  }, [previewId, previewBusinessId, navigate]);
+
+  const switchView = (next) => {
+    if (next === view) return;
+    setView(next);
+    setPreviewId(null); // a popup must not leak into the other tab
+    setPreviewBusinessId(null);
+  };
 
   const handleAdd = async (place) => {
     const added = await addPlace(place);
@@ -71,40 +95,77 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* Filter row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm font-semibold text-muted-foreground">
-          {loading
-            ? 'Loading places…'
-            : `${places.length} ${places.length === 1 ? 'place' : 'places'}`}
-        </p>
-        <CategoryFilter categories={categories} activeCategory={activeCategory} onSelect={selectCategory} />
+      {/* Listing switch — tourist places vs owner-submitted businesses */}
+      <div
+        className="inline-flex rounded-full border border-border bg-muted p-1"
+        role="tablist"
+        aria-label="Choose a listing"
+      >
+        {VIEWS.map((v) => {
+          const active = view === v.id;
+          return (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => switchView(v.id)}
+              className={`min-h-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+                active ? 'bg-brand text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {v.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Listing */}
-      {loading && <Loader label="Loading places…" />}
-      {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
-      {!loading && !error && (
-        <PlaceGrid
-          places={places}
-          categories={categories}
-          hasPlace={hasPlace}
-          onAdd={handleAdd}
-          onOpen={(place) => setPreviewId(place.place_id)}
-        />
+      {view === 'places' && (
+        <>
+          {/* Filter row */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-muted-foreground">
+              {loading
+                ? 'Loading places…'
+                : `${places.length} ${places.length === 1 ? 'place' : 'places'}`}
+            </p>
+            <CategoryFilter
+              categories={categories}
+              activeCategory={activeCategory}
+              onSelect={selectCategory}
+            />
+          </div>
+
+          {/* Listing */}
+          {loading && <Loader label="Loading places…" />}
+          {!loading && error && <ErrorMessage message={error} onRetry={refresh} />}
+          {!loading && !error && (
+            <PlaceGrid
+              places={places}
+              categories={categories}
+              hasPlace={hasPlace}
+              onAdd={handleAdd}
+              onOpen={(place) => setPreviewId(place.place_id)}
+            />
+          )}
+
+          {/* Place detail popup (blur backdrop) — only mounted while open; rendered
+              before the flash so the "added to plan" toast stays above it. */}
+          {preview && (
+            <PlacePreviewModal
+              place={preview}
+              categoryName={
+                categories.find((c) => c.category_id === preview.category_id)?.category_name || ''
+              }
+              inPlan={hasPlace(preview.place_id)}
+              onAdd={handleAdd}
+              onClose={() => setPreviewId(null)}
+            />
+          )}
+        </>
       )}
 
-      {/* Place detail popup (blur backdrop) — only mounted while open; rendered
-          before the flash so the "added to plan" toast stays above it. */}
-      {preview && (
-        <PlacePreviewModal
-          place={preview}
-          categoryName={categories.find((c) => c.category_id === preview.category_id)?.category_name || ''}
-          inPlan={hasPlace(preview.place_id)}
-          onAdd={handleAdd}
-          onClose={() => setPreviewId(null)}
-        />
-      )}
+      {view === 'businesses' && <BusinessesPanel initialPreviewId={previewBusinessId} />}
 
       {/* Add-to-plan confirmation flash (max-width keeps long names on-screen) */}
       <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2">

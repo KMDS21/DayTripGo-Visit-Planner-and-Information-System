@@ -1,7 +1,14 @@
-// Unit — "Featured escapes" CSV/cover-pair serialisation (admin content editor).
+// Unit — "Featured escapes" CSV/cover-pair serialisation (admin content editor)
+// and the plain id lists the home page selections use.
 
 import { describe, test, expect } from 'vitest';
-import { parseFeaturedRows, serializeFeaturedRows } from '../../src/utils/featuredConfig';
+import {
+  BUSINESS_FEATURED_KEYS,
+  parseFeaturedRows,
+  parseIdCsv,
+  serializeFeaturedRows,
+  serializeIdCsv,
+} from '../../src/utils/featuredConfig';
 
 describe('parseFeaturedRows', () => {
   test('pairs ids with their covers in display order', () => {
@@ -75,5 +82,49 @@ describe('serializeFeaturedRows', () => {
       serializeFeaturedRows(original).featured_covers
     );
     expect(again).toEqual(original);
+  });
+
+  // Businesses keep their own sections so the places editor is untouched.
+  test('business rows write the business sections, not the place ones', () => {
+    expect(serializeFeaturedRows([{ id: 4, cover: '' }], BUSINESS_FEATURED_KEYS)).toEqual({
+      featured_business_ids: '4',
+      featured_business_covers: '',
+    });
+    // …and the default keys still serialise to the place sections.
+    expect(serializeFeaturedRows([{ id: 4, cover: '' }])).toEqual({
+      featured_place_ids: '4',
+      featured_covers: '',
+    });
+  });
+
+  test('a business row round-trips through the business sections', () => {
+    const original = [{ id: 12, cover: '' }, { id: 3, cover: '/uploads/places/b.png' }];
+    const saved = serializeFeaturedRows(original, BUSINESS_FEATURED_KEYS);
+    expect(parseFeaturedRows(saved.featured_business_ids, saved.featured_business_covers)).toEqual(original);
+  });
+});
+
+describe('parseIdCsv / serializeIdCsv', () => {
+  test('reads the home page id lists', () => {
+    expect(parseIdCsv('3,7,1')).toEqual([3, 7, 1]);
+    expect(parseIdCsv(' 4 , 6 ')).toEqual([4, 6]);
+  });
+
+  test('junk entries are dropped, empty input yields nothing', () => {
+    expect(parseIdCsv('0,-2,abc, ,5')).toEqual([5]);
+    expect(parseIdCsv('')).toEqual([]);
+    expect(parseIdCsv()).toEqual([]);
+    expect(parseIdCsv(null)).toEqual([]);
+  });
+
+  test('round-trips and de-duplicates', () => {
+    expect(serializeIdCsv([3, 7, 1])).toBe('3,7,1');
+    expect(serializeIdCsv([3, 3, 7])).toBe('3,7');
+    expect(serializeIdCsv(parseIdCsv('3,7,1'))).toBe('3,7,1');
+    expect(serializeIdCsv([])).toBe('');
+  });
+
+  test('drops invalid ids on the way out', () => {
+    expect(serializeIdCsv([0, -1, Number.NaN, 5])).toBe('5');
   });
 });
