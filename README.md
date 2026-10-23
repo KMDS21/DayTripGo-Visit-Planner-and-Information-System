@@ -1,8 +1,8 @@
-<h1 align="center">DayTripGO — Project Documents</h1>
+<h1 align="center">DayTripGO - Project Documents</h1>
 
 <p align="center">
-  Documentation branch of <strong>DayTripGO — Visit Planner &amp; Information System</strong>,<br>
-  a local tourism guide and day-trip planner for the Wadduwa area of Sri Lanka.
+  Documentation branch of <strong>DayTripGO - Visit Planner &amp; Information System</strong>,<br>
+  a local tourism guide and day trip planner for the Wadduwa area of Sri Lanka.
 </p>
 
 <p align="center">
@@ -11,7 +11,7 @@
   <a href="https://github.com/KMDS21/DayTripGo-Visit-Planner-and-Information-System"><strong>Main branch</strong></a>
 </p>
 
-> The full technical README — stack, architecture, features, REST API, database schema, testing, and deployment — lives in the [`main`](https://github.com/KMDS21/DayTripGo-Visit-Planner-and-Information-System/blob/main/README.md) branch.
+> The full technical README - stack, architecture, features, REST API, database schema, testing, and deployment - lives in the [`main`](https://github.com/KMDS21/DayTripGo-Visit-Planner-and-Information-System/blob/main/README.md) branch.
 
 ---
 
@@ -22,7 +22,7 @@
 | [Project Introduction and Problem Specification.pdf](Project%20Introduction%20and%20Problem%20Specification.pdf) | PDF | Project background, problem statement, and objectives |
 | [ITE2953_ProjectProposal_E2410884.docx](ITE2953_ProjectProposal_E2410884.docx) | Word | Project proposal (ITE2953) |
 | [E2410884_SRS DOCUMENT.pdf](E2410884_SRS%20DOCUMENT.pdf) | PDF | Software requirements specification |
-| [E2410884_SRS DOCUMENT_FINAL.pdf](E2410884_SRS%20DOCUMENT_FINAL.pdf) | PDF | Software requirements specification — final version |
+| [E2410884_SRS DOCUMENT_FINAL.pdf](E2410884_SRS%20DOCUMENT_FINAL.pdf) | PDF | Software requirements specification - final version |
 
 Markdown sources (project plan, proposal, SRS, UI/UX guide, integration and testing logs) are kept in the [`main`](https://github.com/KMDS21/DayTripGo-Visit-Planner-and-Information-System/tree/main) branch.
 
@@ -32,7 +32,7 @@ Markdown sources (project plan, proposal, SRS, UI/UX guide, integration and test
 
 ### Public website
 
-| Home — hero | Home — featured escapes | Home — top places |
+| Home - hero | Home - featured escapes | Home - top places |
 | :---: | :---: | :---: |
 | <img src="SS/site-1.png" alt="Home page hero: One perfect day around Wadduwa" width="420"> | <img src="SS/site-2.png" alt="Home page featured escapes carousel" width="420"> | <img src="SS/site-3.png" alt="Home page top places to visit and footer" width="420"> |
 | <sub>Hero with category CTAs</sub> | <sub>Featured escapes carousel</sub> | <sub>Top places + footer</sub> |
@@ -55,8 +55,8 @@ Markdown sources (project plan, proposal, SRS, UI/UX guide, integration and test
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 19 · Vite 8 · Tailwind CSS v4 · react-router-dom 7 · Leaflet maps — hosted on **Vercel** |
-| Backend | Node.js · Express 5 · JWT · bcryptjs · multer uploads — hosted on **Render** |
+| Frontend | React 19 · Vite 8 · Tailwind CSS v4 · react-router-dom 7 · Leaflet maps - hosted on **Vercel** |
+| Backend | Node.js · Express 5 · JWT · bcryptjs · multer uploads - hosted on **Render** |
 | Database | Supabase (hosted PostgreSQL) |
 | Testing | Vitest · Jest + Supertest · Playwright smoke · autocannon load |
 
